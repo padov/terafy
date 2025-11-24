@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen nativa igual à splash do Flutter -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Gradiente vertical: topCenter (#0891B2) para bottomCenter (#085878) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient android:type="linear" android:angle="270" android:startColor="#0891B2" android:endColor="#085878" />
+        </shape>
+    </item>
+
+    <!-- Logo centralizado (mesmo da splash do Flutter) -->
+    <item android:width="200dp" android:height="200dp" android:gravity="center">
+        <bitmap android:gravity="center" android:src="@drawable/splash_logo" android:tileMode="disabled" />
+    </item>
+</layer-list>
+

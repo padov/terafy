@@ -1,0 +1,11 @@
+name: common
+description: Pacote comum com models e logger para uso no frontend e backend.
+publish_to: "none"
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  logging: ^1.2.0
+  ansi_styles: ^0.3.2+1
+  stack_trace: ^1.11.1

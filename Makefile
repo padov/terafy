@@ -1,0 +1,51 @@
+##@ General
+
+.PHONY: help
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+##@ Docker Environment
+
+.PHONY: up
+up: ## Start docker containers in the background.
+	@echo "Starting Docker containers..."
+	@docker compose -f docker/docker-compose.yml up -d
+
+.PHONY: down
+down: ## Stop and remove docker containers.
+	@echo "Stopping Docker containers..."
+	@docker compose -f docker/docker-compose.yml down
+
+##@ Server Development
+
+.PHONY: server
+server: ## Start the Dart server.
+	@echo "Starting Terafy server..."
+	@cd server && dart run bin/server.dart
+
+.PHONY: server-dev
+server-dev: ## Start the Dart server in watch mode (hot-reload).
+	@echo "Starting Terafy server in watch mode..."
+	@cd server && dart --enable-vm-service run bin/dev.dart
+
+.PHONY: migrate
+migrate: ## Apply pending database migrations.
+	@echo "Applying database migrations..."
+	@dbmate --env-file server/.env --migrations-dir server/db/migrations --schema-file server/db/schema.sql up
+
+.PHONY: reset-db
+reset-db: ## Drop and recreate database (run all migrations from scratch).
+	@echo "Resetting database..."
+	@cd server && dart run bin/reset_database.dart
+
+.PHONY: create-test-user
+create-test-user: ## Create a test user in the database.
+	@echo "Creating test user..."
+	@cd server && dart run bin/create_test_user.dart
+
+##@ App Development
+
+.PHONY: clear-storage
+clear-storage: ## Clear app storage data (Android).
+	@echo "Clearing app storage data..."
+	@adb shell pm clear com.example.terafy || echo "Warning: Could not clear storage. Make sure an Android device/emulator is connected and the app is installed."

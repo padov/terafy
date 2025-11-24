@@ -1,0 +1,8 @@
+build/
+.dart_tool/
+.git/
+.gitignore
+.env
+.env.example
+*.md
+test/
