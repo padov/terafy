@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:terafy/core/domain/usecases/patient/create_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/get_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/get_patients_usecase.dart';
+import 'package:terafy/core/domain/usecases/patient/update_patient_usecase.dart';
 import 'package:terafy/core/services/patients_cache_service.dart';
 import 'package:terafy/features/patients/models/patient.dart';
 import 'patients_bloc_models.dart';
@@ -11,10 +12,12 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     required GetPatientsUseCase getPatientsUseCase,
     required CreatePatientUseCase createPatientUseCase,
     required GetPatientUseCase getPatientUseCase,
+    required UpdatePatientUseCase updatePatientUseCase,
     required PatientsCacheService patientsCacheService,
   }) : _getPatientsUseCase = getPatientsUseCase,
        _createPatientUseCase = createPatientUseCase,
        _getPatientUseCase = getPatientUseCase,
+       _updatePatientUseCase = updatePatientUseCase,
        _patientsCacheService = patientsCacheService,
        super(const PatientsInitial()) {
     on<LoadPatients>(_onLoadPatients);
@@ -25,11 +28,14 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     on<SelectPatient>(_onSelectPatient);
     on<RequestAIAnalysis>(_onRequestAIAnalysis);
     on<ResetPatientsView>(_onResetPatientsView);
+    on<UpdatePatient>(_onUpdatePatient);
+    on<UpdatePatientNotes>(_onUpdatePatientNotes);
   }
 
   final GetPatientsUseCase _getPatientsUseCase;
   final CreatePatientUseCase _createPatientUseCase;
   final GetPatientUseCase _getPatientUseCase;
+  final UpdatePatientUseCase _updatePatientUseCase;
   final PatientsCacheService _patientsCacheService;
   PatientsLoaded? _lastLoadedState;
   String? _currentSearchQuery;
@@ -334,6 +340,122 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
     }
 
     return filtered.toList();
+  }
+
+  Future<void> _onUpdatePatient(
+    UpdatePatient event,
+    Emitter<PatientsState> emit,
+  ) async {
+    Patient? currentPatient;
+    if (state is PatientSelected) {
+      currentPatient = (state as PatientSelected).patient;
+      emit(PatientUpdating(currentPatient));
+    } else if (state is AIAnalysisLoading) {
+      currentPatient = (state as AIAnalysisLoading).patient;
+      emit(PatientUpdating(currentPatient));
+    } else if (state is PatientUpdating) {
+      currentPatient = (state as PatientUpdating).patient;
+    } else if (state is PatientUpdated) {
+      currentPatient = (state as PatientUpdated).patient;
+      emit(PatientUpdating(currentPatient));
+    }
+
+    try {
+      final updatedPatient = await _updatePatientUseCase(patient: event.patient);
+      
+      // Atualiza cache
+      final cached = _patientsCacheService.getPatients();
+      if (cached != null) {
+        final index = cached.indexWhere((p) => p.id == updatedPatient.id);
+        if (index != -1) {
+          // Cria uma nova lista mutável para evitar erro de lista imutável
+          final updatedCache = List<Patient>.from(cached);
+          updatedCache[index] = updatedPatient;
+          _patientsCacheService.savePatients(updatedCache);
+        }
+      }
+
+      // Se estava visualizando o paciente, volta para PatientSelected com dados atualizados
+      if (currentPatient != null) {
+        emit(PatientSelected(updatedPatient));
+      } else {
+        // Se não estava visualizando, emite PatientUpdated
+        emit(PatientUpdated(updatedPatient));
+      }
+      
+      // Atualiza lista se estiver em estado de lista (sem emitir, apenas atualiza o cache)
+      if (_lastLoadedState != null) {
+        final updatedList = _lastLoadedState!.patients.map((p) {
+          return p.id == updatedPatient.id ? updatedPatient : p;
+        }).toList();
+        
+        // Atualiza o estado da lista apenas se não estivermos visualizando o paciente
+        if (currentPatient == null) {
+          _emitLoaded(
+            emit,
+            PatientsLoaded(
+              patients: updatedList,
+              filteredPatients: _applyFilters(
+                updatedList,
+                searchQuery: _lastLoadedState!.searchQuery,
+                statusFilter: _lastLoadedState!.statusFilter,
+              ),
+              searchQuery: _lastLoadedState!.searchQuery,
+              statusFilter: _lastLoadedState!.statusFilter,
+            ),
+          );
+        } else {
+          // Apenas atualiza o cache interno sem emitir novo estado
+          _lastLoadedState = PatientsLoaded(
+            patients: updatedList,
+            filteredPatients: _applyFilters(
+              updatedList,
+              searchQuery: _lastLoadedState!.searchQuery,
+              statusFilter: _lastLoadedState!.statusFilter,
+            ),
+            searchQuery: _lastLoadedState!.searchQuery,
+            statusFilter: _lastLoadedState!.statusFilter,
+          );
+        }
+      }
+    } catch (e) {
+      if (currentPatient != null) {
+        emit(PatientSelected(currentPatient));
+      }
+      emit(PatientsError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdatePatientNotes(
+    UpdatePatientNotes event,
+    Emitter<PatientsState> emit,
+  ) async {
+    Patient? currentPatient;
+    if (state is PatientSelected) {
+      currentPatient = (state as PatientSelected).patient;
+    } else if (state is AIAnalysisLoading) {
+      currentPatient = (state as AIAnalysisLoading).patient;
+    } else if (state is PatientUpdating) {
+      currentPatient = (state as PatientUpdating).patient;
+    } else if (state is PatientUpdated) {
+      currentPatient = (state as PatientUpdated).patient;
+    }
+
+    if (currentPatient == null) {
+      emit(const PatientsError('Paciente não encontrado'));
+      return;
+    }
+
+    // Verifica se o pacienteId corresponde
+    if (currentPatient.id != event.patientId) {
+      emit(const PatientsError('Paciente não encontrado'));
+      return;
+    }
+
+    final updatedPatient = currentPatient.copyWith(
+      notes: (event.notes?.isEmpty ?? true) ? null : event.notes,
+    );
+    add(UpdatePatient(updatedPatient));
   }
 
   void _emitLoaded(Emitter<PatientsState> emit, PatientsLoaded state) {

@@ -7,17 +7,16 @@ help: ## Display this help.
 ##@ Docker Environment
 
 .PHONY: up
-up: ## Start docker containers in the background.
-	@echo "Starting Docker containers..."
-	@docker compose -f docker/docker-compose.yml up -d
+up: ## Start PostgreSQL container for local development.
+	@echo "Starting PostgreSQL container for local development..."
+	@docker compose up -d
 
 .PHONY: down
-down: ## Stop and remove docker containers.
-	@echo "Stopping Docker containers..."
-	@docker compose -f docker/docker-compose.yml down
+down: ## Stop and remove PostgreSQL container.
+	@echo "Stopping PostgreSQL container..."
+	@docker compose down
 
 ##@ Server Development
-
 .PHONY: server
 server: ## Start the Dart server.
 	@echo "Starting Terafy server..."
@@ -27,11 +26,6 @@ server: ## Start the Dart server.
 server-dev: ## Start the Dart server in watch mode (hot-reload).
 	@echo "Starting Terafy server in watch mode..."
 	@cd server && dart --enable-vm-service run bin/dev.dart
-
-.PHONY: migrate
-migrate: ## Apply pending database migrations.
-	@echo "Applying database migrations..."
-	@dbmate --env-file server/.env --migrations-dir server/db/migrations --schema-file server/db/schema.sql up
 
 .PHONY: reset-db
 reset-db: ## Drop and recreate database (run all migrations from scratch).

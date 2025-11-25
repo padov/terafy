@@ -33,7 +33,6 @@ CREATE TABLE patients (
     treatment_start_date DATE,
     last_session_date DATE,
     total_sessions INTEGER NOT NULL DEFAULT 0,
-    behavioral_profiles TEXT[] DEFAULT ARRAY[]::TEXT[],
     tags TEXT[] DEFAULT ARRAY[]::TEXT[],
     notes TEXT,
     photo_url TEXT,

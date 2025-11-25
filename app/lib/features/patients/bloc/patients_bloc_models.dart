@@ -74,6 +74,28 @@ class ResetPatientsView extends PatientsEvent {
   const ResetPatientsView();
 }
 
+class UpdatePatient extends PatientsEvent {
+  final Patient patient;
+
+  const UpdatePatient(this.patient);
+
+  @override
+  List<Object?> get props => [patient];
+}
+
+class UpdatePatientNotes extends PatientsEvent {
+  final String patientId;
+  final String? notes;
+
+  const UpdatePatientNotes({
+    required this.patientId,
+    this.notes,
+  });
+
+  @override
+  List<Object?> get props => [patientId, notes];
+}
+
 // States
 abstract class PatientsState extends Equatable {
   const PatientsState();
@@ -160,4 +182,22 @@ class PatientsError extends PatientsState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class PatientUpdating extends PatientsState {
+  final Patient patient;
+
+  const PatientUpdating(this.patient);
+
+  @override
+  List<Object?> get props => [patient];
+}
+
+class PatientUpdated extends PatientsState {
+  final Patient patient;
+
+  const PatientUpdated(this.patient);
+
+  @override
+  List<Object?> get props => [patient];
 }

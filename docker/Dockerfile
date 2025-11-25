@@ -1,47 +1,27 @@
-# Dockerfile para o servidor Terafy
-# Build multi-stage para otimizar tamanho da imagem
-# Contexto: raiz do projeto (terafy/) - definido no docker-compose.yml
+# Dockerfile para PostgreSQL de desenvolvimento local
+# Uso: docker build -f docker/Dockerfile.postgres -t terafy-postgres-local .
+#      docker run -d --name terafy-postgres-local -p 5432:5432 terafy-postgres-local
 
-# Stage 1: Build
-FROM dart:stable AS build
+FROM postgres:16-alpine
 
-WORKDIR /app
+# Variáveis de ambiente padrão para desenvolvimento
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=mysecretpassword
+ENV POSTGRES_DB=terafy_db
 
-# Estrutura final desejada:
-#   /app/server/  (código do servidor)  
-#   /app/common/  (código comum)
+# Configurações do PostgreSQL para desenvolvimento
+# - max_connections: máximo de conexões simultâneas
+# - shared_buffers: memória compartilhada para cache
+# - idle_in_transaction_session_timeout: encerra conexões idle em transação após 5 minutos
+# - statement_timeout: encerra queries muito longas após 30 segundos
+RUN echo "max_connections = 200" >> /usr/local/share/postgresql/postgresql.conf.sample && \
+    echo "shared_buffers = 256MB" >> /usr/local/share/postgresql/postgresql.conf.sample && \
+    echo "idle_in_transaction_session_timeout = 300000" >> /usr/local/share/postgresql/postgresql.conf.sample && \
+    echo "statement_timeout = 30000" >> /usr/local/share/postgresql/postgresql.conf.sample
 
-# Estratégia: Copiar tudo primeiro, depois instalar dependências
-# Isso evita problemas com path dependencies e cache do host
+# Expõe a porta padrão do PostgreSQL
+EXPOSE 5432
 
-# Passo 1: Copia TODO o código primeiro
-COPY common/ ./common/
-COPY server/ ./server/
+# O PostgreSQL já tem um entrypoint padrão que inicializa o banco
+# Não precisa de CMD adicional
 
-# Passo 2: Instala dependências do common primeiro
-WORKDIR /app/common
-RUN dart pub get
-
-# Passo 3: Instala dependências do server (agora ../common existe e está resolvido)
-WORKDIR /app/server
-RUN dart pub get
-
-# Passo 4: Compila o servidor
-RUN dart compile exe bin/server.dart -o server
-
-# Stage 2: Runtime
-FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copia apenas o binário compilado
-COPY --from=build /app/server/server .
-
-EXPOSE 8080
-ENV PORT=8080
-
-CMD ["./server"]

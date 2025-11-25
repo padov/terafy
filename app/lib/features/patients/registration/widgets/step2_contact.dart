@@ -7,11 +7,13 @@ import 'package:terafy/features/patients/registration/bloc/patient_registration_
 class Step2Contact extends StatefulWidget {
   final ContactData? initialData;
   final Function(ContactData) onDataChanged;
+  final DateTime? dateOfBirth; // Para verificar se é menor de idade
 
   const Step2Contact({
     super.key,
     this.initialData,
     required this.onDataChanged,
+    this.dateOfBirth,
   });
 
   @override
@@ -39,6 +41,9 @@ class _Step2ContactState extends State<Step2Contact> {
   @override
   void initState() {
     super.initState();
+    
+    // Ativa o switch se já houver responsável legal ou se o paciente for menor de idade
+    _showGuardian = widget.initialData?.legalGuardian != null || _isMinor();
     _phoneController = TextEditingController(
       text: widget.initialData?.phone ?? '',
     );
@@ -78,6 +83,17 @@ class _Step2ContactState extends State<Step2Contact> {
     _guardianNameController.addListener(_notifyDataChanged);
     _guardianCpfController.addListener(_notifyDataChanged);
     _guardianPhoneController.addListener(_notifyDataChanged);
+  }
+
+  bool _isMinor() {
+    if (widget.dateOfBirth == null) return false;
+    final now = DateTime.now();
+    int age = now.year - widget.dateOfBirth!.year;
+    if (now.month < widget.dateOfBirth!.month ||
+        (now.month == widget.dateOfBirth!.month && now.day < widget.dateOfBirth!.day)) {
+      age--;
+    }
+    return age < 18;
   }
 
   @override

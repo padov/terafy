@@ -29,7 +29,6 @@ class Patient {
   final DateTime? treatmentStartDate;
   final DateTime? lastSessionDate;
   final int totalSessions;
-  final List<String>? behavioralProfiles;
   final List<String>? tags;
   final String? notes;
   final String? photoUrl;
@@ -66,7 +65,6 @@ class Patient {
     this.treatmentStartDate,
     this.lastSessionDate,
     this.totalSessions = 0,
-    this.behavioralProfiles,
     this.tags,
     this.notes,
     this.photoUrl,
@@ -104,7 +102,6 @@ class Patient {
     DateTime? treatmentStartDate,
     DateTime? lastSessionDate,
     int? totalSessions,
-    List<String>? behavioralProfiles,
     List<String>? tags,
     String? notes,
     String? photoUrl,
@@ -142,7 +139,6 @@ class Patient {
       treatmentStartDate: treatmentStartDate ?? this.treatmentStartDate,
       lastSessionDate: lastSessionDate ?? this.lastSessionDate,
       totalSessions: totalSessions ?? this.totalSessions,
-      behavioralProfiles: behavioralProfiles ?? this.behavioralProfiles,
       tags: tags ?? this.tags,
       notes: notes ?? this.notes,
       photoUrl: photoUrl ?? this.photoUrl,
@@ -182,7 +178,6 @@ class Patient {
       'treatmentStartDate': treatmentStartDate?.toIso8601String(),
       'lastSessionDate': lastSessionDate?.toIso8601String(),
       'totalSessions': totalSessions,
-      'behavioralProfiles': behavioralProfiles,
       'tags': tags,
       'notes': notes,
       'photoUrl': photoUrl,
@@ -224,7 +219,6 @@ class Patient {
       'inactivation_reason': inactivationReason,
       'treatment_start_date': treatmentStartDate,
       'last_session_date': lastSessionDate,
-      'behavioral_profiles': behavioralProfiles,
       'tags': tags,
       'notes': notes,
       'photo_url': photoUrl,
@@ -275,7 +269,6 @@ class Patient {
       treatmentStartDate: _parseDate(map['treatment_start_date']),
       lastSessionDate: _parseDate(map['last_session_date']),
       totalSessions: (map['total_sessions'] as int?) ?? 0,
-      behavioralProfiles: _parseStringList(map['behavioral_profiles']),
       tags: _parseStringList(map['tags']),
       notes: map['notes'] as String?,
       photoUrl: map['photo_url'] as String?,

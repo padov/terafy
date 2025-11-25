@@ -412,11 +412,6 @@ class PatientHandler extends BaseHandler {
             _read<dynamic>(data, ['lastSessionDate', 'last_session_date']),
           ) ??
           base?.lastSessionDate,
-      behavioralProfiles:
-          _parseStringList(
-            _read<dynamic>(data, ['behavioralProfiles', 'behavioral_profiles']),
-          ) ??
-          base?.behavioralProfiles,
       tags: _parseStringList(_read<dynamic>(data, ['tags'])) ?? base?.tags,
       notes: _readString(data, ['notes']) ?? base?.notes,
       photoUrl: _readString(data, ['photoUrl', 'photo_url']) ?? base?.photoUrl,
