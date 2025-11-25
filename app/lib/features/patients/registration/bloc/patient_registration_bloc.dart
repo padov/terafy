@@ -20,11 +20,12 @@ class PatientRegistrationBloc
         _updatePatientUseCase = patientToEdit != null
             ? DependencyContainer().updatePatientUseCase
             : null,
-        super(PatientRegistrationInitial()) {
-    // Se estiver editando, inicializa com os dados do paciente
-    if (patientToEdit != null) {
-      _initializeWithPatient(patientToEdit!);
-    }
+        super(patientToEdit != null
+            ? PatientRegistrationInProgress(
+                currentStep: 0,
+                data: _createInitialDataFromPatient(patientToEdit),
+              )
+            : PatientRegistrationInitial()) {
     on<UpdateIdentificationData>(_onUpdateIdentificationData);
     on<UpdateContactData>(_onUpdateContactData);
     on<UpdateProfessionalSocialData>(_onUpdateProfessionalSocialData);
@@ -35,8 +36,8 @@ class PatientRegistrationBloc
     on<SavePatientPressed>(_onSavePatientPressed);
   }
 
-  void _initializeWithPatient(Patient patient) {
-    final data = PatientRegistrationData(
+  static PatientRegistrationData _createInitialDataFromPatient(Patient patient) {
+    return PatientRegistrationData(
       identification: IdentificationData(
         fullName: patient.fullName,
         cpf: patient.cpf,
@@ -71,8 +72,6 @@ class PatientRegistrationBloc
         agendaColor: patient.agendaColor,
       ),
     );
-
-    emit(PatientRegistrationInProgress(currentStep: 0, data: data));
   }
 
   void _onUpdateIdentificationData(

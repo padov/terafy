@@ -50,9 +50,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse(anamnesis.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao buscar anamnese: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao buscar anamnese: ${e.toString()}');
     }
   }
 
@@ -88,9 +86,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse(anamnesis.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao buscar anamnese: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao buscar anamnese: ${e.toString()}');
     }
   }
 
@@ -122,26 +118,18 @@ class AnamnesisHandler extends BaseHandler {
 
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil antes de criar anamneses.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil antes de criar anamneses.');
         }
         therapistId = accountId;
       } else if (userRole != 'admin') {
-        return forbiddenResponse(
-          'Apenas terapeutas ou administradores podem criar anamneses',
-        );
+        return forbiddenResponse('Apenas terapeutas ou administradores podem criar anamneses');
       }
 
       if (therapistId == null) {
         return badRequestResponse('therapistId é obrigatório');
       }
 
-      final anamnesis = _anamnesisFromRequestMap(
-        data: data,
-        patientId: patientId,
-        therapistId: therapistId,
-      );
+      final anamnesis = _anamnesisFromRequestMap(data: data, patientId: patientId, therapistId: therapistId);
 
       final created = await _controller.createAnamnesis(
         anamnesis: anamnesis,
@@ -154,9 +142,7 @@ class AnamnesisHandler extends BaseHandler {
       return createdResponse(created.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao criar anamnese: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao criar anamnese: ${e.toString()}');
     }
   }
 
@@ -219,9 +205,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse(result.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao atualizar anamnese: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao atualizar anamnese: ${e.toString()}');
     }
   }
 
@@ -253,9 +237,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse({'message': 'Anamnese removida com sucesso'});
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao remover anamnese: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao remover anamnese: ${e.toString()}');
     }
   }
 
@@ -276,9 +258,7 @@ class AnamnesisHandler extends BaseHandler {
       int? therapistFilter;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil antes de acessar templates.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil antes de acessar templates.');
         }
         therapistFilter = accountId;
       } else if (userRole == 'admin') {
@@ -302,14 +282,10 @@ class AnamnesisHandler extends BaseHandler {
         bypassRLS: userRole == 'admin',
       );
 
-      return successResponse(
-        templates.map((template) => template.toJson()).toList(),
-      );
+      return successResponse(templates.map((template) => template.toJson()).toList());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao listar templates: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao listar templates: ${e.toString()}');
     }
   }
 
@@ -345,9 +321,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse(template.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao buscar template: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao buscar template: ${e.toString()}');
     }
   }
 
@@ -374,21 +348,14 @@ class AnamnesisHandler extends BaseHandler {
 
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil antes de criar templates.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil antes de criar templates.');
         }
         therapistId = accountId;
       } else if (userRole != 'admin') {
-        return forbiddenResponse(
-          'Apenas terapeutas ou administradores podem criar templates',
-        );
+        return forbiddenResponse('Apenas terapeutas ou administradores podem criar templates');
       }
 
-      final template = _templateFromRequestMap(
-        data: data,
-        therapistId: therapistId,
-      );
+      final template = _templateFromRequestMap(data: data, therapistId: therapistId);
 
       final created = await _controller.createTemplate(
         template: template,
@@ -401,9 +368,7 @@ class AnamnesisHandler extends BaseHandler {
       return createdResponse(created.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao criar template: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao criar template: ${e.toString()}');
     }
   }
 
@@ -443,11 +408,7 @@ class AnamnesisHandler extends BaseHandler {
 
       final data = jsonDecode(body) as Map<String, dynamic>;
 
-      final updatedTemplate = _templateFromRequestMap(
-        data: data,
-        therapistId: existing.therapistId,
-        base: existing,
-      );
+      final updatedTemplate = _templateFromRequestMap(data: data, therapistId: existing.therapistId, base: existing);
 
       final result = await _controller.updateTemplate(
         templateId,
@@ -465,9 +426,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse(result.toJson());
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao atualizar template: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao atualizar template: ${e.toString()}');
     }
   }
 
@@ -499,9 +458,7 @@ class AnamnesisHandler extends BaseHandler {
       return successResponse({'message': 'Template removido com sucesso'});
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao remover template: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao remover template: ${e.toString()}');
     }
   }
 
@@ -513,7 +470,7 @@ class AnamnesisHandler extends BaseHandler {
     required int therapistId,
     Anamnesis? base,
   }) {
-    DateTime? _parseDate(dynamic value) {
+    DateTime? parseDate(dynamic value) {
       if (value == null) return null;
       if (value is DateTime) return value;
       if (value is String && value.isNotEmpty) {
@@ -522,7 +479,7 @@ class AnamnesisHandler extends BaseHandler {
       return null;
     }
 
-    Map<String, dynamic> _parseJson(dynamic value) {
+    Map<String, dynamic> parseJson(dynamic value) {
       if (value == null) return {};
       if (value is Map<String, dynamic>) return value;
       if (value is String && value.isNotEmpty) {
@@ -543,8 +500,8 @@ class AnamnesisHandler extends BaseHandler {
       patientId: patientId,
       therapistId: therapistId,
       templateId: _readInt(data, ['templateId', 'template_id']) ?? base?.templateId,
-      data: _parseJson(_read<dynamic>(data, ['data'])) ?? base?.data ?? {},
-      completedAt: _parseDate(_read<dynamic>(data, ['completedAt', 'completed_at'])) ?? base?.completedAt,
+      data: parseJson(_read<dynamic>(data, ['data'])),
+      completedAt: parseDate(_read<dynamic>(data, ['completedAt', 'completed_at'])) ?? base?.completedAt,
       createdAt: base?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -555,7 +512,7 @@ class AnamnesisHandler extends BaseHandler {
     int? therapistId,
     AnamnesisTemplate? base,
   }) {
-    Map<String, dynamic> _parseJson(dynamic value) {
+    Map<String, dynamic> parseJson(dynamic value) {
       if (value == null) return {};
       if (value is Map<String, dynamic>) return value;
       if (value is String && value.isNotEmpty) {
@@ -579,7 +536,7 @@ class AnamnesisHandler extends BaseHandler {
       category: _readString(data, ['category']) ?? base?.category,
       isDefault: _readBool(data, ['isDefault', 'is_default']) ?? base?.isDefault ?? false,
       isSystem: _readBool(data, ['isSystem', 'is_system']) ?? base?.isSystem ?? false,
-      structure: _parseJson(_read<dynamic>(data, ['structure'])) ?? base?.structure ?? {},
+      structure: parseJson(_read<dynamic>(data, ['structure'])),
       createdAt: base?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -620,4 +577,3 @@ class AnamnesisHandler extends BaseHandler {
     return null;
   }
 }
-

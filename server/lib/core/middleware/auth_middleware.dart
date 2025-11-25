@@ -1,7 +1,6 @@
 import 'package:shelf/shelf.dart';
 import 'package:server/core/services/jwt_service.dart';
 import 'package:server/features/auth/token_blacklist.repository.dart';
-import 'package:common/common.dart';
 
 Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
   return (Handler handler) {

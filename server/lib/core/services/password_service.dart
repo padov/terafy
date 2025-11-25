@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:common/common.dart';
 
 class PasswordService {
   // Gera hash SHA-256 da senha (em produção, use bcrypt ou argon2)
