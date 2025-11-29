@@ -10,6 +10,11 @@ services:
       - POSTGRES_USER=${DB_USER:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-mysecretpassword}
       - POSTGRES_DB=${DB_NAME:-terafy_db}
+      - TZ=UTC
+      - PGTZ=UTC
+    command: >
+      postgres
+      -c timezone=UTC
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
@@ -42,8 +47,11 @@ services:
       postgres_db:
         condition: service_healthy
     volumes:
-      # Monta migrations para o servidor encontrar
-      - ./migrations:/app/migrations:ro
+      # Monta migrations, functions, triggers e policies para o servidor encontrar
+      - ./migrations:/app/db/migrations:ro
+      - ./functions:/app/db/functions:ro
+      - ./triggers:/app/db/triggers:ro
+      - ./policies:/app/db/policies:ro
 
   # Nginx como reverse proxy (opcional)
   nginx:
@@ -62,5 +70,6 @@ services:
 
 volumes:
   postgres_data:
+    name: docker_postgres_data  # Usa o volume existente ao invés de criar um novo
     driver: local
 

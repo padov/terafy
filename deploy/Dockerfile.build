@@ -1,0 +1,33 @@
+# Dockerfile para compilar o servidor Dart em Linux (Debian)
+# Use este para compilar no Mac e gerar binário Linux
+# Contexto: raiz do projeto (terafy/) - definido no script
+
+# Forçar arquitetura amd64 explicitamente
+FROM --platform=linux/amd64 dart:stable AS build
+
+WORKDIR /app
+
+# Estrutura final desejada:
+#   /app/server/  (código do servidor)  
+#   /app/common/  (código comum)
+
+# Passo 1: Copia TODO o código primeiro
+COPY common/ ./common/
+COPY server/ ./server/
+
+# Passo 2: Instala dependências do common primeiro
+WORKDIR /app/common
+RUN dart pub get
+
+# Passo 3: Instala dependências do server (agora ../common existe e está resolvido)
+WORKDIR /app/server
+RUN dart pub get
+
+# Passo 4: Compila o servidor para Linux x64
+# O binário será gerado em /app/server/server
+RUN dart compile exe bin/server.dart -o server
+
+# Stage de output: apenas copia o binário
+FROM scratch AS export
+COPY --from=build /app/server/server /server
+

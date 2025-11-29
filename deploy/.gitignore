@@ -1,6 +1,3 @@
-.env
-ssl/
-*.pem
-*.key
 build/
-
+terafy-deploy/
+terafy-deploy-*.tar.gz
