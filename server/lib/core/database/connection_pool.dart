@@ -135,10 +135,15 @@ class ConnectionPool {
     );
 
     try {
-      return await Connection.open(
+      final conn = await Connection.open(
         Endpoint(host: host, port: port, database: database, username: username, password: password),
         settings: ConnectionSettings(sslMode: sslMode),
       );
+
+      // Garante que a conexão usa UTC como timezone
+      await conn.execute('SET timezone = \'UTC\'');
+
+      return conn;
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao criar conexão ao banco de dados:');
       AppLogger.error('  Host: $host');

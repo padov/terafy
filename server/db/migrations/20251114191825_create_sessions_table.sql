@@ -5,6 +5,7 @@ CREATE TYPE session_type AS ENUM ('presential', 'onlineVideo', 'onlineAudio', 'p
 CREATE TYPE session_modality AS ENUM ('individual', 'couple', 'family', 'group');
 CREATE TYPE session_status AS ENUM ('scheduled', 'confirmed', 'inProgress', 'completed', 'draft', 'cancelledByTherapist', 'cancelledByPatient', 'noShow');
 CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'exempt');
+CREATE TYPE risk_level AS ENUM ('low', 'medium', 'high');
 
 -- Cria a tabela de sessões
 CREATE TABLE sessions (
@@ -25,6 +26,28 @@ CREATE TABLE sessions (
     cancellation_time TIMESTAMP WITH TIME ZONE,
     charged_amount NUMERIC(10, 2),
     payment_status payment_status NOT NULL DEFAULT 'pending',
+    -- Campos de registro clínico
+    patient_mood TEXT,
+    topics_discussed JSONB DEFAULT '[]'::jsonb,
+    session_notes TEXT,
+    observed_behavior TEXT,
+    interventions_used JSONB DEFAULT '[]'::jsonb,
+    resources_used TEXT,
+    homework TEXT,
+    patient_reactions TEXT,
+    progress_observed TEXT,
+    difficulties_identified TEXT,
+    next_steps TEXT,
+    next_session_goals TEXT,
+    needs_referral BOOLEAN DEFAULT FALSE,
+    current_risk risk_level DEFAULT 'low',
+    important_observations TEXT,
+    -- Campos de dados administrativos
+    presence_confirmation_time TIMESTAMP WITH TIME ZONE,
+    reminder_sent BOOLEAN DEFAULT FALSE,
+    reminder_sent_time TIMESTAMP WITH TIME ZONE,
+    patient_rating INTEGER CHECK (patient_rating IS NULL OR (patient_rating >= 1 AND patient_rating <= 5)),
+    attachments JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     
@@ -41,39 +64,7 @@ CREATE INDEX idx_sessions_appointment_id ON sessions(appointment_id);
 CREATE INDEX idx_sessions_status ON sessions(status);
 CREATE INDEX idx_sessions_scheduled_start_time ON sessions(scheduled_start_time);
 
--- Trigger para calcular session_number automaticamente (sequencial por paciente)
-CREATE OR REPLACE FUNCTION calculate_session_number()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Se session_number não foi fornecido ou é 0, calcular automaticamente
-    IF NEW.session_number IS NULL OR NEW.session_number = 0 THEN
-        SELECT COALESCE(MAX(session_number), 0) + 1
-        INTO NEW.session_number
-        FROM sessions
-        WHERE patient_id = NEW.patient_id;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_calculate_session_number
-BEFORE INSERT ON sessions
-FOR EACH ROW
-EXECUTE FUNCTION calculate_session_number();
-
--- Trigger para atualizar updated_at
-CREATE OR REPLACE FUNCTION update_sessions_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_update_sessions_updated_at
-BEFORE UPDATE ON sessions
-FOR EACH ROW
-EXECUTE FUNCTION update_sessions_updated_at();
+-- Triggers serão criados via scripts em triggers/sessions_triggers.sql
 
 -- Adiciona coluna session_id na tabela appointments se não existir
 DO $$
@@ -97,11 +88,7 @@ END $$;
 
 -- migrate:down
 
-DROP TRIGGER IF EXISTS trg_update_sessions_updated_at ON sessions;
-DROP FUNCTION IF EXISTS update_sessions_updated_at();
-
-DROP TRIGGER IF EXISTS trg_calculate_session_number ON sessions;
-DROP FUNCTION IF EXISTS calculate_session_number();
+-- Functions e triggers são gerenciados via pastas functions/ e triggers/
 
 DROP INDEX IF EXISTS idx_appointments_session_id;
 ALTER TABLE appointments DROP CONSTRAINT IF EXISTS fk_appointments_session;
@@ -115,6 +102,7 @@ DROP INDEX IF EXISTS idx_sessions_patient_id;
 
 DROP TABLE IF EXISTS sessions;
 
+DROP TYPE IF EXISTS risk_level;
 DROP TYPE IF EXISTS payment_status;
 DROP TYPE IF EXISTS session_status;
 DROP TYPE IF EXISTS session_modality;

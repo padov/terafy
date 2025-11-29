@@ -1,4 +1,4 @@
-package com.example.terafy
+package br.app.terafy
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

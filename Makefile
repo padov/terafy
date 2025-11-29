@@ -36,10 +36,3 @@ reset-db: ## Drop and recreate database (run all migrations from scratch).
 create-test-user: ## Create a test user in the database.
 	@echo "Creating test user..."
 	@cd server && dart run bin/create_test_user.dart
-
-##@ App Development
-
-.PHONY: clear-storage
-clear-storage: ## Clear app storage data (Android).
-	@echo "Clearing app storage data..."
-	@adb shell pm clear com.example.terafy || echo "Warning: Could not clear storage. Make sure an Android device/emulator is connected and the app is installed."

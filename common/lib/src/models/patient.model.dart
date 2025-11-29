@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../logger/app_logger.dart';
+
 class Patient {
   final int? id;
   final int therapistId;
@@ -129,8 +131,7 @@ class Patient {
       legalGuardian: legalGuardian ?? this.legalGuardian,
       healthInsurance: healthInsurance ?? this.healthInsurance,
       healthInsuranceCard: healthInsuranceCard ?? this.healthInsuranceCard,
-      preferredPaymentMethod:
-          preferredPaymentMethod ?? this.preferredPaymentMethod,
+      preferredPaymentMethod: preferredPaymentMethod ?? this.preferredPaymentMethod,
       sessionPrice: sessionPrice ?? this.sessionPrice,
       consentSignedAt: consentSignedAt ?? this.consentSignedAt,
       lgpdConsentAt: lgpdConsentAt ?? this.lgpdConsentAt,
@@ -203,12 +204,8 @@ class Patient {
       'phones': phones,
       'profession': profession,
       'education': education,
-      'emergency_contact': emergencyContact != null
-          ? jsonEncode(emergencyContact)
-          : null,
-      'legal_guardian': legalGuardian != null
-          ? jsonEncode(legalGuardian)
-          : null,
+      'emergency_contact': emergencyContact != null ? jsonEncode(emergencyContact) : null,
+      'legal_guardian': legalGuardian != null ? jsonEncode(legalGuardian) : null,
       'health_insurance': healthInsurance,
       'health_insurance_card': healthInsuranceCard,
       'preferred_payment_method': preferredPaymentMethod,
@@ -227,6 +224,8 @@ class Patient {
   }
 
   factory Patient.fromMap(Map<String, dynamic> map) {
+    AppLogger.func();
+
     double? _parseDouble(dynamic value) {
       if (value == null) return null;
       if (value is double) return value;
@@ -281,10 +280,7 @@ class Patient {
   static List<String>? _parseStringList(dynamic value) {
     if (value == null) return null;
     if (value is List) {
-      return value
-          .map((e) => e?.toString() ?? '')
-          .where((e) => e.isNotEmpty)
-          .toList();
+      return value.map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList();
     }
     return null;
   }
@@ -305,10 +301,7 @@ class Patient {
     return null;
   }
 
-  static String _parseEnumField(
-    dynamic value, {
-    String defaultValue = 'active',
-  }) {
+  static String _parseEnumField(dynamic value, {String defaultValue = 'active'}) {
     if (value == null) return defaultValue;
     if (value is String) return value;
     return value.toString();

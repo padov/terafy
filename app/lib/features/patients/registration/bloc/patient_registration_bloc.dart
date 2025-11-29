@@ -5,8 +5,7 @@ import 'package:terafy/core/domain/usecases/patient/update_patient_usecase.dart'
 import 'package:terafy/features/patients/models/patient.dart';
 import 'package:terafy/features/patients/registration/bloc/patient_registration_models.dart';
 
-class PatientRegistrationBloc
-    extends Bloc<PatientRegistrationEvent, PatientRegistrationState> {
+class PatientRegistrationBloc extends Bloc<PatientRegistrationEvent, PatientRegistrationState> {
   static const int totalSteps = 5;
 
   final Patient? patientToEdit;
@@ -14,18 +13,13 @@ class PatientRegistrationBloc
   final UpdatePatientUseCase? _updatePatientUseCase;
 
   PatientRegistrationBloc({this.patientToEdit})
-      : _createPatientUseCase = patientToEdit == null
-            ? DependencyContainer().createPatientUseCase
-            : null,
-        _updatePatientUseCase = patientToEdit != null
-            ? DependencyContainer().updatePatientUseCase
-            : null,
-        super(patientToEdit != null
-            ? PatientRegistrationInProgress(
-                currentStep: 0,
-                data: _createInitialDataFromPatient(patientToEdit),
-              )
-            : PatientRegistrationInitial()) {
+    : _createPatientUseCase = patientToEdit == null ? DependencyContainer().createPatientUseCase : null,
+      _updatePatientUseCase = patientToEdit != null ? DependencyContainer().updatePatientUseCase : null,
+      super(
+        patientToEdit != null
+            ? PatientRegistrationInProgress(currentStep: 0, data: _createInitialDataFromPatient(patientToEdit))
+            : PatientRegistrationInitial(),
+      ) {
     on<UpdateIdentificationData>(_onUpdateIdentificationData);
     on<UpdateContactData>(_onUpdateContactData);
     on<UpdateProfessionalSocialData>(_onUpdateProfessionalSocialData);
@@ -54,14 +48,8 @@ class PatientRegistrationBloc
         emergencyContact: patient.emergencyContact,
         legalGuardian: patient.legalGuardian,
       ),
-      professionalSocial: ProfessionalSocialData(
-        profession: patient.profession,
-        education: patient.education,
-      ),
-      health: HealthData(
-        healthInsurance: patient.healthInsurance,
-        insuranceNumber: patient.insuranceCardNumber,
-      ),
+      professionalSocial: ProfessionalSocialData(profession: patient.profession, education: patient.education),
+      health: HealthData(healthInsurance: patient.healthInsurance, insuranceNumber: patient.insuranceCardNumber),
       administrative: AdministrativeData(
         sessionValue: patient.sessionValue,
         paymentMethod: patient.preferredPaymentMethod,
@@ -74,109 +62,45 @@ class PatientRegistrationBloc
     );
   }
 
-  void _onUpdateIdentificationData(
-    UpdateIdentificationData event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onUpdateIdentificationData(UpdateIdentificationData event, Emitter<PatientRegistrationState> emit) {
     final updatedData = state.data.copyWith(identification: event.data);
-    emit(
-      PatientRegistrationInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(PatientRegistrationInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onUpdateContactData(
-    UpdateContactData event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onUpdateContactData(UpdateContactData event, Emitter<PatientRegistrationState> emit) {
     final updatedData = state.data.copyWith(contact: event.data);
-    emit(
-      PatientRegistrationInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(PatientRegistrationInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onUpdateProfessionalSocialData(
-    UpdateProfessionalSocialData event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onUpdateProfessionalSocialData(UpdateProfessionalSocialData event, Emitter<PatientRegistrationState> emit) {
     final updatedData = state.data.copyWith(professionalSocial: event.data);
-    emit(
-      PatientRegistrationInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(PatientRegistrationInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onUpdateHealthData(
-    UpdateHealthData event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onUpdateHealthData(UpdateHealthData event, Emitter<PatientRegistrationState> emit) {
     final updatedData = state.data.copyWith(health: event.data);
-    emit(
-      PatientRegistrationInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(PatientRegistrationInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onUpdateAdministrativeData(
-    UpdateAdministrativeData event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onUpdateAdministrativeData(UpdateAdministrativeData event, Emitter<PatientRegistrationState> emit) {
     final updatedData = state.data.copyWith(administrative: event.data);
-    emit(
-      PatientRegistrationInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(PatientRegistrationInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onNextStepPressed(
-    NextStepPressed event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onNextStepPressed(NextStepPressed event, Emitter<PatientRegistrationState> emit) {
     if (state.currentStep < totalSteps - 1) {
-      emit(
-        PatientRegistrationInProgress(
-          currentStep: state.currentStep + 1,
-          data: state.data,
-        ),
-      );
+      emit(PatientRegistrationInProgress(currentStep: state.currentStep + 1, data: state.data));
     }
   }
 
-  void _onPreviousStepPressed(
-    PreviousStepPressed event,
-    Emitter<PatientRegistrationState> emit,
-  ) {
+  void _onPreviousStepPressed(PreviousStepPressed event, Emitter<PatientRegistrationState> emit) {
     if (state.currentStep > 0) {
-      emit(
-        PatientRegistrationInProgress(
-          currentStep: state.currentStep - 1,
-          data: state.data,
-        ),
-      );
+      emit(PatientRegistrationInProgress(currentStep: state.currentStep - 1, data: state.data));
     }
   }
 
-  Future<void> _onSavePatientPressed(
-    SavePatientPressed event,
-    Emitter<PatientRegistrationState> emit,
-  ) async {
-    emit(
-      PatientRegistrationLoading(
-        currentStep: state.currentStep,
-        data: state.data,
-      ),
-    );
+  Future<void> _onSavePatientPressed(SavePatientPressed event, Emitter<PatientRegistrationState> emit) async {
+    emit(PatientRegistrationLoading(currentStep: state.currentStep, data: state.data));
 
     try {
       // Validações básicas
@@ -230,13 +154,7 @@ class PatientRegistrationBloc
         // Por enquanto, apenas os campos básicos são salvos na criação rápida
       }
 
-      emit(
-        PatientRegistrationSuccess(
-          patient: savedPatient,
-          currentStep: state.currentStep,
-          data: state.data,
-        ),
-      );
+      emit(PatientRegistrationSuccess(patient: savedPatient, currentStep: state.currentStep, data: state.data));
     } catch (e) {
       emit(
         PatientRegistrationError(
@@ -251,11 +169,9 @@ class PatientRegistrationBloc
   bool canProceedToNextStep() {
     switch (state.currentStep) {
       case 0: // Identificação
-        return state.data.identification != null &&
-            state.data.identification!.fullName.isNotEmpty;
+        return state.data.identification != null && state.data.identification!.fullName.isNotEmpty;
       case 1: // Contato
-        return state.data.contact != null &&
-            state.data.contact!.phone.isNotEmpty;
+        return state.data.contact != null && state.data.contact!.phone.isNotEmpty;
       case 2: // Profissional/Social
         return true; // Opcional
       case 3: // Saúde

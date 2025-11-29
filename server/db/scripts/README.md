@@ -24,6 +24,8 @@ Este script:
 Execute o script SQL diretamente:
 
 ```bash
+gcloud compute ssh terafy-freetier-vm
+
 # Via psql
 psql -h localhost -U postgres -d terafy_db -f server/db/scripts/create_test_user.sql
 
@@ -105,7 +107,7 @@ cd server && dart run bin/seed_default_anamnesis_template.dart
 psql -h localhost -U postgres -d terafy_db -f server/db/scripts/seed_default_anamnesis_template.sql
 
 # Ou via docker
-docker exec -i terafy_postgres psql -U postgres -d terafy_db < server/db/scripts/seed_default_anamnesis_template.sql
+docker exec -i postgres_db psql -U postgres -d terafy_db < server/db/scripts/seed_default_anamnesis_template.sql
 ```
 
 ### Verificar Template Criado

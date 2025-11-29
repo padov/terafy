@@ -1,12 +1,12 @@
 -- migrate:up
 
 -- Cria tipo ENUM para status de pacientes
-CREATE TYPE patient_status AS ENUM ('active', 'inactive', 'discharged', 'completed');
+CREATE TYPE patient_status AS ENUM ('active', 'inactive', 'discharged', 'completed', 'evaluated');
 
 -- Cria a tabela de pacientes vinculados a um terapeuta
 CREATE TABLE patients (
     id SERIAL PRIMARY KEY,
-    therapist_id INTEGER NOT NULL REFERENCES therapists(id) ON DELETE CASCADE,
+    therapist_id INTEGER NOT NULL DEFAULT (current_setting('app.account_id', true)::int) REFERENCES therapists(id) ON DELETE CASCADE,
     user_id INTEGER UNIQUE REFERENCES users(id),
     full_name VARCHAR(255) NOT NULL,
     birth_date DATE,
@@ -47,6 +47,9 @@ CREATE TABLE patients (
 CREATE INDEX idx_patients_therapist_id ON patients(therapist_id);
 CREATE INDEX idx_patients_status ON patients(status);
 CREATE INDEX idx_patients_tags ON patients USING GIN (tags);
+
+-- Habilita Row Level Security (RLS) na tabela patients
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
 
 -- migrate:down
 
