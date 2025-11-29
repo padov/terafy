@@ -8,11 +8,7 @@ class Step6Administrative extends StatefulWidget {
   final AdministrativeData? initialData;
   final Function(AdministrativeData) onDataChanged;
 
-  const Step6Administrative({
-    super.key,
-    this.initialData,
-    required this.onDataChanged,
-  });
+  const Step6Administrative({super.key, this.initialData, required this.onDataChanged});
 
   @override
   State<Step6Administrative> createState() => _Step6AdministrativeState();
@@ -52,12 +48,8 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
   @override
   void initState() {
     super.initState();
-    _sessionValueController = TextEditingController(
-      text: widget.initialData?.sessionValue?.toStringAsFixed(2) ?? '',
-    );
-    _observationsController = TextEditingController(
-      text: widget.initialData?.generalObservations ?? '',
-    );
+    _sessionValueController = TextEditingController(text: widget.initialData?.sessionValue?.toStringAsFixed(2) ?? '');
+    _observationsController = TextEditingController(text: widget.initialData?.generalObservations ?? '');
     _tagInputController = TextEditingController();
     _selectedPaymentMethod = widget.initialData?.paymentMethod;
     _consentDate = widget.initialData?.consentDate;
@@ -70,6 +62,57 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
   }
 
   @override
+  void didUpdateWidget(Step6Administrative oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    final newSessionValue = widget.initialData?.sessionValue?.toStringAsFixed(2) ?? '';
+    if (widget.initialData?.sessionValue != oldWidget.initialData?.sessionValue &&
+        _sessionValueController.text != newSessionValue &&
+        !newSessionValue.startsWith(_sessionValueController.text) &&
+        !_sessionValueController.text.startsWith(newSessionValue)) {
+      _sessionValueController.text = newSessionValue;
+    }
+
+    final newObservations = widget.initialData?.generalObservations ?? '';
+    if (widget.initialData?.generalObservations != oldWidget.initialData?.generalObservations &&
+        _observationsController.text != newObservations &&
+        !newObservations.startsWith(_observationsController.text) &&
+        !_observationsController.text.startsWith(newObservations)) {
+      _observationsController.text = newObservations;
+    }
+    // Atualiza outros campos se necessário
+    if (widget.initialData?.paymentMethod != oldWidget.initialData?.paymentMethod) {
+      _selectedPaymentMethod = widget.initialData?.paymentMethod;
+    }
+    if (widget.initialData?.consentDate != oldWidget.initialData?.consentDate) {
+      _consentDate = widget.initialData?.consentDate;
+    }
+    if (widget.initialData?.lgpdAcceptanceDate != oldWidget.initialData?.lgpdAcceptanceDate) {
+      _lgpdDate = widget.initialData?.lgpdAcceptanceDate;
+    }
+    if (widget.initialData?.agendaColor != oldWidget.initialData?.agendaColor) {
+      _selectedColor = widget.initialData?.agendaColor ?? _agendaColors[0];
+    }
+    // Atualiza tags apenas se mudaram externamente
+    if (widget.initialData?.tags != oldWidget.initialData?.tags) {
+      final newTags = widget.initialData?.tags ?? [];
+      if (!_listsEqual(_tags, newTags)) {
+        _tags = List.from(newTags);
+      }
+    }
+  }
+
+  bool _listsEqual(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
+  }
+
+  @override
   void dispose() {
     _sessionValueController.dispose();
     _observationsController.dispose();
@@ -79,16 +122,12 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
 
   void _notifyDataChanged() {
     final data = AdministrativeData(
-      sessionValue: _sessionValueController.text.isEmpty
-          ? null
-          : double.tryParse(_sessionValueController.text),
+      sessionValue: _sessionValueController.text.isEmpty ? null : double.tryParse(_sessionValueController.text),
       paymentMethod: _selectedPaymentMethod,
       consentDate: _consentDate,
       lgpdAcceptanceDate: _lgpdDate,
       tags: _tags,
-      generalObservations: _observationsController.text.isEmpty
-          ? null
-          : _observationsController.text,
+      generalObservations: _observationsController.text.isEmpty ? null : _observationsController.text,
       agendaColor: _selectedColor,
     );
     widget.onDataChanged(data);
@@ -119,31 +158,19 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
           // Título
           const Text(
             'Dados Administrativos',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Informações financeiras e organização',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          ),
+          Text('Informações financeiras e organização', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 32),
 
           // Valor da Sessão
           _buildLabel('Valor da Sessão (R\$)'),
           TextFormField(
             controller: _sessionValueController,
-            decoration: _buildInputDecoration(
-              hintText: '150.00',
-              icon: Icons.attach_money,
-            ),
+            decoration: _buildInputDecoration(hintText: '150.00', icon: Icons.attach_money),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-            ],
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
           ),
           const SizedBox(height: 20),
 
@@ -151,10 +178,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
           _buildLabel('Forma de Pagamento Preferencial'),
           DropdownButtonFormField<String>(
             initialValue: _selectedPaymentMethod,
-            decoration: _buildInputDecoration(
-              hintText: 'Selecione a forma de pagamento',
-              icon: Icons.payment,
-            ),
+            decoration: _buildInputDecoration(hintText: 'Selecione a forma de pagamento', icon: Icons.payment),
             items: _paymentMethods.map((method) {
               return DropdownMenuItem(value: method, child: Text(method));
             }).toList(),
@@ -215,10 +239,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
           const SizedBox(height: 16),
 
           _buildLabel('Adicionar Tags'),
-          Text(
-            'Tags para organizar e filtrar pacientes',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
+          Text('Tags para organizar e filtrar pacientes', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -242,9 +263,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Icon(Icons.add),
                 ),
@@ -261,10 +280,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
                   label: Text(tag),
                   backgroundColor: AppColors.primary.withOpacity(0.1),
                   side: const BorderSide(color: AppColors.primary),
-                  labelStyle: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  labelStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
                   deleteIcon: const Icon(Icons.close, size: 16),
                   onDeleted: () => _removeTag(tag),
                 );
@@ -292,12 +308,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
                   decoration: BoxDecoration(
                     color: Color(int.parse(color.replaceFirst('#', '0xFF'))),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.offBlack
-                          : Colors.transparent,
-                      width: 3,
-                    ),
+                    border: Border.all(color: isSelected ? AppColors.offBlack : Colors.transparent, width: 3),
                     boxShadow: [
                       if (isSelected)
                         BoxShadow(
@@ -307,9 +318,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
                         ),
                     ],
                   ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white)
-                      : null,
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white) : null,
                 ),
               );
             }).toList(),
@@ -318,17 +327,11 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
 
           // Observações Gerais
           _buildLabel('Observações Gerais'),
-          Text(
-            'Anotações importantes sobre o paciente',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
+          Text('Anotações importantes sobre o paciente', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           const SizedBox(height: 8),
           TextFormField(
             controller: _observationsController,
-            decoration: _buildInputDecoration(
-              hintText: 'Adicione observações relevantes...',
-              icon: Icons.notes,
-            ),
+            decoration: _buildInputDecoration(hintText: 'Adicione observações relevantes...', icon: Icons.notes),
             maxLines: 4,
           ),
           const SizedBox(height: 32),
@@ -343,11 +346,7 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.green,
-                  size: 24,
-                ),
+                const Icon(Icons.check_circle_outline, color: Colors.green, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -367,20 +366,11 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.primary.withOpacity(0.3),
-            width: 2,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.3), width: 2)),
       ),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primary,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary),
       ),
     );
   }
@@ -390,27 +380,17 @@ class _Step6AdministrativeState extends State<Step6Administrative> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.offBlack,
-        ),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.offBlack),
       ),
     );
   }
 
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    required IconData icon,
-  }) {
+  InputDecoration _buildInputDecoration({required String hintText, required IconData icon}) {
     return InputDecoration(
       hintText: hintText,
       filled: true,
       fillColor: Colors.grey[100],
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       prefixIcon: Icon(icon, color: Colors.grey[600]),
     );

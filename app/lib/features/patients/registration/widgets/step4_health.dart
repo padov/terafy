@@ -19,15 +19,34 @@ class _Step4HealthState extends State<Step4Health> {
   @override
   void initState() {
     super.initState();
-    _healthInsuranceController = TextEditingController(
-      text: widget.initialData?.healthInsurance ?? '',
-    );
-    _insuranceNumberController = TextEditingController(
-      text: widget.initialData?.insuranceNumber ?? '',
-    );
+    _healthInsuranceController = TextEditingController(text: widget.initialData?.healthInsurance ?? '');
+    _insuranceNumberController = TextEditingController(text: widget.initialData?.insuranceNumber ?? '');
 
     _healthInsuranceController.addListener(_notifyDataChanged);
     _insuranceNumberController.addListener(_notifyDataChanged);
+  }
+
+  @override
+  void didUpdateWidget(Step4Health oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    final newHealthInsurance = widget.initialData?.healthInsurance ?? '';
+    if (widget.initialData?.healthInsurance != oldWidget.initialData?.healthInsurance &&
+        _healthInsuranceController.text != newHealthInsurance &&
+        !newHealthInsurance.startsWith(_healthInsuranceController.text) &&
+        !_healthInsuranceController.text.startsWith(newHealthInsurance)) {
+      _healthInsuranceController.text = newHealthInsurance;
+    }
+
+    final newInsuranceNumber = widget.initialData?.insuranceNumber ?? '';
+    if (widget.initialData?.insuranceNumber != oldWidget.initialData?.insuranceNumber &&
+        _insuranceNumberController.text != newInsuranceNumber &&
+        !newInsuranceNumber.startsWith(_insuranceNumberController.text) &&
+        !_insuranceNumberController.text.startsWith(newInsuranceNumber)) {
+      _insuranceNumberController.text = newInsuranceNumber;
+    }
   }
 
   @override
@@ -39,12 +58,8 @@ class _Step4HealthState extends State<Step4Health> {
 
   void _notifyDataChanged() {
     final data = HealthData(
-      healthInsurance: _healthInsuranceController.text.isEmpty
-          ? null
-          : _healthInsuranceController.text,
-      insuranceNumber: _insuranceNumberController.text.isEmpty
-          ? null
-          : _insuranceNumberController.text,
+      healthInsurance: _healthInsuranceController.text.isEmpty ? null : _healthInsuranceController.text,
+      insuranceNumber: _insuranceNumberController.text.isEmpty ? null : _insuranceNumberController.text,
     );
     widget.onDataChanged(data);
   }
@@ -59,17 +74,10 @@ class _Step4HealthState extends State<Step4Health> {
           // Título
           const Text(
             'Informações de Saúde',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Dados médicos e histórico de saúde',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          ),
+          Text('Dados médicos e histórico de saúde', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 32),
 
           // Convênio/Plano de Saúde
@@ -87,10 +95,7 @@ class _Step4HealthState extends State<Step4Health> {
           _buildLabel('Número da Carteirinha'),
           TextFormField(
             controller: _insuranceNumberController,
-            decoration: _buildInputDecoration(
-              hintText: 'Digite o número da carteirinha',
-              icon: Icons.credit_card,
-            ),
+            decoration: _buildInputDecoration(hintText: 'Digite o número da carteirinha', icon: Icons.credit_card),
           ),
           const SizedBox(height: 32),
 
@@ -124,27 +129,17 @@ class _Step4HealthState extends State<Step4Health> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.offBlack,
-        ),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.offBlack),
       ),
     );
   }
 
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    required IconData icon,
-  }) {
+  InputDecoration _buildInputDecoration({required String hintText, required IconData icon}) {
     return InputDecoration(
       hintText: hintText,
       filled: true,
       fillColor: Colors.grey[100],
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       prefixIcon: Icon(icon, color: Colors.grey[600]),
     );

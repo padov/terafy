@@ -9,11 +9,7 @@ class Step1Identification extends StatefulWidget {
   final IdentificationData? initialData;
   final Function(IdentificationData) onDataChanged;
 
-  const Step1Identification({
-    super.key,
-    this.initialData,
-    required this.onDataChanged,
-  });
+  const Step1Identification({super.key, this.initialData, required this.onDataChanged});
 
   @override
   State<Step1Identification> createState() => _Step1IdentificationState();
@@ -28,20 +24,12 @@ class _Step1IdentificationState extends State<Step1Identification> {
   Gender? _selectedGender;
   String? _selectedMaritalStatus;
 
-  final List<String> _maritalStatusOptions = [
-    'Solteiro(a)',
-    'Casado(a)',
-    'Divorciado(a)',
-    'Viúvo(a)',
-    'União Estável',
-  ];
+  final List<String> _maritalStatusOptions = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'];
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
-      text: widget.initialData?.fullName ?? '',
-    );
+    _nameController = TextEditingController(text: widget.initialData?.fullName ?? '');
     _cpfController = TextEditingController(text: widget.initialData?.cpf ?? '');
     _rgController = TextEditingController(text: widget.initialData?.rg ?? '');
     _selectedDate = widget.initialData?.dateOfBirth;
@@ -51,6 +39,47 @@ class _Step1IdentificationState extends State<Step1Identification> {
     _nameController.addListener(_notifyDataChanged);
     _cpfController.addListener(_notifyDataChanged);
     _rgController.addListener(_notifyDataChanged);
+  }
+
+  @override
+  void didUpdateWidget(Step1Identification oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    final newFullName = widget.initialData?.fullName ?? '';
+    if (widget.initialData?.fullName != oldWidget.initialData?.fullName &&
+        _nameController.text != newFullName &&
+        !newFullName.startsWith(_nameController.text) &&
+        !_nameController.text.startsWith(newFullName)) {
+      _nameController.text = newFullName;
+    }
+
+    final newCpf = widget.initialData?.cpf ?? '';
+    if (widget.initialData?.cpf != oldWidget.initialData?.cpf &&
+        _cpfController.text != newCpf &&
+        !newCpf.startsWith(_cpfController.text) &&
+        !_cpfController.text.startsWith(newCpf)) {
+      _cpfController.text = newCpf;
+    }
+
+    final newRg = widget.initialData?.rg ?? '';
+    if (widget.initialData?.rg != oldWidget.initialData?.rg &&
+        _rgController.text != newRg &&
+        !newRg.startsWith(_rgController.text) &&
+        !_rgController.text.startsWith(newRg)) {
+      _rgController.text = newRg;
+    }
+
+    if (widget.initialData?.dateOfBirth != oldWidget.initialData?.dateOfBirth) {
+      _selectedDate = widget.initialData?.dateOfBirth;
+    }
+    if (widget.initialData?.gender != oldWidget.initialData?.gender) {
+      _selectedGender = widget.initialData?.gender;
+    }
+    if (widget.initialData?.maritalStatus != oldWidget.initialData?.maritalStatus) {
+      _selectedMaritalStatus = widget.initialData?.maritalStatus;
+    }
   }
 
   @override
@@ -85,11 +114,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
             // Título
             const Text(
               'Identificação',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -102,10 +127,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
             _buildLabel('Nome Completo', isRequired: true),
             TextFormField(
               controller: _nameController,
-              decoration: _buildInputDecoration(
-                hintText: 'Digite o nome completo',
-                icon: Icons.person,
-              ),
+              decoration: _buildInputDecoration(hintText: 'Digite o nome completo', icon: Icons.person),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Nome é obrigatório';
@@ -119,15 +141,9 @@ class _Step1IdentificationState extends State<Step1Identification> {
             _buildLabel('CPF'),
             TextFormField(
               controller: _cpfController,
-              decoration: _buildInputDecoration(
-                hintText: '000.000.000-00',
-                icon: Icons.badge,
-              ),
+              decoration: _buildInputDecoration(hintText: '000.000.000-00', icon: Icons.badge),
               keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(11),
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
             ),
             const SizedBox(height: 20),
 
@@ -135,10 +151,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
             _buildLabel('RG'),
             TextFormField(
               controller: _rgController,
-              decoration: _buildInputDecoration(
-                hintText: 'Digite o RG',
-                icon: Icons.credit_card,
-              ),
+              decoration: _buildInputDecoration(hintText: 'Digite o RG', icon: Icons.credit_card),
             ),
             const SizedBox(height: 20),
 
@@ -148,9 +161,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
-                  initialDate:
-                      _selectedDate ??
-                      DateTime.now().subtract(const Duration(days: 365 * 25)),
+                  initialDate: _selectedDate ?? DateTime.now().subtract(const Duration(days: 365 * 25)),
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
                   locale: const Locale('pt', 'BR'),
@@ -161,31 +172,17 @@ class _Step1IdentificationState extends State<Step1Identification> {
                 }
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.calendar_today,
-                      color: Colors.grey[600],
-                      size: 20,
-                    ),
+                    Icon(Icons.calendar_today, color: Colors.grey[600], size: 20),
                     const SizedBox(width: 12),
                     Text(
-                      _selectedDate != null
-                          ? DateFormat('dd/MM/yyyy').format(_selectedDate!)
-                          : 'Selecione a data',
+                      _selectedDate != null ? DateFormat('dd/MM/yyyy').format(_selectedDate!) : 'Selecione a data',
                       style: TextStyle(
                         fontSize: 16,
-                        color: _selectedDate != null
-                            ? AppColors.offBlack
-                            : Colors.grey[600],
+                        color: _selectedDate != null ? AppColors.offBlack : Colors.grey[600],
                       ),
                     ),
                   ],
@@ -211,9 +208,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
                   selectedColor: AppColors.primary.withOpacity(0.2),
                   labelStyle: TextStyle(
                     color: isSelected ? AppColors.primary : AppColors.offBlack,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 );
               }).toList(),
@@ -224,10 +219,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
             _buildLabel('Estado Civil'),
             DropdownButtonFormField<String>(
               initialValue: _selectedMaritalStatus,
-              decoration: _buildInputDecoration(
-                hintText: 'Selecione o estado civil',
-                icon: Icons.favorite,
-              ),
+              decoration: _buildInputDecoration(hintText: 'Selecione o estado civil', icon: Icons.favorite),
               items: _maritalStatusOptions.map((status) {
                 return DropdownMenuItem(value: status, child: Text(status));
               }).toList(),
@@ -249,11 +241,7 @@ class _Step1IdentificationState extends State<Step1Identification> {
       child: RichText(
         text: TextSpan(
           text: text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.offBlack,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.offBlack),
           children: isRequired
               ? [
                   const TextSpan(
@@ -267,18 +255,12 @@ class _Step1IdentificationState extends State<Step1Identification> {
     );
   }
 
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    required IconData icon,
-  }) {
+  InputDecoration _buildInputDecoration({required String hintText, required IconData icon}) {
     return InputDecoration(
       hintText: hintText,
       filled: true,
       fillColor: Colors.grey[100],
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       prefixIcon: Icon(icon, color: Colors.grey[600]),
     );

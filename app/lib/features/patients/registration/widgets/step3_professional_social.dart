@@ -6,15 +6,10 @@ class Step3ProfessionalSocial extends StatefulWidget {
   final ProfessionalSocialData? initialData;
   final Function(ProfessionalSocialData) onDataChanged;
 
-  const Step3ProfessionalSocial({
-    super.key,
-    this.initialData,
-    required this.onDataChanged,
-  });
+  const Step3ProfessionalSocial({super.key, this.initialData, required this.onDataChanged});
 
   @override
-  State<Step3ProfessionalSocial> createState() =>
-      _Step3ProfessionalSocialState();
+  State<Step3ProfessionalSocial> createState() => _Step3ProfessionalSocialState();
 }
 
 class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
@@ -36,15 +31,34 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
   @override
   void initState() {
     super.initState();
-    _professionController = TextEditingController(
-      text: widget.initialData?.profession ?? '',
-    );
-    _educationController = TextEditingController(
-      text: widget.initialData?.education ?? '',
-    );
+    _professionController = TextEditingController(text: widget.initialData?.profession ?? '');
+    _educationController = TextEditingController(text: widget.initialData?.education ?? '');
 
     _professionController.addListener(_notifyDataChanged);
     _educationController.addListener(_notifyDataChanged);
+  }
+
+  @override
+  void didUpdateWidget(Step3ProfessionalSocial oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    final newProfession = widget.initialData?.profession ?? '';
+    if (widget.initialData?.profession != oldWidget.initialData?.profession &&
+        _professionController.text != newProfession &&
+        !newProfession.startsWith(_professionController.text) &&
+        !_professionController.text.startsWith(newProfession)) {
+      _professionController.text = newProfession;
+    }
+
+    final newEducation = widget.initialData?.education ?? '';
+    if (widget.initialData?.education != oldWidget.initialData?.education &&
+        _educationController.text != newEducation &&
+        !newEducation.startsWith(_educationController.text) &&
+        !_educationController.text.startsWith(newEducation)) {
+      _educationController.text = newEducation;
+    }
   }
 
   @override
@@ -56,12 +70,8 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
 
   void _notifyDataChanged() {
     final data = ProfessionalSocialData(
-      profession: _professionController.text.isEmpty
-          ? null
-          : _professionController.text,
-      education: _educationController.text.isEmpty
-          ? null
-          : _educationController.text,
+      profession: _professionController.text.isEmpty ? null : _professionController.text,
+      education: _educationController.text.isEmpty ? null : _educationController.text,
     );
     widget.onDataChanged(data);
   }
@@ -76,17 +86,10 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
           // Título
           const Text(
             'Vida Profissional',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Informações sobre trabalho e estudos',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          ),
+          Text('Informações sobre trabalho e estudos', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 32),
 
           // Profissão/Ocupação
@@ -103,13 +106,8 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
           // Escolaridade
           _buildLabel('Escolaridade'),
           DropdownButtonFormField<String>(
-            initialValue: _educationLevels.contains(_educationController.text)
-                ? _educationController.text
-                : null,
-            decoration: _buildInputDecoration(
-              hintText: 'Selecione o nível de escolaridade',
-              icon: Icons.school,
-            ),
+            initialValue: _educationLevels.contains(_educationController.text) ? _educationController.text : null,
+            decoration: _buildInputDecoration(hintText: 'Selecione o nível de escolaridade', icon: Icons.school),
             items: _educationLevels.map((level) {
               return DropdownMenuItem(value: level, child: Text(level));
             }).toList(),
@@ -152,27 +150,17 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.offBlack,
-        ),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.offBlack),
       ),
     );
   }
 
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    required IconData icon,
-  }) {
+  InputDecoration _buildInputDecoration({required String hintText, required IconData icon}) {
     return InputDecoration(
       hintText: hintText,
       filled: true,
       fillColor: Colors.grey[100],
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       prefixIcon: Icon(icon, color: Colors.grey[600]),
     );

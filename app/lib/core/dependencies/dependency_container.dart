@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:common/common.dart';
 import 'package:terafy/core/data/datasources/remote/auth_remote_data_source.dart';
 import 'package:terafy/core/data/repositories/auth_repository_impl.dart';
 import 'package:terafy/core/data/repositories/home_repository_impl.dart';
@@ -118,10 +119,11 @@ class DependencyContainer {
 
   // Obtém a URL base do backend dependendo da plataforma
   String get _baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8080';
-    }
+    // Em desenvolvimento, usa localhost
     if (kDebugMode) {
+      if (kIsWeb) {
+        return 'http://localhost:8080';
+      }
       if (Platform.isAndroid) {
         return 'http://10.0.2.2:8080';
       }
@@ -130,7 +132,44 @@ class DependencyContainer {
         return 'http://localhost:8080';
       }
     }
-    return 'http://35.224.10.2';
+
+    // Em produção web, detecta automaticamente o protocolo da página atual
+    // Isso garante que se a página está em HTTPS, a API também usa HTTPS
+    if (kIsWeb) {
+      return _getApiUrlForWeb();
+    }
+
+    // Para mobile em produção, sempre usa HTTPS
+    return 'https://api.terafy.app.br';
+  }
+
+  /// Detecta automaticamente o protocolo da página web e usa HTTPS para produção
+  /// Isso resolve problemas de Mixed Content (HTTPS page → HTTP API)
+  String _getApiUrlForWeb() {
+    try {
+      // Obtém a URL atual da página
+      final currentUrl = Uri.base;
+      final host = currentUrl.host;
+
+      // Se está em um domínio de produção (terafy.app.br), sempre usa HTTPS
+      if (host.contains('terafy.app.br')) {
+        return 'https://api.terafy.app.br';
+      }
+
+      // Se está em localhost (desenvolvimento), pode usar HTTP
+      if (host == 'localhost' || host == '127.0.0.1') {
+        // Em desenvolvimento local, pode usar HTTP
+        // Mas se você estiver testando HTTPS localmente, use HTTPS
+        return 'http://localhost:8080';
+      }
+
+      // Para qualquer outro caso (incluindo IPs), usa HTTPS como padrão seguro
+      return 'https://api.terafy.app.br';
+    } catch (e) {
+      // Em caso de erro, usa HTTPS como padrão seguro
+      AppLogger.warning('Erro ao detectar protocolo da página: $e. Usando HTTPS como padrão.');
+      return 'https://api.terafy.app.br';
+    }
   }
 
   void setup({AuthService? testAuthService}) {
