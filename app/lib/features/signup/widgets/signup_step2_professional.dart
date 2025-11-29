@@ -27,8 +27,7 @@ class SignupStep2Professional extends StatefulWidget {
   });
 
   @override
-  State<SignupStep2Professional> createState() =>
-      _SignupStep2ProfessionalState();
+  State<SignupStep2Professional> createState() => _SignupStep2ProfessionalState();
 }
 
 class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
@@ -42,14 +41,58 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
   @override
   void initState() {
     super.initState();
-    _presentationController = TextEditingController(
-      text: widget.initialPresentation,
-    );
+    _presentationController = TextEditingController(text: widget.initialPresentation);
     _addressController = TextEditingController(text: widget.initialAddress);
     _specialties = List.from(widget.initialSpecialties ?? []);
-    _professionalRegistrations = List.from(
-      widget.initialProfessionalRegistrations ?? [],
-    );
+    _professionalRegistrations = List.from(widget.initialProfessionalRegistrations ?? []);
+  }
+
+  @override
+  void didUpdateWidget(SignupStep2Professional oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    // (indicando que é uma atualização externa, não digitação)
+    final newPresentation = widget.initialPresentation ?? '';
+    if (widget.initialPresentation != oldWidget.initialPresentation &&
+        _presentationController.text != newPresentation &&
+        !newPresentation.startsWith(_presentationController.text) &&
+        !_presentationController.text.startsWith(newPresentation)) {
+      _presentationController.text = newPresentation;
+    }
+
+    final newAddress = widget.initialAddress ?? '';
+    if (widget.initialAddress != oldWidget.initialAddress &&
+        _addressController.text != newAddress &&
+        !newAddress.startsWith(_addressController.text) &&
+        !_addressController.text.startsWith(newAddress)) {
+      _addressController.text = newAddress;
+    }
+
+    // Atualiza listas apenas se mudaram externamente (não durante edição)
+    if (widget.initialSpecialties != oldWidget.initialSpecialties) {
+      final newSpecialties = widget.initialSpecialties ?? [];
+      // Só atualiza se a lista realmente mudou
+      if (!_listsEqual(_specialties, newSpecialties)) {
+        _specialties = List.from(newSpecialties);
+      }
+    }
+    if (widget.initialProfessionalRegistrations != oldWidget.initialProfessionalRegistrations) {
+      final newRegistrations = widget.initialProfessionalRegistrations ?? [];
+      // Só atualiza se a lista realmente mudou
+      if (!_listsEqual(_professionalRegistrations, newRegistrations)) {
+        _professionalRegistrations = List.from(newRegistrations);
+      }
+    }
+  }
+
+  bool _listsEqual(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -115,27 +158,16 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
         children: [
           Text(
             'signup.step2.title'.tr(),
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
-          Text(
-            'signup.step2.subtitle'.tr(),
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          ),
+          Text('signup.step2.subtitle'.tr(), style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 24),
 
           // Especialidades
           Text(
             'signup.step2.specialties'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           Row(
@@ -147,10 +179,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
                     hintText: 'signup.step2.specialties_placeholder'.tr(),
                     filled: true,
                     fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
                   onFieldSubmitted: (_) => _addSpecialty(),
                 ),
@@ -186,11 +215,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
           // Registros Profissionais
           Text(
             'signup.step2.registrations'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           Row(
@@ -202,10 +227,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
                     hintText: 'signup.step2.registrations_placeholder'.tr(),
                     filled: true,
                     fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
                   onFieldSubmitted: (_) => _addRegistration(),
                 ),
@@ -241,11 +263,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
           // Apresentação Profissional
           Text(
             'signup.step2.presentation'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -255,10 +273,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
               hintText: 'signup.step2.presentation_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
             onChanged: (_) => _notifyDataChanged(),
           ),
@@ -267,11 +282,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
           // Endereço
           Text(
             'signup.step2.address'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -281,10 +292,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
               hintText: 'signup.step2.address_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
             onChanged: (_) => _notifyDataChanged(),
           ),

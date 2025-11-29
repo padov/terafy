@@ -62,50 +62,71 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
     _nicknameController = TextEditingController(text: widget.initialNickname);
-    _legalDocumentController = TextEditingController(
-      text: widget.initialLegalDocument,
-    );
+    _legalDocumentController = TextEditingController(text: widget.initialLegalDocument);
     _emailController = TextEditingController(text: widget.initialEmail);
     _phoneController = TextEditingController(text: widget.initialPhone);
-    _selectedBirthday =
-        widget.initialBirthday ?? SignupStep1Personal._defaultBirthday;
+    _selectedBirthday = widget.initialBirthday ?? SignupStep1Personal._defaultBirthday;
     _birthdayController = TextEditingController(
-      text: _selectedBirthday != null
-          ? DateFormat('dd/MM/yyyy').format(_selectedBirthday!)
-          : '',
+      text: _selectedBirthday != null ? DateFormat('dd/MM/yyyy').format(_selectedBirthday!) : '',
     );
     _passwordController = TextEditingController(text: widget.initialPassword);
-    _confirmPasswordController = TextEditingController(
-      text: widget.initialPassword,
-    );
+    _confirmPasswordController = TextEditingController(text: widget.initialPassword);
   }
 
   @override
   void didUpdateWidget(SignupStep1Personal oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Atualiza os controllers quando os valores iniciais mudarem
-    if (widget.initialName != oldWidget.initialName) {
-      _nameController.text = widget.initialName ?? '';
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    // (indicando que é uma atualização externa, não digitação)
+    final newName = widget.initialName ?? '';
+    if (widget.initialName != oldWidget.initialName &&
+        _nameController.text != newName &&
+        !newName.startsWith(_nameController.text) &&
+        !_nameController.text.startsWith(newName)) {
+      _nameController.text = newName;
     }
-    if (widget.initialNickname != oldWidget.initialNickname) {
-      _nicknameController.text = widget.initialNickname ?? '';
+
+    final newNickname = widget.initialNickname ?? '';
+    if (widget.initialNickname != oldWidget.initialNickname &&
+        _nicknameController.text != newNickname &&
+        !newNickname.startsWith(_nicknameController.text) &&
+        !_nicknameController.text.startsWith(newNickname)) {
+      _nicknameController.text = newNickname;
     }
-    if (widget.initialLegalDocument != oldWidget.initialLegalDocument) {
-      _legalDocumentController.text = widget.initialLegalDocument ?? '';
+
+    final newLegalDocument = widget.initialLegalDocument ?? '';
+    if (widget.initialLegalDocument != oldWidget.initialLegalDocument &&
+        _legalDocumentController.text != newLegalDocument &&
+        !newLegalDocument.startsWith(_legalDocumentController.text) &&
+        !_legalDocumentController.text.startsWith(newLegalDocument)) {
+      _legalDocumentController.text = newLegalDocument;
     }
+
     // Atualiza o controller do email quando o initialEmail mudar
-    if (widget.initialEmail != oldWidget.initialEmail) {
-      _emailController.text = widget.initialEmail ?? '';
+    final newEmail = widget.initialEmail ?? '';
+    if (widget.initialEmail != oldWidget.initialEmail &&
+        _emailController.text != newEmail &&
+        !newEmail.startsWith(_emailController.text) &&
+        !_emailController.text.startsWith(newEmail)) {
+      _emailController.text = newEmail;
     }
-    if (widget.initialPhone != oldWidget.initialPhone) {
-      _phoneController.text = widget.initialPhone ?? '';
+
+    final newPhone = widget.initialPhone ?? '';
+    if (widget.initialPhone != oldWidget.initialPhone &&
+        _phoneController.text != newPhone &&
+        !newPhone.startsWith(_phoneController.text) &&
+        !_phoneController.text.startsWith(newPhone)) {
+      _phoneController.text = newPhone;
     }
+
     if (widget.initialBirthday != oldWidget.initialBirthday) {
-      _selectedBirthday =
-          widget.initialBirthday ?? SignupStep1Personal._defaultBirthday;
-      _birthdayController.text = _selectedBirthday != null
-          ? DateFormat('dd/MM/yyyy').format(_selectedBirthday!)
-          : '';
+      _selectedBirthday = widget.initialBirthday ?? SignupStep1Personal._defaultBirthday;
+      final newBirthdayText = _selectedBirthday != null ? DateFormat('dd/MM/yyyy').format(_selectedBirthday!) : '';
+      if (_birthdayController.text != newBirthdayText) {
+        _birthdayController.text = newBirthdayText;
+      }
     }
   }
 
@@ -130,9 +151,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
       lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColors.primary),
-          ),
+          data: Theme.of(context).copyWith(colorScheme: ColorScheme.light(primary: AppColors.primary)),
           child: child!,
         );
       },
@@ -154,9 +173,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
       legalDocument: _legalDocumentController.text,
       email: _emailController.text,
       phone: _phoneController.text,
-      password: _passwordController.text.isNotEmpty
-          ? _passwordController.text
-          : null,
+      password: _passwordController.text.isNotEmpty ? _passwordController.text : null,
       birthday: _selectedBirthday,
     );
   }
@@ -170,27 +187,16 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
         children: [
           Text(
             'signup.step1.title'.tr(),
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
-          Text(
-            'signup.step1.subtitle'.tr(),
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          ),
+          Text('signup.step1.subtitle'.tr(), style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 24),
 
           // Nome Completo
           Text(
             'signup.step1.name'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -199,10 +205,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
               hintText: 'signup.step1.name_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
             onChanged: (_) => _notifyDataChanged(),
             validator: (value) {
@@ -217,11 +220,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
           // Apelido
           Text(
             'signup.step1.nickname'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -230,10 +229,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
               hintText: 'signup.step1.nickname_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
             onChanged: (_) => _notifyDataChanged(),
           ),
@@ -242,11 +238,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
           // CPF/CNPJ
           Text(
             'signup.step1.legal_document'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -256,10 +248,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
               hintText: 'signup.step1.legal_document_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
             onChanged: (_) => _notifyDataChanged(),
             validator: (value) {
@@ -277,39 +266,27 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
           // Email
           Text(
             'signup.step1.email'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            readOnly:
-                widget.readOnlyEmail, // Email somente leitura se especificado
+            readOnly: widget.readOnlyEmail, // Email somente leitura se especificado
             decoration: InputDecoration(
               hintText: 'signup.step1.email_placeholder'.tr(),
               filled: true,
               fillColor: widget.readOnlyEmail
                   ? Colors.grey[200]
                   : Colors.grey[100], // Cor diferente quando somente leitura
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
-            onChanged: widget.readOnlyEmail
-                ? null
-                : (_) => _notifyDataChanged(),
+            onChanged: widget.readOnlyEmail ? null : (_) => _notifyDataChanged(),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Email é obrigatório';
               }
-              final emailRegex = RegExp(
-                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-              );
+              final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
               if (!emailRegex.hasMatch(value.trim())) {
                 return 'Email inválido';
               }
@@ -323,11 +300,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
             // Senha
             Text(
               'Senha',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.offBlack,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -338,15 +311,10 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
                 hintText: 'Crie uma senha',
                 filled: true,
                 fillColor: Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
+                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     color: Colors.grey[600],
                   ),
                   onPressed: () {
@@ -372,11 +340,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
             // Confirmar senha
             Text(
               'Confirmar senha',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.offBlack,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -387,15 +351,10 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
                 hintText: 'Repita a senha',
                 filled: true,
                 fillColor: Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
+                    _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     color: Colors.grey[600],
                   ),
                   onPressed: () {
@@ -422,11 +381,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
           // Telefone
           Text(
             'signup.step1.phone'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -436,10 +391,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
               hintText: 'signup.step1.phone_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
             onChanged: (_) => _notifyDataChanged(),
             validator: (value) {
@@ -457,11 +409,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
           // Data de Nascimento
           Text(
             'signup.step1.birthday'.tr(),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -471,10 +419,7 @@ class _SignupStep1PersonalState extends State<SignupStep1Personal> {
               hintText: 'signup.step1.birthday_placeholder'.tr(),
               filled: true,
               fillColor: Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               suffixIcon: Icon(Icons.calendar_today, color: Colors.grey[600]),
             ),
             onTap: _selectBirthday,

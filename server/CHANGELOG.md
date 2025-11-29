@@ -5,6 +5,25 @@ Todas as mudanças notáveis no servidor serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.2.1] - 2025-11-29
+
+### 🎉 Adicionado
+
+#### Suporte para Aplicação Web
+- Middleware CORS (`cors_middleware.dart`) para permitir requisições do navegador web
+- Headers CORS configurados para desenvolvimento e produção
+- Suporte a requisições preflight (OPTIONS)
+- Integração do middleware CORS no pipeline do servidor
+
+### 🔧 Alterado
+- Pipeline do servidor atualizado para incluir middleware CORS como primeiro middleware
+- Headers HTTP agora incluem `Access-Control-Allow-*` para requisições cross-origin
+
+### 📝 Documentação
+- Documentação inline no middleware CORS explicando comportamento para apps móveis vs web
+
+---
+
 ## [0.2.0] - 2025-01-XX
 
 ### 🎉 Adicionado

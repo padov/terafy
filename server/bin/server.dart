@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
+import 'package:server/core/middleware/cors_middleware.dart';
 import 'package:server/core/middleware/auth_middleware.dart';
 import 'package:server/core/database/db_connection.dart';
 import 'package:server/core/database/migration_manager.dart';
@@ -33,6 +34,9 @@ import 'package:server/features/anamnesis/anamnesis.repository.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
 
+/// Versão do servidor
+const String serverVersion = '0.2.1';
+
 void main() async {
   // Carrega variáveis de ambiente do arquivo .env
   EnvConfig.load();
@@ -44,6 +48,16 @@ void main() async {
   AppLogger.info('  DB_NAME: ${EnvConfig.getOrDefault('DB_NAME', 'não definido')}');
   AppLogger.info('  DB_USER: ${EnvConfig.getOrDefault('DB_USER', 'não definido')}');
   AppLogger.info('  DB_SSL_MODE: ${EnvConfig.getOrDefault('DB_SSL_MODE', 'não definido')}');
+
+  // Valida JWT_SECRET_KEY
+  final jwtSecret = EnvConfig.get('JWT_SECRET_KEY');
+  if (jwtSecret == null || jwtSecret.isEmpty) {
+    AppLogger.warning('⚠️  JWT_SECRET_KEY não configurado! Usando chave de desenvolvimento.');
+    AppLogger.warning('   ⚠️  ATENÇÃO: Em produção, configure JWT_SECRET_KEY no arquivo .env');
+    AppLogger.warning('   ⚠️  Isso pode causar problemas de autenticação!');
+  } else {
+    AppLogger.info('✅ JWT_SECRET_KEY configurado (${jwtSecret.length} caracteres)');
+  }
 
   // Configura o logger
   // Em produção, pode usar variável de ambiente: const bool.fromEnvironment('DEBUG', defaultValue: false)
@@ -126,6 +140,7 @@ void main() async {
 
   // --- Criação do Pipeline e Servidor ---
   final handler = Pipeline()
+      .addMiddleware(corsMiddleware()) // CORS deve ser o primeiro middleware
       .addMiddleware(logRequests())
       .addMiddleware(
         authMiddleware(blacklistRepository: blacklistRepository),
@@ -145,5 +160,6 @@ void main() async {
                         |___/
 ''';
   AppLogger.info(ascArt);
-  AppLogger.info('Servidor rodando em http://${server.address.host}:${server.port}');
+  AppLogger.info('📦 Versão: $serverVersion');
+  AppLogger.info('🌐 Servidor rodando em http://${server.address.host}:${server.port}');
 }

@@ -11,12 +11,7 @@ class SessionEvolutionPage extends StatelessWidget {
   final String patientName;
   final Session? existingSession;
 
-  const SessionEvolutionPage({
-    super.key,
-    required this.sessionId,
-    required this.patientName,
-    this.existingSession,
-  });
+  const SessionEvolutionPage({super.key, required this.sessionId, required this.patientName, this.existingSession});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +26,7 @@ class SessionEvolutionPage extends StatelessWidget {
         getAppointmentUseCase: container.getAppointmentUseCase,
         updateAppointmentUseCase: container.updateAppointmentUseCase,
       )..add(LoadSessionDetails(sessionId)),
-      child: _SessionEvolutionContent(
-        sessionId: sessionId,
-        patientName: patientName,
-        existingSession: existingSession,
-      ),
+      child: _SessionEvolutionContent(sessionId: sessionId, patientName: patientName, existingSession: existingSession),
     );
   }
 }
@@ -45,19 +36,13 @@ class _SessionEvolutionContent extends StatefulWidget {
   final String patientName;
   final Session? existingSession;
 
-  const _SessionEvolutionContent({
-    required this.sessionId,
-    required this.patientName,
-    this.existingSession,
-  });
+  const _SessionEvolutionContent({required this.sessionId, required this.patientName, this.existingSession});
 
   @override
-  State<_SessionEvolutionContent> createState() =>
-      _SessionEvolutionContentState();
+  State<_SessionEvolutionContent> createState() => _SessionEvolutionContentState();
 }
 
-class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
-    with SingleTickerProviderStateMixin {
+class _SessionEvolutionContentState extends State<_SessionEvolutionContent> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _formKey = GlobalKey<FormState>();
 
@@ -94,21 +79,70 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
 
   void _loadExistingData(Session session) {
     _currentSession = session;
-    _moodController.text = session.patientMood ?? '';
+
+    // Só atualiza os controllers se o valor mudou E o valor atual do controller
+    // é diferente do novo valor (evita sobrescrever durante digitação)
+    final newMood = session.patientMood ?? '';
+    if (_moodController.text != newMood) {
+      _moodController.text = newMood;
+    }
+
     _topics = List.from(session.topicsDiscussed);
-    _notesController.text = session.sessionNotes ?? '';
-    _behaviorController.text = session.observedBehavior ?? '';
+
+    final newNotes = session.sessionNotes ?? '';
+    if (_notesController.text != newNotes) {
+      _notesController.text = newNotes;
+    }
+
+    final newBehavior = session.observedBehavior ?? '';
+    if (_behaviorController.text != newBehavior) {
+      _behaviorController.text = newBehavior;
+    }
+
     _interventions = List.from(session.interventionsUsed);
-    _resourcesController.text = session.resourcesUsed ?? '';
-    _homeworkController.text = session.homework ?? '';
-    _reactionsController.text = session.patientReactions ?? '';
-    _progressController.text = session.progressObserved ?? '';
-    _difficultiesController.text = session.difficultiesIdentified ?? '';
-    _nextStepsController.text = session.nextSteps ?? '';
-    _nextGoalsController.text = session.nextSessionGoals ?? '';
+
+    final newResources = session.resourcesUsed ?? '';
+    if (_resourcesController.text != newResources) {
+      _resourcesController.text = newResources;
+    }
+
+    final newHomework = session.homework ?? '';
+    if (_homeworkController.text != newHomework) {
+      _homeworkController.text = newHomework;
+    }
+
+    final newReactions = session.patientReactions ?? '';
+    if (_reactionsController.text != newReactions) {
+      _reactionsController.text = newReactions;
+    }
+
+    final newProgress = session.progressObserved ?? '';
+    if (_progressController.text != newProgress) {
+      _progressController.text = newProgress;
+    }
+
+    final newDifficulties = session.difficultiesIdentified ?? '';
+    if (_difficultiesController.text != newDifficulties) {
+      _difficultiesController.text = newDifficulties;
+    }
+
+    final newNextSteps = session.nextSteps ?? '';
+    if (_nextStepsController.text != newNextSteps) {
+      _nextStepsController.text = newNextSteps;
+    }
+
+    final newNextGoals = session.nextSessionGoals ?? '';
+    if (_nextGoalsController.text != newNextGoals) {
+      _nextGoalsController.text = newNextGoals;
+    }
+
     _needsReferral = session.needsReferral;
     _currentRisk = session.currentRisk;
-    _importantObsController.text = session.importantObservations ?? '';
+
+    final newImportantObs = session.importantObservations ?? '';
+    if (_importantObsController.text != newImportantObs) {
+      _importantObsController.text = newImportantObs;
+    }
   }
 
   @override
@@ -142,19 +176,15 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           final isDraft = state.session.status == SessionStatus.draft;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                isDraft
-                    ? 'Rascunho salvo com sucesso!'
-                    : 'Evolução finalizada com sucesso!',
-              ),
+              content: Text(isDraft ? 'Rascunho salvo com sucesso!' : 'Evolução finalizada com sucesso!'),
               backgroundColor: isDraft ? Colors.amber : Colors.green,
             ),
           );
           Navigator.of(context).pop(true);
         } else if (state is SessionsError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
         }
       },
       builder: (context, state) {
@@ -178,22 +208,13 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
                         children: [
                           const Text(
                             'Registro de Evolução',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                           if (isDraft) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amber,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(8)),
                               child: Text(
                                 'RASCUNHO',
                                 style: TextStyle(
@@ -207,13 +228,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
                           ],
                         ],
                       ),
-                      Text(
-                        widget.patientName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
+                      Text(widget.patientName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
                     ],
                   ),
                 ),
@@ -225,10 +240,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
               indicatorWeight: 3,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
-              labelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+              labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               unselectedLabelStyle: const TextStyle(fontSize: 12),
               tabs: const [
                 Tab(text: 'Sessão'),
@@ -245,12 +257,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: [
-                      _buildSessionTab(),
-                      _buildInterventionsTab(),
-                      _buildProgressTab(),
-                      _buildRiskTab(),
-                    ],
+                    children: [_buildSessionTab(), _buildInterventionsTab(), _buildProgressTab(), _buildRiskTab()],
                   ),
                 ),
                 _buildBottomBar(isLoading),
@@ -273,9 +280,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _moodController,
-            decoration: const InputDecoration(
-              hintText: 'Ex: Ansioso, mas receptivo',
-            ),
+            decoration: const InputDecoration(hintText: 'Ex: Ansioso, mas receptivo'),
             maxLines: 2,
           ),
 
@@ -323,9 +328,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _notesController,
-            decoration: const InputDecoration(
-              hintText: 'Descreva o conteúdo principal da sessão...',
-            ),
+            decoration: const InputDecoration(hintText: 'Descreva o conteúdo principal da sessão...'),
             maxLines: 6,
           ),
 
@@ -336,8 +339,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           TextFormField(
             controller: _behaviorController,
             decoration: const InputDecoration(
-              hintText:
-                  'Ex: Postura tensa no início, relaxou após primeiros 20 minutos',
+              hintText: 'Ex: Postura tensa no início, relaxou após primeiros 20 minutos',
             ),
             maxLines: 3,
           ),
@@ -368,11 +370,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.check_circle,
-                        color: Colors.green,
-                        size: 20,
-                      ),
+                      const Icon(Icons.check_circle, color: Colors.green, size: 20),
                       const SizedBox(width: 12),
                       Expanded(child: Text(intervention)),
                       IconButton(
@@ -393,9 +391,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
               Expanded(
                 child: TextFormField(
                   controller: _interventionController,
-                  decoration: const InputDecoration(
-                    hintText: 'Ex: Reestruturação cognitiva',
-                  ),
+                  decoration: const InputDecoration(hintText: 'Ex: Reestruturação cognitiva'),
                   onFieldSubmitted: (_) => _addIntervention(),
                 ),
               ),
@@ -414,9 +410,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _resourcesController,
-            decoration: const InputDecoration(
-              hintText: 'Ex: Exercícios de respiração, worksheets',
-            ),
+            decoration: const InputDecoration(hintText: 'Ex: Exercícios de respiração, worksheets'),
             maxLines: 3,
           ),
 
@@ -427,8 +421,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           TextFormField(
             controller: _homeworkController,
             decoration: const InputDecoration(
-              hintText:
-                  'Ex: Praticar respiração 2x/dia. Registrar situações de ansiedade.',
+              hintText: 'Ex: Praticar respiração 2x/dia. Registrar situações de ansiedade.',
             ),
             maxLines: 4,
           ),
@@ -439,9 +432,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _reactionsController,
-            decoration: const InputDecoration(
-              hintText: 'Como o paciente reagiu às intervenções?',
-            ),
+            decoration: const InputDecoration(hintText: 'Como o paciente reagiu às intervenções?'),
             maxLines: 3,
           ),
         ],
@@ -460,9 +451,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _progressController,
-            decoration: const InputDecoration(
-              hintText: 'Que avanços foram notados nesta sessão?',
-            ),
+            decoration: const InputDecoration(hintText: 'Que avanços foram notados nesta sessão?'),
             maxLines: 4,
           ),
 
@@ -472,9 +461,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _difficultiesController,
-            decoration: const InputDecoration(
-              hintText: 'Quais desafios ou obstáculos foram identificados?',
-            ),
+            decoration: const InputDecoration(hintText: 'Quais desafios ou obstáculos foram identificados?'),
             maxLines: 4,
           ),
 
@@ -484,9 +471,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _nextStepsController,
-            decoration: const InputDecoration(
-              hintText: 'O que precisa ser trabalhado nas próximas sessões?',
-            ),
+            decoration: const InputDecoration(hintText: 'O que precisa ser trabalhado nas próximas sessões?'),
             maxLines: 4,
           ),
 
@@ -496,9 +481,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           const SizedBox(height: 8),
           TextFormField(
             controller: _nextGoalsController,
-            decoration: const InputDecoration(
-              hintText: 'Quais serão os focos da próxima sessão?',
-            ),
+            decoration: const InputDecoration(hintText: 'Quais serão os focos da próxima sessão?'),
             maxLines: 4,
           ),
         ],
@@ -516,42 +499,22 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
           _buildSectionTitle('Nível de Risco Atual'),
           const SizedBox(height: 16),
 
-          _buildRiskOption(
-            RiskLevel.low,
-            'Baixo',
-            Colors.green,
-            'Paciente estável, sem indicadores de risco',
-          ),
+          _buildRiskOption(RiskLevel.low, 'Baixo', Colors.green, 'Paciente estável, sem indicadores de risco'),
           const SizedBox(height: 12),
-          _buildRiskOption(
-            RiskLevel.medium,
-            'Médio',
-            Colors.orange,
-            'Atenção necessária, monitoramento próximo',
-          ),
+          _buildRiskOption(RiskLevel.medium, 'Médio', Colors.orange, 'Atenção necessária, monitoramento próximo'),
           const SizedBox(height: 12),
-          _buildRiskOption(
-            RiskLevel.high,
-            'Alto',
-            Colors.red,
-            'Risco significativo, intervenção imediata',
-          ),
+          _buildRiskOption(RiskLevel.high, 'Alto', Colors.red, 'Risco significativo, intervenção imediata'),
 
           const SizedBox(height: 24),
 
           CheckboxListTile(
             value: _needsReferral,
-            onChanged: (value) =>
-                setState(() => _needsReferral = value ?? false),
+            onChanged: (value) => setState(() => _needsReferral = value ?? false),
             title: const Text('Necessita Encaminhamento'),
-            subtitle: const Text(
-              'Marque se for necessário encaminhar para outro profissional',
-            ),
+            subtitle: const Text('Marque se for necessário encaminhar para outro profissional'),
             controlAffinity: ListTileControlAffinity.leading,
             tileColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
 
           const SizedBox(height: 24),
@@ -567,18 +530,11 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
             child: TextFormField(
               controller: _importantObsController,
               decoration: InputDecoration(
-                hintText:
-                    'Registre qualquer observação crítica ou que demande atenção especial',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+                hintText: 'Registre qualquer observação crítica ou que demande atenção especial',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 filled: true,
                 fillColor: Colors.transparent,
-                prefixIcon: const Icon(
-                  Icons.warning_amber,
-                  color: Colors.orange,
-                ),
+                prefixIcon: const Icon(Icons.warning_amber, color: Colors.orange),
               ),
               maxLines: 5,
             ),
@@ -588,12 +544,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
     );
   }
 
-  Widget _buildRiskOption(
-    RiskLevel level,
-    String label,
-    Color color,
-    String description,
-  ) {
+  Widget _buildRiskOption(RiskLevel level, String label, Color color, String description) {
     final isSelected = _currentRisk == level;
 
     return InkWell(
@@ -604,19 +555,11 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
         decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? color : AppColors.borderColor,
-            width: isSelected ? 2 : 1,
-          ),
+          border: Border.all(color: isSelected ? color : AppColors.borderColor, width: isSelected ? 2 : 1),
         ),
         child: Row(
           children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              color: color,
-            ),
+            Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: color),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -624,17 +567,10 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
                 children: [
                   Text(
                     label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: color),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  ),
+                  Text(description, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
                 ],
               ),
             ),
@@ -647,11 +583,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: AppColors.offBlack,
-      ),
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.offBlack),
     );
   }
 
@@ -661,11 +593,7 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: AppColors.offBlack.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
+          BoxShadow(color: AppColors.offBlack.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
       ),
       child: SafeArea(
@@ -677,17 +605,10 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: isLoading
-                    ? null
-                    : () => _saveEvolution(isDraft: true),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+                onPressed: isLoading ? null : () => _saveEvolution(isDraft: true),
+                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 icon: const Icon(Icons.save_outlined, size: 20),
-                label: const Text(
-                  'Salvar Rascunho',
-                  style: TextStyle(fontSize: 15),
-                ),
+                label: const Text('Salvar Rascunho', style: TextStyle(fontSize: 15)),
               ),
             ),
             const SizedBox(height: 12),
@@ -696,12 +617,8 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: isLoading
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
+                    onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                     child: const Text('Cancelar'),
                   ),
                 ),
@@ -709,36 +626,23 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
                 Expanded(
                   flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: isLoading
-                        ? null
-                        : () => _saveEvolution(isDraft: false),
+                    onPressed: isLoading ? null : () => _saveEvolution(isDraft: false),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                           )
                         : const Icon(Icons.check_circle, size: 20),
                     label: isLoading
                         ? const SizedBox.shrink()
-                        : const Text(
-                            'Finalizar Sessão',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                        : const Text('Finalizar Sessão', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -772,43 +676,21 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent>
 
     final updatedSession = _currentSession!.copyWith(
       status: isDraft ? SessionStatus.draft : SessionStatus.completed,
-      patientMood: _moodController.text.isNotEmpty
-          ? _moodController.text
-          : null,
+      patientMood: _moodController.text.isNotEmpty ? _moodController.text : null,
       topicsDiscussed: _topics,
-      sessionNotes: _notesController.text.isNotEmpty
-          ? _notesController.text
-          : null,
-      observedBehavior: _behaviorController.text.isNotEmpty
-          ? _behaviorController.text
-          : null,
+      sessionNotes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      observedBehavior: _behaviorController.text.isNotEmpty ? _behaviorController.text : null,
       interventionsUsed: _interventions,
-      resourcesUsed: _resourcesController.text.isNotEmpty
-          ? _resourcesController.text
-          : null,
-      homework: _homeworkController.text.isNotEmpty
-          ? _homeworkController.text
-          : null,
-      patientReactions: _reactionsController.text.isNotEmpty
-          ? _reactionsController.text
-          : null,
-      progressObserved: _progressController.text.isNotEmpty
-          ? _progressController.text
-          : null,
-      difficultiesIdentified: _difficultiesController.text.isNotEmpty
-          ? _difficultiesController.text
-          : null,
-      nextSteps: _nextStepsController.text.isNotEmpty
-          ? _nextStepsController.text
-          : null,
-      nextSessionGoals: _nextGoalsController.text.isNotEmpty
-          ? _nextGoalsController.text
-          : null,
+      resourcesUsed: _resourcesController.text.isNotEmpty ? _resourcesController.text : null,
+      homework: _homeworkController.text.isNotEmpty ? _homeworkController.text : null,
+      patientReactions: _reactionsController.text.isNotEmpty ? _reactionsController.text : null,
+      progressObserved: _progressController.text.isNotEmpty ? _progressController.text : null,
+      difficultiesIdentified: _difficultiesController.text.isNotEmpty ? _difficultiesController.text : null,
+      nextSteps: _nextStepsController.text.isNotEmpty ? _nextStepsController.text : null,
+      nextSessionGoals: _nextGoalsController.text.isNotEmpty ? _nextGoalsController.text : null,
       needsReferral: _needsReferral,
       currentRisk: _currentRisk,
-      importantObservations: _importantObsController.text.isNotEmpty
-          ? _importantObsController.text
-          : null,
+      importantObservations: _importantObsController.text.isNotEmpty ? _importantObsController.text : null,
       updatedAt: DateTime.now(),
     );
 

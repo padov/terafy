@@ -9,12 +9,7 @@ class Step2Contact extends StatefulWidget {
   final Function(ContactData) onDataChanged;
   final DateTime? dateOfBirth; // Para verificar se é menor de idade
 
-  const Step2Contact({
-    super.key,
-    this.initialData,
-    required this.onDataChanged,
-    this.dateOfBirth,
-  });
+  const Step2Contact({super.key, this.initialData, required this.onDataChanged, this.dateOfBirth});
 
   @override
   State<Step2Contact> createState() => _Step2ContactState();
@@ -41,38 +36,22 @@ class _Step2ContactState extends State<Step2Contact> {
   @override
   void initState() {
     super.initState();
-    
+
     // Ativa o switch se já houver responsável legal ou se o paciente for menor de idade
     _showGuardian = widget.initialData?.legalGuardian != null || _isMinor();
-    _phoneController = TextEditingController(
-      text: widget.initialData?.phone ?? '',
-    );
-    _emailController = TextEditingController(
-      text: widget.initialData?.email ?? '',
-    );
-    _addressController = TextEditingController(
-      text: widget.initialData?.address ?? '',
-    );
+    _phoneController = TextEditingController(text: widget.initialData?.phone ?? '');
+    _emailController = TextEditingController(text: widget.initialData?.email ?? '');
+    _addressController = TextEditingController(text: widget.initialData?.address ?? '');
 
-    _emergencyNameController = TextEditingController(
-      text: widget.initialData?.emergencyContact?.name ?? '',
-    );
-    _emergencyPhoneController = TextEditingController(
-      text: widget.initialData?.emergencyContact?.phone ?? '',
-    );
+    _emergencyNameController = TextEditingController(text: widget.initialData?.emergencyContact?.name ?? '');
+    _emergencyPhoneController = TextEditingController(text: widget.initialData?.emergencyContact?.phone ?? '');
     _emergencyRelationController = TextEditingController(
       text: widget.initialData?.emergencyContact?.relationship ?? '',
     );
 
-    _guardianNameController = TextEditingController(
-      text: widget.initialData?.legalGuardian?.name ?? '',
-    );
-    _guardianCpfController = TextEditingController(
-      text: widget.initialData?.legalGuardian?.cpf ?? '',
-    );
-    _guardianPhoneController = TextEditingController(
-      text: widget.initialData?.legalGuardian?.phone ?? '',
-    );
+    _guardianNameController = TextEditingController(text: widget.initialData?.legalGuardian?.name ?? '');
+    _guardianCpfController = TextEditingController(text: widget.initialData?.legalGuardian?.cpf ?? '');
+    _guardianPhoneController = TextEditingController(text: widget.initialData?.legalGuardian?.phone ?? '');
 
     _phoneController.addListener(_notifyDataChanged);
     _emailController.addListener(_notifyDataChanged);
@@ -97,6 +76,91 @@ class _Step2ContactState extends State<Step2Contact> {
   }
 
   @override
+  void didUpdateWidget(Step2Contact oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Só atualiza os controllers se o valor mudou de uma fonte externa
+    // (não durante digitação do usuário). Verifica se o valor atual do controller
+    // não é um prefixo do novo valor E o novo valor não é um prefixo do atual
+    final newPhone = widget.initialData?.phone ?? '';
+    if (widget.initialData?.phone != oldWidget.initialData?.phone &&
+        _phoneController.text != newPhone &&
+        !newPhone.startsWith(_phoneController.text) &&
+        !_phoneController.text.startsWith(newPhone)) {
+      _phoneController.text = newPhone;
+    }
+
+    final newEmail = widget.initialData?.email ?? '';
+    if (widget.initialData?.email != oldWidget.initialData?.email &&
+        _emailController.text != newEmail &&
+        !newEmail.startsWith(_emailController.text) &&
+        !_emailController.text.startsWith(newEmail)) {
+      _emailController.text = newEmail;
+    }
+
+    final newAddress = widget.initialData?.address ?? '';
+    if (widget.initialData?.address != oldWidget.initialData?.address &&
+        _addressController.text != newAddress &&
+        !newAddress.startsWith(_addressController.text) &&
+        !_addressController.text.startsWith(newAddress)) {
+      _addressController.text = newAddress;
+    }
+
+    final newEmergencyName = widget.initialData?.emergencyContact?.name ?? '';
+    if (widget.initialData?.emergencyContact?.name != oldWidget.initialData?.emergencyContact?.name &&
+        _emergencyNameController.text != newEmergencyName &&
+        !newEmergencyName.startsWith(_emergencyNameController.text) &&
+        !_emergencyNameController.text.startsWith(newEmergencyName)) {
+      _emergencyNameController.text = newEmergencyName;
+    }
+
+    final newEmergencyPhone = widget.initialData?.emergencyContact?.phone ?? '';
+    if (widget.initialData?.emergencyContact?.phone != oldWidget.initialData?.emergencyContact?.phone &&
+        _emergencyPhoneController.text != newEmergencyPhone &&
+        !newEmergencyPhone.startsWith(_emergencyPhoneController.text) &&
+        !_emergencyPhoneController.text.startsWith(newEmergencyPhone)) {
+      _emergencyPhoneController.text = newEmergencyPhone;
+    }
+
+    final newEmergencyRelation = widget.initialData?.emergencyContact?.relationship ?? '';
+    if (widget.initialData?.emergencyContact?.relationship != oldWidget.initialData?.emergencyContact?.relationship &&
+        _emergencyRelationController.text != newEmergencyRelation &&
+        !newEmergencyRelation.startsWith(_emergencyRelationController.text) &&
+        !_emergencyRelationController.text.startsWith(newEmergencyRelation)) {
+      _emergencyRelationController.text = newEmergencyRelation;
+    }
+
+    final newGuardianName = widget.initialData?.legalGuardian?.name ?? '';
+    if (widget.initialData?.legalGuardian?.name != oldWidget.initialData?.legalGuardian?.name &&
+        _guardianNameController.text != newGuardianName &&
+        !newGuardianName.startsWith(_guardianNameController.text) &&
+        !_guardianNameController.text.startsWith(newGuardianName)) {
+      _guardianNameController.text = newGuardianName;
+    }
+
+    final newGuardianCpf = widget.initialData?.legalGuardian?.cpf ?? '';
+    if (widget.initialData?.legalGuardian?.cpf != oldWidget.initialData?.legalGuardian?.cpf &&
+        _guardianCpfController.text != newGuardianCpf &&
+        !newGuardianCpf.startsWith(_guardianCpfController.text) &&
+        !_guardianCpfController.text.startsWith(newGuardianCpf)) {
+      _guardianCpfController.text = newGuardianCpf;
+    }
+
+    final newGuardianPhone = widget.initialData?.legalGuardian?.phone ?? '';
+    if (widget.initialData?.legalGuardian?.phone != oldWidget.initialData?.legalGuardian?.phone &&
+        _guardianPhoneController.text != newGuardianPhone &&
+        !newGuardianPhone.startsWith(_guardianPhoneController.text) &&
+        !_guardianPhoneController.text.startsWith(newGuardianPhone)) {
+      _guardianPhoneController.text = newGuardianPhone;
+    }
+
+    // Atualiza o switch se necessário
+    final shouldShowGuardian = widget.initialData?.legalGuardian != null || _isMinor();
+    if (shouldShowGuardian != _showGuardian) {
+      _showGuardian = shouldShowGuardian;
+    }
+  }
+
+  @override
   void dispose() {
     _phoneController.dispose();
     _emailController.dispose();
@@ -112,8 +176,7 @@ class _Step2ContactState extends State<Step2Contact> {
 
   void _notifyDataChanged() {
     EmergencyContact? emergencyContact;
-    if (_emergencyNameController.text.isNotEmpty ||
-        _emergencyPhoneController.text.isNotEmpty) {
+    if (_emergencyNameController.text.isNotEmpty || _emergencyPhoneController.text.isNotEmpty) {
       emergencyContact = EmergencyContact(
         name: _emergencyNameController.text,
         phone: _emergencyPhoneController.text,
@@ -153,32 +216,19 @@ class _Step2ContactState extends State<Step2Contact> {
             // Título
             const Text(
               'Contato',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Dados de contato e emergência',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
+            Text('Dados de contato e emergência', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
             const SizedBox(height: 32),
 
             // Telefone *
             _buildLabel('Telefone', isRequired: true),
             TextFormField(
               controller: _phoneController,
-              decoration: _buildInputDecoration(
-                hintText: '(00) 00000-0000',
-                icon: Icons.phone,
-              ),
+              decoration: _buildInputDecoration(hintText: '(00) 00000-0000', icon: Icons.phone),
               keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(11),
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Telefone é obrigatório';
@@ -192,10 +242,7 @@ class _Step2ContactState extends State<Step2Contact> {
             _buildLabel('Email'),
             TextFormField(
               controller: _emailController,
-              decoration: _buildInputDecoration(
-                hintText: 'email@exemplo.com',
-                icon: Icons.email,
-              ),
+              decoration: _buildInputDecoration(hintText: 'email@exemplo.com', icon: Icons.email),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
@@ -204,10 +251,7 @@ class _Step2ContactState extends State<Step2Contact> {
             _buildLabel('Endereço Completo'),
             TextFormField(
               controller: _addressController,
-              decoration: _buildInputDecoration(
-                hintText: 'Rua, número, bairro, cidade - UF',
-                icon: Icons.location_on,
-              ),
+              decoration: _buildInputDecoration(hintText: 'Rua, número, bairro, cidade - UF', icon: Icons.location_on),
               maxLines: 2,
             ),
             const SizedBox(height: 32),
@@ -219,45 +263,30 @@ class _Step2ContactState extends State<Step2Contact> {
             _buildLabel('Nome'),
             TextFormField(
               controller: _emergencyNameController,
-              decoration: _buildInputDecoration(
-                hintText: 'Nome do contato',
-                icon: Icons.person_outline,
-              ),
+              decoration: _buildInputDecoration(hintText: 'Nome do contato', icon: Icons.person_outline),
             ),
             const SizedBox(height: 20),
 
             _buildLabel('Telefone'),
             TextFormField(
               controller: _emergencyPhoneController,
-              decoration: _buildInputDecoration(
-                hintText: '(00) 00000-0000',
-                icon: Icons.phone_outlined,
-              ),
+              decoration: _buildInputDecoration(hintText: '(00) 00000-0000', icon: Icons.phone_outlined),
               keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(11),
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
             ),
             const SizedBox(height: 20),
 
             _buildLabel('Relação'),
             TextFormField(
               controller: _emergencyRelationController,
-              decoration: _buildInputDecoration(
-                hintText: 'Ex: Mãe, Pai, Cônjuge...',
-                icon: Icons.family_restroom,
-              ),
+              decoration: _buildInputDecoration(hintText: 'Ex: Mãe, Pai, Cônjuge...', icon: Icons.family_restroom),
             ),
             const SizedBox(height: 32),
 
             // Toggle para Responsável Legal
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Paciente é menor de idade?',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
+              title: const Text('Paciente é menor de idade?', style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: const Text('Adicionar dados do responsável legal'),
               value: _showGuardian,
               onChanged: (value) {
@@ -276,40 +305,25 @@ class _Step2ContactState extends State<Step2Contact> {
               _buildLabel('Nome do Responsável'),
               TextFormField(
                 controller: _guardianNameController,
-                decoration: _buildInputDecoration(
-                  hintText: 'Nome completo',
-                  icon: Icons.person,
-                ),
+                decoration: _buildInputDecoration(hintText: 'Nome completo', icon: Icons.person),
               ),
               const SizedBox(height: 20),
 
               _buildLabel('CPF do Responsável'),
               TextFormField(
                 controller: _guardianCpfController,
-                decoration: _buildInputDecoration(
-                  hintText: '000.000.000-00',
-                  icon: Icons.badge,
-                ),
+                decoration: _buildInputDecoration(hintText: '000.000.000-00', icon: Icons.badge),
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(11),
-                ],
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
               ),
               const SizedBox(height: 20),
 
               _buildLabel('Telefone do Responsável'),
               TextFormField(
                 controller: _guardianPhoneController,
-                decoration: _buildInputDecoration(
-                  hintText: '(00) 00000-0000',
-                  icon: Icons.phone,
-                ),
+                decoration: _buildInputDecoration(hintText: '(00) 00000-0000', icon: Icons.phone),
                 keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(11),
-                ],
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
               ),
             ],
 
@@ -324,20 +338,11 @@ class _Step2ContactState extends State<Step2Contact> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.primary.withOpacity(0.3),
-            width: 2,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.3), width: 2)),
       ),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primary,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary),
       ),
     );
   }
@@ -348,11 +353,7 @@ class _Step2ContactState extends State<Step2Contact> {
       child: RichText(
         text: TextSpan(
           text: text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.offBlack,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.offBlack),
           children: isRequired
               ? [
                   const TextSpan(
@@ -366,18 +367,12 @@ class _Step2ContactState extends State<Step2Contact> {
     );
   }
 
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    required IconData icon,
-  }) {
+  InputDecoration _buildInputDecoration({required String hintText, required IconData icon}) {
     return InputDecoration(
       hintText: hintText,
       filled: true,
       fillColor: Colors.grey[100],
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       prefixIcon: Icon(icon, color: Colors.grey[600]),
     );

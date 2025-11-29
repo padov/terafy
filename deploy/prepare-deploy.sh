@@ -55,6 +55,40 @@ ls -lh "$BUILD_DIR/server"
 echo ""
 
 # ============================================
+# PASSO 1.5: Build do Flutter Web
+# ============================================
+echo "🌐 PASSO 1.5: Compilando Flutter Web..."
+APP_DIR="$PROJECT_ROOT/app"
+WEB_BUILD_DIR="$APP_DIR/build/web"
+SKIP_WEB=false  # Inicializar como false
+
+if [ ! -d "$APP_DIR" ]; then
+    echo "⚠️  Aviso: Pasta app/ não encontrada, pulando build do Flutter Web"
+    SKIP_WEB=true
+else
+    cd "$APP_DIR"
+    
+    # Verificar se Flutter está instalado
+    if ! command -v flutter &> /dev/null; then
+        echo "⚠️  Aviso: Flutter não encontrado, pulando build do Flutter Web"
+        SKIP_WEB=true
+    else
+        echo "📱 Fazendo build do Flutter Web..."
+        flutter build web --release
+        
+        if [ ! -d "$WEB_BUILD_DIR" ]; then
+            echo "⚠️  Aviso: Build do Flutter Web não gerou arquivos, pulando"
+            SKIP_WEB=true
+        else
+            SKIP_WEB=false
+            WEB_FILE_COUNT=$(find "$WEB_BUILD_DIR" -type f | wc -l | tr -d ' ')
+            echo "✅ Flutter Web compilado: $WEB_FILE_COUNT arquivos em $WEB_BUILD_DIR"
+        fi
+    fi
+fi
+echo ""
+
+# ============================================
 # PASSO 2: Criar pasta completa para VM
 # ============================================
 echo "📁 PASSO 2: Criando pasta completa para VM..."
@@ -71,8 +105,10 @@ mkdir -p "$DEPLOY_DIR/migrations"
 mkdir -p "$DEPLOY_DIR/functions"
 mkdir -p "$DEPLOY_DIR/policies"
 mkdir -p "$DEPLOY_DIR/triggers"
+mkdir -p "$DEPLOY_DIR/web/app"
 
 echo "📋 Copiando arquivos necessários..."
+echo "  📍 NEW_DEPLOY_DIR: $NEW_DEPLOY_DIR"
 
 # 1. Binário compilado
 cp "$BUILD_DIR/server" "$DEPLOY_DIR/server"
@@ -121,10 +157,38 @@ echo "  ✅ Template de variáveis: env.example"
 cp "$NEW_DEPLOY_DIR/nginx.conf" "$DEPLOY_DIR/nginx.conf"
 echo "  ✅ Nginx config: nginx.conf"
 
+# 9.1. nginx.conf.temp (para obtenção inicial de certificados)
+if [ -f "$NEW_DEPLOY_DIR/nginx.conf.temp" ]; then
+    cp "$NEW_DEPLOY_DIR/nginx.conf.temp" "$DEPLOY_DIR/nginx.conf.temp"
+    echo "  ✅ Nginx config temporário: nginx.conf.temp"
+fi
+
 # 10. Script de atualização (útil na VM)
 cp "$NEW_DEPLOY_DIR/update-binario.sh" "$DEPLOY_DIR/update-binario.sh"
 chmod +x "$DEPLOY_DIR/update-binario.sh"
 echo "  ✅ Script de atualização: update-binario.sh"
+
+# 10.1. Scripts de HTTPS (Certbot)
+echo "  📋 Copiando scripts de HTTPS..."
+for script in obter-certificados.sh renovar-certificados.sh certbot-renew.sh; do
+    if [ -f "$NEW_DEPLOY_DIR/$script" ]; then
+        cp "$NEW_DEPLOY_DIR/$script" "$DEPLOY_DIR/$script"
+        chmod +x "$DEPLOY_DIR/$script"
+        echo "  ✅ Script HTTPS: $script"
+    else
+        echo "  ⚠️  Script HTTPS não encontrado: $script (em $NEW_DEPLOY_DIR)"
+    fi
+done
+
+# 11. Flutter Web (se build foi feito)
+if [ "$SKIP_WEB" != "true" ] && [ -d "$WEB_BUILD_DIR" ]; then
+    echo "📱 Copiando Flutter Web..."
+    cp -r "$WEB_BUILD_DIR"/* "$DEPLOY_DIR/web/app/"
+    WEB_FILE_COUNT=$(find "$DEPLOY_DIR/web/app" -type f | wc -l | tr -d ' ')
+    echo "  ✅ Flutter Web: $WEB_FILE_COUNT arquivos em web/app/"
+else
+    echo "  ⚠️  Flutter Web: não incluído (build não disponível)"
+fi
 
 # 8. README para a VM (opcional, mas útil)
 cat > "$DEPLOY_DIR/README.md" << 'EOF'

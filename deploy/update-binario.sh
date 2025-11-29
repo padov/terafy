@@ -174,6 +174,16 @@ echo ""
 echo "🚀 Iniciando servidor (PostgreSQL e Nginx já estão rodando)..."
 docker compose up -d server
 
+# 6.5. Recriar Nginx (para montar volume do Flutter Web corretamente)
+echo ""
+echo "🔄 Recriando Nginx (para montar volume do Flutter Web)..."
+# Parar e remover o container atual para garantir que o volume seja montado
+docker compose stop nginx 2>/dev/null || true
+docker compose rm -f nginx 2>/dev/null || true
+# Recriar o container com o volume montado
+docker compose --profile with-nginx up -d nginx
+echo "✅ Nginx recriado com volume montado"
+
 # 7. Verificar status
 echo ""
 echo "📊 Status dos containers:"

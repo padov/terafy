@@ -6,8 +6,9 @@ help: ## Display this help.
 	@echo "🚀 Terafy Deploy - Makefile"
 	@echo ""
 	@echo "Commands:"
-	@echo "  make all [VM_NAME=xxx] - Build, deploy and connect to VM (default: terafy-freetier-vm)"
-	@echo "  make build          - Build terafy-deploy-x.x.x.tar.gz"
+	@echo "  make all [VM_NAME=xxx] - Build (server + web), deploy and connect to VM (default: terafy-freetier-vm)"
+	@echo "  make build          - Build terafy-deploy-x.x.x.tar.gz (includes server + web)"
+	@echo "  make build-web      - Build only Flutter Web (for testing)"
 	@echo "  make deploy [VM_NAME=xxx] - Copy package and script to VM (default: terafy-freetier-vm)"
 	@echo "  make clean          - Remove build artifacts"
 	@echo "  make gcloud [VM_NAME=xxx] - Connect to VM (default: terafy-freetier-vm)"
@@ -32,9 +33,15 @@ all: ## Build, deploy and connect to VM (default: terafy-freetier-vm).
 	VM_NAME=$$VM_NAME $(MAKE) gcloud
 
 .PHONY: build
-build: ## Build terafy-deploy-x.x.x.tar.gz package.
-	@echo "📦 Building deploy package..."
+build: ## Build terafy-deploy-x.x.x.tar.gz package (includes server + web).
+	@echo "📦 Building deploy package (server + web)..."
 	@./prepare-deploy.sh
+
+.PHONY: build-web
+build-web: ## Build only Flutter Web (for testing).
+	@echo "🌐 Building Flutter Web..."
+	@cd ../app && flutter build web --release
+	@echo "✅ Flutter Web built in app/build/web/"
 
 ##@ Deploy
 
@@ -61,6 +68,8 @@ clean: ## Remove build artifacts.
 	@rm -rf build/
 	@rm -rf terafy-deploy/
 	@rm -f terafy-deploy*.tar.gz
+	@echo "🧹 Cleaning Flutter Web build..."
+	@cd ../app && rm -rf build/web/ 2>/dev/null || true
 	@echo "✅ Clean completed"
 
 ##@ Google Cloud
