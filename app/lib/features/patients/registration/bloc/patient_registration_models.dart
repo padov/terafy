@@ -107,35 +107,19 @@ class ProfessionalSocialData {
 class HealthData {
   final String? healthInsurance;
   final String? insuranceNumber;
-  final String? currentMedications;
-  final String? allergies;
-  final String? medicalHistory;
-  final String? psychiatricHistory;
 
   HealthData({
     this.healthInsurance,
     this.insuranceNumber,
-    this.currentMedications,
-    this.allergies,
-    this.medicalHistory,
-    this.psychiatricHistory,
   });
 
   HealthData copyWith({
     String? healthInsurance,
     String? insuranceNumber,
-    String? currentMedications,
-    String? allergies,
-    String? medicalHistory,
-    String? psychiatricHistory,
   }) {
     return HealthData(
       healthInsurance: healthInsurance ?? this.healthInsurance,
       insuranceNumber: insuranceNumber ?? this.insuranceNumber,
-      currentMedications: currentMedications ?? this.currentMedications,
-      allergies: allergies ?? this.allergies,
-      medicalHistory: medicalHistory ?? this.medicalHistory,
-      psychiatricHistory: psychiatricHistory ?? this.psychiatricHistory,
     );
   }
 }
@@ -271,10 +255,12 @@ class PatientRegistrationData {
   }
 
   /// Converte para Patient
-  Patient toPatient() {
+  Patient toPatient({Patient? patientToEdit}) {
+    final now = DateTime.now();
+    
     return Patient(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      therapistId: 'therapist_1', // TODO: Obter do usuário logado
+      id: patientToEdit?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      therapistId: patientToEdit?.therapistId ?? 'therapist_1', // TODO: Obter do usuário logado
       fullName: identification?.fullName ?? '',
       phone: contact?.phone ?? '',
       email: contact?.email,
@@ -294,15 +280,18 @@ class PatientRegistrationData {
       sessionValue: administrative?.sessionValue,
       consentDate: administrative?.consentDate,
       lgpdAcceptDate: administrative?.lgpdAcceptanceDate,
-      status: PatientStatus.active,
-      treatmentStartDate: DateTime.now(),
-      totalSessions: 0,
+      status: patientToEdit?.status ?? PatientStatus.active,
+      inactivationReason: patientToEdit?.inactivationReason,
+      treatmentStartDate: patientToEdit?.treatmentStartDate ?? now,
+      lastSessionDate: patientToEdit?.lastSessionDate,
+      totalSessions: patientToEdit?.totalSessions ?? 0,
       tags: administrative?.tags ?? [],
       notes: administrative?.generalObservations,
       photoUrl: identification?.photoUrl,
-      agendaColor: administrative?.agendaColor ?? '#7C3AED',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      agendaColor: administrative?.agendaColor ?? patientToEdit?.agendaColor ?? '#7C3AED',
+      completionPercentage: patientToEdit?.completionPercentage ?? 0.0,
+      createdAt: patientToEdit?.createdAt ?? now,
+      updatedAt: now,
     );
   }
 }

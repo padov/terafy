@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:terafy/routes/app_routes.dart';
 import 'package:terafy/common/app_images.dart';
 import 'package:terafy/common/app_colors.dart';

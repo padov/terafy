@@ -21,6 +21,7 @@ class PatientsListPage extends StatelessWidget {
         getPatientsUseCase: container.getPatientsUseCase,
         createPatientUseCase: container.createPatientUseCase,
         getPatientUseCase: container.getPatientUseCase,
+        updatePatientUseCase: container.updatePatientUseCase,
         patientsCacheService: container.patientsCacheService,
       )..add(const LoadPatients()),
       child: const _PatientsListPageContent(),
@@ -264,9 +265,12 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
   }
 
   void _showFilterOptions(BuildContext context) {
+    // Captura o BLoC ANTES de abrir o bottom sheet
+    final patientsBloc = context.read<PatientsBloc>();
+    
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
+      builder: (bottomSheetContext) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -277,17 +281,19 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildFilterOption(context, 'patients.filter_all'.tr(), null),
+            _buildFilterOption(bottomSheetContext, 'patients.filter_all'.tr(), null, patientsBloc),
             _buildFilterOption(
-              context,
+              bottomSheetContext,
               'patients.filter_active'.tr(),
               PatientStatus.active,
+              patientsBloc,
             ),
-            _buildFilterOption(context, 'Avaliado', PatientStatus.evaluated),
+            _buildFilterOption(bottomSheetContext, 'Avaliado', PatientStatus.evaluated, patientsBloc),
             _buildFilterOption(
-              context,
+              bottomSheetContext,
               'patients.filter_inactive'.tr(),
               PatientStatus.inactive,
+              patientsBloc,
             ),
           ],
         ),
@@ -299,11 +305,12 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
     BuildContext context,
     String label,
     PatientStatus? status,
+    PatientsBloc bloc,
   ) {
     return ListTile(
       title: Text(label),
       onTap: () {
-        context.read<PatientsBloc>().add(FilterPatientsByStatus(status));
+        bloc.add(FilterPatientsByStatus(status));
         Navigator.pop(context);
       },
     );

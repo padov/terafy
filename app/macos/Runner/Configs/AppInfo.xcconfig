@@ -8,7 +8,7 @@
 PRODUCT_NAME = Terafy
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.terafy
+PRODUCT_BUNDLE_IDENTIFIER = br.app.terafy
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.

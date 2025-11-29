@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:terafy/common/app_colors.dart';
+import 'package:terafy/features/patients/models/patient.dart';
 import 'package:terafy/features/patients/registration/bloc/patient_registration_bloc.dart';
 import 'package:terafy/features/patients/registration/bloc/patient_registration_models.dart';
 import 'package:terafy/features/patients/registration/widgets/step1_identification.dart';
 import 'package:terafy/features/patients/registration/widgets/step2_contact.dart';
 import 'package:terafy/features/patients/registration/widgets/step3_professional_social.dart';
 import 'package:terafy/features/patients/registration/widgets/step4_health.dart';
-import 'package:terafy/features/patients/registration/widgets/step5_anamnesis.dart';
 import 'package:terafy/features/patients/registration/widgets/step6_administrative.dart';
-import 'package:terafy/routes/app_routes.dart';
 
 class PatientRegistrationPage extends StatelessWidget {
-  const PatientRegistrationPage({super.key});
+  final Patient? patientToEdit;
+
+  const PatientRegistrationPage({super.key, this.patientToEdit});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PatientRegistrationBloc(),
-      child: const _PatientRegistrationContent(),
+      create: (context) => PatientRegistrationBloc(patientToEdit: patientToEdit),
+      child: _PatientRegistrationContent(isEditMode: patientToEdit != null),
     );
   }
 }
 
 class _PatientRegistrationContent extends StatelessWidget {
-  const _PatientRegistrationContent();
+  final bool isEditMode;
+
+  const _PatientRegistrationContent({required this.isEditMode});
 
   @override
   Widget build(BuildContext context) {
@@ -33,21 +36,19 @@ class _PatientRegistrationContent extends StatelessWidget {
         if (state is PatientRegistrationSuccess) {
           // Mostrar mensagem de sucesso
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Paciente cadastrado com sucesso!'),
+            SnackBar(
+              content: Text(
+                isEditMode
+                    ? 'Paciente atualizado com sucesso!'
+                    : 'Paciente cadastrado com sucesso!',
+              ),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
 
-          // Voltar para a lista de pacientes (ou tela anterior)
-          // Remove todas as telas do wizard e volta
-          Navigator.of(context).popUntil(
-            (route) =>
-                route.settings.name == AppRouter.patientsRoute ||
-                route.settings.name == AppRouter.homeRoute ||
-                route.isFirst,
-          );
+          // Voltar para a tela anterior
+          Navigator.of(context).pop(true);
         } else if (state is PatientRegistrationError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -60,9 +61,9 @@ class _PatientRegistrationContent extends StatelessWidget {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: const Text(
-              'Cadastro Completo de Paciente',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            title: Text(
+              isEditMode ? 'Editar Paciente' : 'Cadastro Completo de Paciente',
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             backgroundColor: Colors.white,
             foregroundColor: AppColors.offBlack,
@@ -103,7 +104,6 @@ class _PatientRegistrationContent extends StatelessWidget {
       {'icon': Icons.contact_phone, 'label': 'Contato'},
       {'icon': Icons.work, 'label': 'Profissional'},
       {'icon': Icons.medical_services, 'label': 'Saúde'},
-      {'icon': Icons.description, 'label': 'Anamnese'},
       {'icon': Icons.settings, 'label': 'Administrativo'},
     ];
 
@@ -207,6 +207,7 @@ class _PatientRegistrationContent extends StatelessWidget {
       case 1:
         return Step2Contact(
           initialData: state.data.contact,
+          dateOfBirth: state.data.identification?.dateOfBirth,
           onDataChanged: (data) {
             bloc.add(UpdateContactData(data));
           },
@@ -226,13 +227,6 @@ class _PatientRegistrationContent extends StatelessWidget {
           },
         );
       case 4:
-        return Step5Anamnesis(
-          initialData: state.data.anamnesis,
-          onDataChanged: (data) {
-            bloc.add(UpdateAnamnesisData(data));
-          },
-        );
-      case 5:
         return Step6Administrative(
           initialData: state.data.administrative,
           onDataChanged: (data) {
@@ -324,7 +318,9 @@ class _PatientRegistrationContent extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        isLastStep ? 'Finalizar Cadastro' : 'Próximo',
+                        isLastStep
+                            ? (isEditMode ? 'Salvar Alterações' : 'Finalizar Cadastro')
+                            : 'Próximo',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

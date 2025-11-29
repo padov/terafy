@@ -24,6 +24,8 @@ Este script:
 Execute o script SQL diretamente:
 
 ```bash
+gcloud compute ssh terafy-freetier-vm
+
 # Via psql
 psql -h localhost -U postgres -d terafy_db -f server/db/scripts/create_test_user.sql
 
@@ -88,9 +90,38 @@ Você deve receber uma resposta com `auth_token`, `refresh_token` e `user`.
 }
 ```
 
+## Inserir Template Padrão de Anamnese
+
+### Método 1: Via Script Dart (Recomendado) ⭐
+
+```bash
+make seed-anamnesis-template
+# ou
+cd server && dart run bin/seed_default_anamnesis_template.dart
+```
+
+### Método 2: Via SQL
+
+```bash
+# Via psql
+psql -h localhost -U postgres -d terafy_db -f server/db/scripts/seed_default_anamnesis_template.sql
+
+# Ou via docker
+docker exec -i postgres_db psql -U postgres -d terafy_db < server/db/scripts/seed_default_anamnesis_template.sql
+```
+
+### Verificar Template Criado
+
+```sql
+SELECT id, name, category, is_system, is_default, created_at 
+FROM anamnesis_templates 
+WHERE is_system = TRUE;
+```
+
 ## Próximos Passos
 
 1. Teste o login no app Flutter com essas credenciais
 2. Após login bem-sucedido, você pode criar o therapist completo
 3. Vincule o `user_id` ao therapist criado
+4. Insira o template padrão de anamnese para começar a usar
 

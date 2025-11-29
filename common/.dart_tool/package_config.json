@@ -33,8 +33,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.9.0",
+  "generatorVersion": "3.10.1",
   "flutterRoot": "file:///opt/homebrew/Caskroom/flutter/3.22.2/flutter",
-  "flutterVersion": "3.35.1",
+  "flutterVersion": "3.38.3",
   "pubCache": "file:///Users/marcio.padovani/.pub-cache"
 }

@@ -20,8 +20,6 @@ class Step3ProfessionalSocial extends StatefulWidget {
 class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
   late TextEditingController _professionController;
   late TextEditingController _educationController;
-  late TextEditingController _socialLifeController;
-  late TextEditingController _hobbiesController;
 
   final List<String> _educationLevels = [
     'Fundamental Incompleto',
@@ -44,25 +42,15 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
     _educationController = TextEditingController(
       text: widget.initialData?.education ?? '',
     );
-    _socialLifeController = TextEditingController(
-      text: widget.initialData?.socialLife ?? '',
-    );
-    _hobbiesController = TextEditingController(
-      text: widget.initialData?.hobbies ?? '',
-    );
 
     _professionController.addListener(_notifyDataChanged);
     _educationController.addListener(_notifyDataChanged);
-    _socialLifeController.addListener(_notifyDataChanged);
-    _hobbiesController.addListener(_notifyDataChanged);
   }
 
   @override
   void dispose() {
     _professionController.dispose();
     _educationController.dispose();
-    _socialLifeController.dispose();
-    _hobbiesController.dispose();
     super.dispose();
   }
 
@@ -74,10 +62,6 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
       education: _educationController.text.isEmpty
           ? null
           : _educationController.text,
-      socialLife: _socialLifeController.text.isEmpty
-          ? null
-          : _socialLifeController.text,
-      hobbies: _hobbiesController.text.isEmpty ? null : _hobbiesController.text,
     );
     widget.onDataChanged(data);
   }
@@ -91,7 +75,7 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
         children: [
           // Título
           const Text(
-            'Vida Profissional e Social',
+            'Vida Profissional',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -100,7 +84,7 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Informações sobre trabalho, estudos e vida social',
+            'Informações sobre trabalho e estudos',
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 32),
@@ -135,40 +119,6 @@ class _Step3ProfessionalSocialState extends State<Step3ProfessionalSocial> {
                 _notifyDataChanged();
               });
             },
-          ),
-          const SizedBox(height: 20),
-
-          // Vida Social
-          _buildLabel('Vida Social'),
-          Text(
-            'Descreva brevemente o círculo social, amizades, rede de apoio',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _socialLifeController,
-            decoration: _buildInputDecoration(
-              hintText: 'Ex: Possui poucos amigos, família próxima...',
-              icon: Icons.people_outline,
-            ),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 20),
-
-          // Hobbies e Interesses
-          _buildLabel('Hobbies e Interesses'),
-          Text(
-            'Atividades de lazer, interesses, passatempos',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _hobbiesController,
-            decoration: _buildInputDecoration(
-              hintText: 'Ex: Leitura, esportes, música...',
-              icon: Icons.sports_esports_outlined,
-            ),
-            maxLines: 2,
           ),
           const SizedBox(height: 32),
 

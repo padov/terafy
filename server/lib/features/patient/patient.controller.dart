@@ -72,6 +72,7 @@ class PatientController {
     bool bypassRLS = false,
   }) async {
     AppLogger.func();
+
     try {
       return await _repository.createPatient(
         patient,
@@ -80,14 +81,14 @@ class PatientController {
         accountId: accountId ?? patient.therapistId,
         bypassRLS: bypassRLS,
       );
-    } on ServerException catch (e) {
-      AppLogger.error(e);
+    } on ServerException catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
       if (e.code == '23505') {
         throw PatientException('CPF já cadastrado para outro paciente.', 409);
       }
       throw PatientException('Erro ao criar paciente: ${e.message}', 500);
-    } catch (e) {
-      AppLogger.error(e);
+    } catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
       throw PatientException('Erro ao criar paciente: ${e.toString()}', 500);
     }
   }
@@ -122,10 +123,7 @@ class PatientController {
       throw PatientException('Erro ao atualizar paciente: ${e.message}', 500);
     } catch (e) {
       if (e is PatientException) rethrow;
-      throw PatientException(
-        'Erro ao atualizar paciente: ${e.toString()}',
-        500,
-      );
+      throw PatientException('Erro ao atualizar paciente: ${e.toString()}', 500);
     }
   }
 

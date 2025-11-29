@@ -1,3 +1,4 @@
+-- docker exec -it terafy_postgres psql -U postgres -d postgres
 -- Script para aumentar o limite de conexões do PostgreSQL
 -- Execute este script conectado ao banco 'postgres' como superuser
 

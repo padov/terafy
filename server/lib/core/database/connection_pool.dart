@@ -130,10 +130,30 @@ class ConnectionPool {
     final sslModeStr = (sslModeRaw ?? 'disable').toLowerCase().trim();
     final sslMode = (sslModeStr == 'require' || sslModeStr == 'required') ? SslMode.require : SslMode.disable;
 
-    return Connection.open(
-      Endpoint(host: host, port: port, database: database, username: username, password: password),
-      settings: ConnectionSettings(sslMode: sslMode),
+    AppLogger.info(
+      'Criando conexão ao banco: $host:$port/$database (usuário: $username, SSL: ${sslMode == SslMode.require ? 'require' : 'disable'})',
     );
+
+    try {
+      final conn = await Connection.open(
+        Endpoint(host: host, port: port, database: database, username: username, password: password),
+        settings: ConnectionSettings(sslMode: sslMode),
+      );
+
+      // Garante que a conexão usa UTC como timezone
+      await conn.execute('SET timezone = \'UTC\'');
+
+      return conn;
+    } catch (e, stackTrace) {
+      AppLogger.error('Erro ao criar conexão ao banco de dados:');
+      AppLogger.error('  Host: $host');
+      AppLogger.error('  Porta: $port');
+      AppLogger.error('  Database: $database');
+      AppLogger.error('  Usuário: $username');
+      AppLogger.error('  Erro: $e');
+      AppLogger.error('  Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   /// Limpa conexões idle do pool

@@ -5,23 +5,18 @@ CREATE TYPE transaction_type AS ENUM ('recebimento', 'estorno', 'desconto');
 CREATE TYPE transaction_status AS ENUM ('pendente', 'pago', 'atrasado', 'cancelado');
 CREATE TYPE transaction_category AS ENUM ('sessao', 'avaliacao', 'documento', 'outro');
 
--- Cria tipo ENUM para formas de pagamento (se não existir)
+-- Cria tipo ENUM para formas de pagamento
 -- Nota: Já existe payment_method para plan_subscriptions, mas vamos criar um específico para transações
 -- para ter mais flexibilidade (inclui convênio, etc.)
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'financial_payment_method') THEN
-        CREATE TYPE financial_payment_method AS ENUM (
-            'dinheiro',
-            'pix',
-            'cartao_debito',
-            'cartao_credito',
-            'transferencia',
-            'boleto',
-            'convenio'
-        );
-    END IF;
-END $$;
+CREATE TYPE financial_payment_method AS ENUM (
+    'dinheiro',
+    'pix',
+    'cartao_debito',
+    'cartao_credito',
+    'transferencia',
+    'boleto',
+    'convenio'
+);
 
 -- Cria a tabela de transações financeiras
 CREATE TABLE financial_transactions (
@@ -58,25 +53,11 @@ CREATE INDEX idx_financial_transactions_transaction_date ON financial_transactio
 CREATE INDEX idx_financial_transactions_due_date ON financial_transactions(due_date);
 CREATE INDEX idx_financial_transactions_category ON financial_transactions(category);
 
--- Trigger para atualizar updated_at
-CREATE OR REPLACE FUNCTION update_financial_transactions_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_update_financial_transactions_updated_at
-    BEFORE UPDATE ON financial_transactions
-    FOR EACH ROW
-    EXECUTE FUNCTION update_financial_transactions_updated_at();
+-- Triggers serão criados via scripts em triggers/financial_transactions_triggers.sql
 
 -- migrate:down
 
-DROP TRIGGER IF EXISTS trg_update_financial_transactions_updated_at ON financial_transactions;
-DROP FUNCTION IF EXISTS update_financial_transactions_updated_at();
-
+-- Functions e triggers são gerenciados via pastas functions/ e triggers/
 DROP INDEX IF EXISTS idx_financial_transactions_category;
 DROP INDEX IF EXISTS idx_financial_transactions_due_date;
 DROP INDEX IF EXISTS idx_financial_transactions_transaction_date;

@@ -1,0 +1,75 @@
+# Docker Compose para usar binário pré-compilado
+# Use este quando compilar localmente e enviar apenas o binário
+
+services:
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: terafy_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-mysecretpassword}
+      - POSTGRES_DB=${DB_NAME:-terafy_db}
+      - TZ=UTC
+      - PGTZ=UTC
+    command: >
+      postgres
+      -c timezone=UTC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: terafy_server
+    restart: unless-stopped
+    environment:
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-terafy_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-mysecretpassword}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRATION_DAYS=${JWT_EXPIRATION_DAYS:-7}
+      - DB_SSL_MODE=${DB_SSL_MODE:-disable}
+    ports:
+      - '${SERVER_PORT:-8080}:8080'
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    volumes:
+      # Monta migrations, functions, triggers e policies para o servidor encontrar
+      - ./migrations:/app/db/migrations:ro
+      - ./functions:/app/db/functions:ro
+      - ./triggers:/app/db/triggers:ro
+      - ./policies:/app/db/policies:ro
+
+  # Nginx como reverse proxy (opcional)
+  nginx:
+    image: nginx:alpine
+    container_name: terafy_nginx
+    restart: unless-stopped
+    ports:
+      - '${NGINX_HTTP_PORT:-80}:80'
+      - '${NGINX_HTTPS_PORT:-443}:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - server
+    profiles:
+      - with-nginx
+
+volumes:
+  postgres_data:
+    name: docker_postgres_data  # Usa o volume existente ao invés de criar um novo
+    driver: local
+

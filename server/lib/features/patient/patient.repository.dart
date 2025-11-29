@@ -57,7 +57,6 @@ class PatientRepository {
           treatment_start_date,
           last_session_date,
           total_sessions,
-          behavioral_profiles,
           tags,
           notes,
           photo_url,
@@ -132,7 +131,6 @@ class PatientRepository {
             treatment_start_date,
             last_session_date,
             total_sessions,
-            behavioral_profiles,
             tags,
             notes,
             photo_url,
@@ -160,6 +158,8 @@ class PatientRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
+
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -203,7 +203,6 @@ class PatientRepository {
           inactivation_reason,
           treatment_start_date,
           last_session_date,
-          behavioral_profiles,
           tags,
           notes,
           photo_url,
@@ -236,7 +235,6 @@ class PatientRepository {
           @inactivation_reason,
           @treatment_start_date,
           @last_session_date,
-          @behavioral_profiles,
           @tags,
           @notes,
           @photo_url,
@@ -270,7 +268,6 @@ class PatientRepository {
           inactivation_reason,
           treatment_start_date,
           last_session_date,
-          behavioral_profiles,
           tags,
           notes,
           photo_url,
@@ -338,7 +335,6 @@ class PatientRepository {
           inactivation_reason = @inactivation_reason,
           treatment_start_date = @treatment_start_date,
           last_session_date = @last_session_date,
-          behavioral_profiles = @behavioral_profiles,
           tags = @tags,
           notes = @notes,
           photo_url = @photo_url,
@@ -373,7 +369,6 @@ class PatientRepository {
           inactivation_reason,
           treatment_start_date,
           last_session_date,
-          behavioral_profiles,
           tags,
           notes,
           photo_url,

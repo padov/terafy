@@ -11,4 +11,6 @@ abstract class PatientRepository {
     String? email,
     DateTime? birthDate,
   });
+
+  Future<domain.Patient> updatePatient({required domain.Patient patient});
 }

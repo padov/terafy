@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../logger/app_logger.dart';
+
 class Patient {
   final int? id;
   final int therapistId;
@@ -29,7 +31,6 @@ class Patient {
   final DateTime? treatmentStartDate;
   final DateTime? lastSessionDate;
   final int totalSessions;
-  final List<String>? behavioralProfiles;
   final List<String>? tags;
   final String? notes;
   final String? photoUrl;
@@ -66,7 +67,6 @@ class Patient {
     this.treatmentStartDate,
     this.lastSessionDate,
     this.totalSessions = 0,
-    this.behavioralProfiles,
     this.tags,
     this.notes,
     this.photoUrl,
@@ -104,7 +104,6 @@ class Patient {
     DateTime? treatmentStartDate,
     DateTime? lastSessionDate,
     int? totalSessions,
-    List<String>? behavioralProfiles,
     List<String>? tags,
     String? notes,
     String? photoUrl,
@@ -132,8 +131,7 @@ class Patient {
       legalGuardian: legalGuardian ?? this.legalGuardian,
       healthInsurance: healthInsurance ?? this.healthInsurance,
       healthInsuranceCard: healthInsuranceCard ?? this.healthInsuranceCard,
-      preferredPaymentMethod:
-          preferredPaymentMethod ?? this.preferredPaymentMethod,
+      preferredPaymentMethod: preferredPaymentMethod ?? this.preferredPaymentMethod,
       sessionPrice: sessionPrice ?? this.sessionPrice,
       consentSignedAt: consentSignedAt ?? this.consentSignedAt,
       lgpdConsentAt: lgpdConsentAt ?? this.lgpdConsentAt,
@@ -142,7 +140,6 @@ class Patient {
       treatmentStartDate: treatmentStartDate ?? this.treatmentStartDate,
       lastSessionDate: lastSessionDate ?? this.lastSessionDate,
       totalSessions: totalSessions ?? this.totalSessions,
-      behavioralProfiles: behavioralProfiles ?? this.behavioralProfiles,
       tags: tags ?? this.tags,
       notes: notes ?? this.notes,
       photoUrl: photoUrl ?? this.photoUrl,
@@ -182,7 +179,6 @@ class Patient {
       'treatmentStartDate': treatmentStartDate?.toIso8601String(),
       'lastSessionDate': lastSessionDate?.toIso8601String(),
       'totalSessions': totalSessions,
-      'behavioralProfiles': behavioralProfiles,
       'tags': tags,
       'notes': notes,
       'photoUrl': photoUrl,
@@ -208,12 +204,8 @@ class Patient {
       'phones': phones,
       'profession': profession,
       'education': education,
-      'emergency_contact': emergencyContact != null
-          ? jsonEncode(emergencyContact)
-          : null,
-      'legal_guardian': legalGuardian != null
-          ? jsonEncode(legalGuardian)
-          : null,
+      'emergency_contact': emergencyContact != null ? jsonEncode(emergencyContact) : null,
+      'legal_guardian': legalGuardian != null ? jsonEncode(legalGuardian) : null,
       'health_insurance': healthInsurance,
       'health_insurance_card': healthInsuranceCard,
       'preferred_payment_method': preferredPaymentMethod,
@@ -224,7 +216,6 @@ class Patient {
       'inactivation_reason': inactivationReason,
       'treatment_start_date': treatmentStartDate,
       'last_session_date': lastSessionDate,
-      'behavioral_profiles': behavioralProfiles,
       'tags': tags,
       'notes': notes,
       'photo_url': photoUrl,
@@ -233,6 +224,8 @@ class Patient {
   }
 
   factory Patient.fromMap(Map<String, dynamic> map) {
+    AppLogger.func();
+
     double? _parseDouble(dynamic value) {
       if (value == null) return null;
       if (value is double) return value;
@@ -275,7 +268,6 @@ class Patient {
       treatmentStartDate: _parseDate(map['treatment_start_date']),
       lastSessionDate: _parseDate(map['last_session_date']),
       totalSessions: (map['total_sessions'] as int?) ?? 0,
-      behavioralProfiles: _parseStringList(map['behavioral_profiles']),
       tags: _parseStringList(map['tags']),
       notes: map['notes'] as String?,
       photoUrl: map['photo_url'] as String?,
@@ -288,10 +280,7 @@ class Patient {
   static List<String>? _parseStringList(dynamic value) {
     if (value == null) return null;
     if (value is List) {
-      return value
-          .map((e) => e?.toString() ?? '')
-          .where((e) => e.isNotEmpty)
-          .toList();
+      return value.map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList();
     }
     return null;
   }
@@ -312,10 +301,7 @@ class Patient {
     return null;
   }
 
-  static String _parseEnumField(
-    dynamic value, {
-    String defaultValue = 'active',
-  }) {
+  static String _parseEnumField(dynamic value, {String defaultValue = 'active'}) {
     if (value == null) return defaultValue;
     if (value is String) return value;
     return value.toString();

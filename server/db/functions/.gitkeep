@@ -1,0 +1,5 @@
+# Functions Directory
+# Coloque aqui todas as PostgreSQL functions
+# Cada function em um arquivo .sql separado
+# Exemplo: ft_after_appointment.sql
+

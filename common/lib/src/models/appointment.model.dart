@@ -127,27 +127,25 @@ class Appointment {
       'status': status,
       'title': title,
       'description': description,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
+      'startTime': _toUtcIso8601String(startTime),
+      'endTime': _toUtcIso8601String(endTime),
       'recurrenceRule': recurrenceRule,
-      'recurrenceEnd': recurrenceEnd?.toIso8601String(),
-      'recurrenceExceptions': recurrenceExceptions
-          ?.map((e) => e.toIso8601String())
-          .toList(),
+      'recurrenceEnd': recurrenceEnd != null ? _toUtcIso8601String(recurrenceEnd!) : null,
+      'recurrenceExceptions': recurrenceExceptions?.map((e) => _toUtcIso8601String(e)).toList(),
       'location': location,
       'onlineLink': onlineLink,
       'color': color,
       'reminders': reminders,
-      'reminderSentAt': reminderSentAt?.toIso8601String(),
-      'patientConfirmedAt': patientConfirmedAt?.toIso8601String(),
-      'patientArrivalAt': patientArrivalAt?.toIso8601String(),
+      'reminderSentAt': reminderSentAt != null ? _toUtcIso8601String(reminderSentAt!) : null,
+      'patientConfirmedAt': patientConfirmedAt != null ? _toUtcIso8601String(patientConfirmedAt!) : null,
+      'patientArrivalAt': patientArrivalAt != null ? _toUtcIso8601String(patientArrivalAt!) : null,
       'waitingRoomStatus': waitingRoomStatus,
       'cancellationReason': cancellationReason,
       'notes': notes,
       'parentAppointmentId': parentAppointmentId,
       'sessionId': sessionId,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt != null ? _toUtcIso8601String(createdAt!) : null,
+      'updatedAt': updatedAt != null ? _toUtcIso8601String(updatedAt!) : null,
     };
   }
 
@@ -184,11 +182,7 @@ class Appointment {
       id: map['id'] as int?,
       therapistId: map['therapist_id'] as int? ?? map['therapistId'] as int,
       patientId: map['patient_id'] as int? ?? map['patientId'] as int?,
-      patientName:
-          (map['patient_name'] ??
-                  map['patientName'] ??
-                  map['patient_full_name'])
-              as String?,
+      patientName: (map['patient_name'] ?? map['patientName'] ?? map['patient_full_name']) as String?,
       type: map['type']?.toString() ?? 'session',
       status: map['status']?.toString() ?? 'reserved',
       title: map['title'] as String?,
@@ -259,18 +253,51 @@ class Appointment {
 
   static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
-    if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString());
+
+    // Se já é DateTime, garante que seja UTC
+    if (value is DateTime) {
+      return value.isUtc ? value : value.toUtc();
+    }
+
+    // Parse da string
+    final str = value.toString();
+    final parsed = DateTime.tryParse(str);
+    if (parsed == null) return null;
+
+    // Se a string não tem timezone explícito (Z ou offset), assume UTC
+    // Caso contrário, converte para UTC
+    final hasTimezone = str.endsWith('Z') || RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(str);
+
+    if (!hasTimezone) {
+      // Se não tem timezone, assume que já está em UTC mas precisa marcar como UTC
+      return DateTime.utc(
+        parsed.year,
+        parsed.month,
+        parsed.day,
+        parsed.hour,
+        parsed.minute,
+        parsed.second,
+        parsed.millisecond,
+        parsed.microsecond,
+      );
+    }
+
+    // Se tem timezone, converte para UTC
+    return parsed.isUtc ? parsed : parsed.toUtc();
+  }
+
+  /// Garante que a data seja serializada como ISO8601 com timezone UTC (termina com Z)
+  static String _toUtcIso8601String(DateTime dateTime) {
+    final utc = dateTime.isUtc ? dateTime : dateTime.toUtc();
+    // Garante que sempre termine com Z para indicar UTC
+    final iso = utc.toIso8601String();
+    return iso.endsWith('Z') ? iso : '${iso}Z';
   }
 
   static List<DateTime>? _parseDateList(dynamic value) {
     if (value == null) return null;
     if (value is List) {
-      return value
-          .map((e) => _parseDate(e))
-          .where((e) => e != null)
-          .cast<DateTime>()
-          .toList();
+      return value.map((e) => _parseDate(e)).where((e) => e != null).cast<DateTime>().toList();
     }
     return null;
   }

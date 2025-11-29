@@ -27,6 +27,9 @@ import 'package:server/features/therapist/therapist.handler.dart';
 import 'package:server/features/therapist/therapist.repository.dart';
 import 'package:server/features/user/user.handler.dart';
 import 'package:server/features/user/user.repository.dart';
+import 'package:server/features/anamnesis/anamnesis.controller.dart';
+import 'package:server/features/anamnesis/anamnesis.handler.dart';
+import 'package:server/features/anamnesis/anamnesis.repository.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
 
@@ -34,9 +37,37 @@ void main() async {
   // Carrega variáveis de ambiente do arquivo .env
   EnvConfig.load();
 
+  // Log das variáveis de ambiente de conexão (sem mostrar senha)
+  AppLogger.info('Configurações de banco de dados:');
+  AppLogger.info('  DB_HOST: ${EnvConfig.getOrDefault('DB_HOST', 'não definido')}');
+  AppLogger.info('  DB_PORT: ${EnvConfig.getIntOrDefault('DB_PORT', 0)}');
+  AppLogger.info('  DB_NAME: ${EnvConfig.getOrDefault('DB_NAME', 'não definido')}');
+  AppLogger.info('  DB_USER: ${EnvConfig.getOrDefault('DB_USER', 'não definido')}');
+  AppLogger.info('  DB_SSL_MODE: ${EnvConfig.getOrDefault('DB_SSL_MODE', 'não definido')}');
+
   // Configura o logger
   // Em produção, pode usar variável de ambiente: const bool.fromEnvironment('DEBUG', defaultValue: false)
   AppLogger.config(isDebugMode: true);
+
+  // --- Garantir Banco de Dados e Permissões ---
+  // Este passo é opcional - apenas tenta criar/configurar se tiver permissões
+  // Se falhar, continua mesmo assim (o banco pode já existir e estar configurado)
+  AppLogger.info('🔍 Verificando banco de dados e permissões...');
+  try {
+    await MigrationManager.ensureDatabaseAndPermissions();
+  } catch (e) {
+    // Se o banco não existe, aborta a inicialização
+    final errorStr = e.toString();
+    if (errorStr.contains('3D000') || errorStr.contains('does not exist')) {
+      AppLogger.error('❌ Banco de dados não existe e não foi possível criá-lo.');
+      AppLogger.error('   Por favor, crie o banco de dados manualmente ou verifique as permissões do usuário.');
+      AppLogger.error('   Erro: $e');
+      exit(1);
+    }
+    // Para outros erros (permissão), apenas registra aviso e continua
+    AppLogger.warning('⚠️  Não foi possível verificar/criar banco (pode não ter permissão)');
+    AppLogger.warning('   Continuando... (assumindo que o banco já existe e está configurado)');
+  }
 
   // --- Execução Automática de Migrations ---
   AppLogger.info('🔄 Verificando e executando migrations pendentes...');
@@ -73,6 +104,9 @@ void main() async {
   final financialHandler = FinancialHandler(financialController);
   final homeController = HomeController(scheduleRepository, sessionRepository, patientRepository);
   final homeHandler = HomeHandler(homeController);
+  final anamnesisRepository = AnamnesisRepository(dbConnection);
+  final anamnesisController = AnamnesisController(anamnesisRepository);
+  final anamnesisHandler = AnamnesisHandler(anamnesisController);
   final refreshTokenRepository = RefreshTokenRepository(dbConnection);
   final blacklistRepository = TokenBlacklistRepository(dbConnection);
   final authHandler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
@@ -87,7 +121,8 @@ void main() async {
     ..mount('/schedule', scheduleHandler.router.call) // Monta as rotas de agenda
     ..mount('/sessions', sessionHandler.router.call) // Monta as rotas de sessões
     ..mount('/financial', financialHandler.router.call) // Monta as rotas financeiras
-    ..mount('/home', homeHandler.router.call); // Monta as rotas da home
+    ..mount('/home', homeHandler.router.call) // Monta as rotas da home
+    ..mount('/anamnesis', anamnesisHandler.router.call); // Monta as rotas de anamnese
 
   // --- Criação do Pipeline e Servidor ---
   final handler = Pipeline()

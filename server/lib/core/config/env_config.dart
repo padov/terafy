@@ -16,6 +16,10 @@ class EnvConfig {
     final envFile = File(filename);
     if (envFile.existsSync()) {
       _env!.load([filename]);
+      print('✅ Arquivo .env carregado: ${envFile.absolute.path}');
+    } else {
+      print('⚠️  Arquivo .env não encontrado: ${envFile.absolute.path}');
+      print('   Usando apenas variáveis de ambiente do sistema');
     }
 
     _loaded = true;

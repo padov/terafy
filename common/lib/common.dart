@@ -8,6 +8,8 @@ export 'src/models/appointment.model.dart';
 export 'src/models/home_summary.model.dart';
 export 'src/models/session.model.dart';
 export 'src/models/financial_transaction.model.dart';
+export 'src/models/anamnesis.model.dart';
+export 'src/models/anamnesis_template.model.dart';
 
 // Exporta logger
 export 'src/logger/app_logger.dart';

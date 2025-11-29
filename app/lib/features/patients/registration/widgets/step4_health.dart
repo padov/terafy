@@ -15,10 +15,6 @@ class Step4Health extends StatefulWidget {
 class _Step4HealthState extends State<Step4Health> {
   late TextEditingController _healthInsuranceController;
   late TextEditingController _insuranceNumberController;
-  late TextEditingController _medicationsController;
-  late TextEditingController _allergiesController;
-  late TextEditingController _medicalHistoryController;
-  late TextEditingController _psychiatricHistoryController;
 
   @override
   void initState() {
@@ -29,35 +25,15 @@ class _Step4HealthState extends State<Step4Health> {
     _insuranceNumberController = TextEditingController(
       text: widget.initialData?.insuranceNumber ?? '',
     );
-    _medicationsController = TextEditingController(
-      text: widget.initialData?.currentMedications ?? '',
-    );
-    _allergiesController = TextEditingController(
-      text: widget.initialData?.allergies ?? '',
-    );
-    _medicalHistoryController = TextEditingController(
-      text: widget.initialData?.medicalHistory ?? '',
-    );
-    _psychiatricHistoryController = TextEditingController(
-      text: widget.initialData?.psychiatricHistory ?? '',
-    );
 
     _healthInsuranceController.addListener(_notifyDataChanged);
     _insuranceNumberController.addListener(_notifyDataChanged);
-    _medicationsController.addListener(_notifyDataChanged);
-    _allergiesController.addListener(_notifyDataChanged);
-    _medicalHistoryController.addListener(_notifyDataChanged);
-    _psychiatricHistoryController.addListener(_notifyDataChanged);
   }
 
   @override
   void dispose() {
     _healthInsuranceController.dispose();
     _insuranceNumberController.dispose();
-    _medicationsController.dispose();
-    _allergiesController.dispose();
-    _medicalHistoryController.dispose();
-    _psychiatricHistoryController.dispose();
     super.dispose();
   }
 
@@ -69,18 +45,6 @@ class _Step4HealthState extends State<Step4Health> {
       insuranceNumber: _insuranceNumberController.text.isEmpty
           ? null
           : _insuranceNumberController.text,
-      currentMedications: _medicationsController.text.isEmpty
-          ? null
-          : _medicationsController.text,
-      allergies: _allergiesController.text.isEmpty
-          ? null
-          : _allergiesController.text,
-      medicalHistory: _medicalHistoryController.text.isEmpty
-          ? null
-          : _medicalHistoryController.text,
-      psychiatricHistory: _psychiatricHistoryController.text.isEmpty
-          ? null
-          : _psychiatricHistoryController.text,
     );
     widget.onDataChanged(data);
   }
@@ -130,93 +94,20 @@ class _Step4HealthState extends State<Step4Health> {
           ),
           const SizedBox(height: 32),
 
-          // Seção Medicamentos
-          _buildSectionTitle('Medicamentos e Alergias'),
-          const SizedBox(height: 16),
-
-          _buildLabel('Medicações em Uso'),
-          Text(
-            'Liste os medicamentos que o paciente usa atualmente',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _medicationsController,
-            decoration: _buildInputDecoration(
-              hintText: 'Ex: Sertralina 50mg (manhã), Rivotril 2mg (noite)...',
-              icon: Icons.medication_outlined,
-            ),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 20),
-
-          _buildLabel('Alergias'),
-          Text(
-            'Alergias a medicamentos, alimentos, etc.',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _allergiesController,
-            decoration: _buildInputDecoration(
-              hintText: 'Ex: Dipirona, Penicilina, Frutos do mar...',
-              icon: Icons.warning_amber_outlined,
-            ),
-            maxLines: 2,
-          ),
-          const SizedBox(height: 32),
-
-          // Seção Históricos
-          _buildSectionTitle('Histórico Médico'),
-          const SizedBox(height: 16),
-
-          _buildLabel('Histórico Médico Geral'),
-          Text(
-            'Doenças, cirurgias, internações, etc.',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _medicalHistoryController,
-            decoration: _buildInputDecoration(
-              hintText: 'Descreva o histórico médico relevante...',
-              icon: Icons.local_hospital_outlined,
-            ),
-            maxLines: 4,
-          ),
-          const SizedBox(height: 20),
-
-          _buildLabel('Histórico Psiquiátrico'),
-          Text(
-            'Diagnósticos anteriores, tratamentos, internações',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _psychiatricHistoryController,
-            decoration: _buildInputDecoration(
-              hintText: 'Descreva o histórico psiquiátrico relevante...',
-              icon: Icons.psychology_outlined,
-            ),
-            maxLines: 4,
-          ),
-          const SizedBox(height: 32),
-
           // Nota informativa
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
+              color: AppColors.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Colors.amber, size: 24),
+                Icon(Icons.info_outline, color: AppColors.primary, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Estas informações são importantes para um atendimento seguro e adequado.',
+                    'Informações sobre medicações, alergias e histórico médico podem ser registradas na anamnese do paciente.',
                     style: TextStyle(fontSize: 13, color: AppColors.offBlack),
                   ),
                 ),
@@ -224,28 +115,6 @@ class _Step4HealthState extends State<Step4Health> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.primary.withOpacity(0.3),
-            width: 2,
-          ),
-        ),
-      ),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primary,
-        ),
       ),
     );
   }

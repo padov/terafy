@@ -192,7 +192,7 @@ Primeira avaliação completa do paciente.
 - Impressões do terapeuta
 - Aspectos relevantes não categorizados
 - Campos personalizáveis por abordagem
-
+=
 **Relacionamentos:**
 - Pertence a um Paciente
 - Criada por um Terapeuta

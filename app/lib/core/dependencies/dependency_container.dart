@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:terafy/core/data/datasources/remote/auth_remote_data_source.dart';
@@ -8,6 +9,8 @@ import 'package:terafy/core/data/repositories/schedule_repository_impl.dart';
 import 'package:terafy/core/data/repositories/session_repository_impl.dart';
 import 'package:terafy/core/data/repositories/therapist_repository_impl.dart';
 import 'package:terafy/core/data/repositories/financial_repository_impl.dart';
+import 'package:terafy/core/data/repositories/anamnesis_repository_impl.dart';
+import 'package:terafy/core/data/repositories/anamnesis_template_repository_impl.dart';
 import 'package:terafy/core/domain/repositories/auth_repository.dart';
 import 'package:terafy/core/domain/repositories/home_repository.dart';
 import 'package:terafy/core/domain/repositories/patient_repository.dart';
@@ -15,6 +18,8 @@ import 'package:terafy/core/domain/repositories/schedule_repository.dart';
 import 'package:terafy/core/domain/repositories/session_repository.dart';
 import 'package:terafy/core/domain/repositories/therapist_repository.dart';
 import 'package:terafy/core/domain/repositories/financial_repository.dart';
+import 'package:terafy/core/domain/repositories/anamnesis_repository.dart';
+import 'package:terafy/core/domain/repositories/anamnesis_template_repository.dart';
 import 'package:terafy/core/domain/usecases/auth/get_current_user_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/login_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/logout_usecase.dart';
@@ -25,6 +30,7 @@ import 'package:terafy/core/domain/usecases/home/get_home_summary_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/create_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/get_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/get_patients_usecase.dart';
+import 'package:terafy/core/domain/usecases/patient/update_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/schedule/create_appointment_usecase.dart';
 import 'package:terafy/core/domain/usecases/schedule/delete_appointment_usecase.dart';
 import 'package:terafy/core/domain/usecases/schedule/get_appointment_usecase.dart';
@@ -70,6 +76,8 @@ class DependencyContainer {
   late final SessionRepository sessionRepository;
   late final FinancialRepository financialRepository;
   late final HomeRepository homeRepository;
+  late final AnamnesisRepository anamnesisRepository;
+  late final AnamnesisTemplateRepository anamnesisTemplateRepository;
   late final LoginUseCase loginUseCase;
   late final RegisterUserUseCase registerUserUseCase;
   late final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -82,6 +90,7 @@ class DependencyContainer {
   late final GetPatientsUseCase getPatientsUseCase;
   late final CreatePatientUseCase createPatientUseCase;
   late final GetPatientUseCase getPatientUseCase;
+  late final UpdatePatientUseCase updatePatientUseCase;
   late final GetHomeSummaryUseCase getHomeSummaryUseCase;
   late final GetScheduleSettingsUseCase getScheduleSettingsUseCase;
   late final UpdateScheduleSettingsUseCase updateScheduleSettingsUseCase;
@@ -109,18 +118,18 @@ class DependencyContainer {
 
   // Obtém a URL base do backend dependendo da plataforma
   String get _baseUrl {
-    // if (kIsWeb) {
-    //   return 'http://localhost:8080';
-    // }
-    // if (kDebugMode) {
-    //   if (Platform.isAndroid) {
-    //     return 'http://10.0.2.2:8080';
-    //   }
-    //   if (Platform.isIOS) {
-    //     // iOS Simulator usa localhost normalmente
-    //     return 'http://localhost:8080';
-    //   }
-    // }
+    if (kIsWeb) {
+      return 'http://localhost:8080';
+    }
+    if (kDebugMode) {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:8080';
+      }
+      if (Platform.isIOS) {
+        // iOS Simulator usa localhost normalmente
+        return 'http://localhost:8080';
+      }
+    }
     return 'http://35.224.10.2';
   }
 
@@ -147,6 +156,8 @@ class DependencyContainer {
     sessionRepository = SessionRepositoryImpl(httpClient: httpClient);
     financialRepository = FinancialRepositoryImpl(httpClient: httpClient);
     homeRepository = HomeRepositoryImpl(httpClient: httpClient);
+    anamnesisRepository = AnamnesisRepositoryImpl(httpClient: httpClient);
+    anamnesisTemplateRepository = AnamnesisTemplateRepositoryImpl(httpClient: httpClient);
 
     // Use Cases
     loginUseCase = LoginUseCase(authRepository);
@@ -161,6 +172,7 @@ class DependencyContainer {
     getPatientsUseCase = GetPatientsUseCase(patientRepository);
     createPatientUseCase = CreatePatientUseCase(patientRepository);
     getPatientUseCase = GetPatientUseCase(patientRepository);
+    updatePatientUseCase = UpdatePatientUseCase(patientRepository);
     getHomeSummaryUseCase = GetHomeSummaryUseCase(homeRepository);
     getScheduleSettingsUseCase = GetScheduleSettingsUseCase(scheduleRepository);
     updateScheduleSettingsUseCase = UpdateScheduleSettingsUseCase(scheduleRepository);

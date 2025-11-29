@@ -87,6 +87,100 @@ class PatientRepositoryImpl implements PatientRepository {
     }
   }
 
+  @override
+  Future<domain.Patient> updatePatient({required domain.Patient patient}) async {
+    final payload = _patientToJson(patient);
+
+    try {
+      final response = await httpClient.put('/patients/${patient.id}', data: payload);
+
+      if (response.statusCode != 200 || response.data == null) {
+        throw Exception('Erro ao atualizar paciente');
+      }
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Resposta inesperada ao atualizar paciente');
+      }
+
+      return _mapToDomainPatient(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e) ?? 'Erro ao atualizar paciente';
+      throw Exception(message);
+    }
+  }
+
+  Map<String, dynamic> _patientToJson(domain.Patient patient) {
+    return {
+      'fullName': patient.fullName,
+      'phones': [patient.phone],
+      if (patient.email != null && patient.email!.isNotEmpty) 'email': patient.email,
+      if (patient.dateOfBirth != null) 'birthDate': patient.dateOfBirth!.toIso8601String(),
+      if (patient.cpf != null) 'cpf': patient.cpf,
+      if (patient.rg != null) 'rg': patient.rg,
+      if (patient.gender != null) 'gender': _genderToString(patient.gender!),
+      if (patient.maritalStatus != null) 'maritalStatus': patient.maritalStatus,
+      if (patient.address != null) 'address': patient.address,
+      if (patient.profession != null) 'profession': patient.profession,
+      if (patient.education != null) 'education': patient.education,
+      'emergencyContact': patient.emergencyContact != null
+          ? {
+              'name': patient.emergencyContact!.name,
+              'relationship': patient.emergencyContact!.relationship,
+              'phone': patient.emergencyContact!.phone,
+            }
+          : null,
+      'legalGuardian': patient.legalGuardian != null
+          ? {
+              'name': patient.legalGuardian!.name,
+              'cpf': patient.legalGuardian!.cpf,
+              'phone': patient.legalGuardian!.phone,
+            }
+          : null,
+      if (patient.healthInsurance != null) 'healthInsurance': patient.healthInsurance,
+      if (patient.insuranceCardNumber != null) 'healthInsuranceCard': patient.insuranceCardNumber,
+      if (patient.preferredPaymentMethod != null) 'preferredPaymentMethod': patient.preferredPaymentMethod,
+      if (patient.sessionValue != null) 'sessionPrice': patient.sessionValue,
+      if (patient.consentDate != null) 'consentSignedAt': patient.consentDate!.toIso8601String(),
+      if (patient.lgpdAcceptDate != null) 'lgpdConsentAt': patient.lgpdAcceptDate!.toIso8601String(),
+      'status': _statusToString(patient.status),
+      if (patient.inactivationReason != null) 'inactivationReason': patient.inactivationReason,
+      if (patient.treatmentStartDate != null) 'treatmentStartDate': patient.treatmentStartDate!.toIso8601String(),
+      if (patient.lastSessionDate != null) 'lastSessionDate': patient.lastSessionDate!.toIso8601String(),
+      if (patient.tags.isNotEmpty) 'tags': patient.tags,
+      if (patient.notes != null) 'notes': patient.notes,
+      if (patient.photoUrl != null) 'photoUrl': patient.photoUrl,
+      if (patient.agendaColor != null) 'color': patient.agendaColor,
+    };
+  }
+
+  String _genderToString(domain.Gender gender) {
+    switch (gender) {
+      case domain.Gender.male:
+        return 'male';
+      case domain.Gender.female:
+        return 'female';
+      case domain.Gender.other:
+        return 'other';
+      case domain.Gender.preferNotToSay:
+        return 'prefer_not_to_say';
+    }
+  }
+
+  String _statusToString(domain.PatientStatus status) {
+    switch (status) {
+      case domain.PatientStatus.active:
+        return 'active';
+      case domain.PatientStatus.evaluated:
+        return 'evaluated';
+      case domain.PatientStatus.inactive:
+        return 'inactive';
+      case domain.PatientStatus.discharged:
+        return 'discharged';
+      case domain.PatientStatus.dischargeCompleted:
+        return 'completed';
+    }
+  }
+
   domain.Patient _mapToDomainPatient(Map<String, dynamic> json) {
     final commonPatient = common.Patient(
       id: json['id'] as int?,
@@ -117,7 +211,6 @@ class PatientRepositoryImpl implements PatientRepository {
       treatmentStartDate: _parseDate(json['treatmentStartDate']),
       lastSessionDate: _parseDate(json['lastSessionDate']),
       totalSessions: (json['totalSessions'] as int?) ?? 0,
-      behavioralProfiles: _parseStringList(json['behavioralProfiles']),
       tags: _parseStringList(json['tags']),
       notes: json['notes'] as String?,
       photoUrl: json['photoUrl'] as String?,

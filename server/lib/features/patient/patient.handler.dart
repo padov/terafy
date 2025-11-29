@@ -54,16 +54,12 @@ class PatientHandler extends BaseHandler {
         bypassRLS: userRole == 'admin',
       );
 
-      return successResponse(
-        patients.map((patient) => patient.toJson()).toList(),
-      );
+      return successResponse(patients.map((patient) => patient.toJson()).toList());
     } on PatientException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao listar pacientes: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao listar pacientes: ${e.toString()}');
     }
   }
 
@@ -97,9 +93,7 @@ class PatientHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao buscar paciente: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao buscar paciente: ${e.toString()}');
     }
   }
 
@@ -132,21 +126,14 @@ class PatientHandler extends BaseHandler {
         }
         therapistId = accountId;
       } else if (userRole != 'admin') {
-        return forbiddenResponse(
-          'Apenas terapeutas ou administradores podem criar pacientes',
-        );
+        return forbiddenResponse('Apenas terapeutas ou administradores podem criar pacientes');
       }
 
       if (therapistId == null) {
-        return badRequestResponse(
-          'Informe o therapistId para vincular o paciente ao terapeuta responsável.',
-        );
+        return badRequestResponse('Informe o therapistId para vincular o paciente ao terapeuta responsável.');
       }
 
-      final patient = _patientFromRequestMap(
-        data: data,
-        therapistId: therapistId,
-      );
+      final patient = _patientFromRequestMap(data: data, therapistId: therapistId);
 
       final created = await _controller.createPatient(
         patient: patient,
@@ -161,9 +148,7 @@ class PatientHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao criar paciente: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao criar paciente: ${e.toString()}');
     }
   }
 
@@ -201,10 +186,7 @@ class PatientHandler extends BaseHandler {
 
       int therapistId = existing.therapistId;
       if (userRole == 'admin') {
-        final therapistFromBody = _readInt(data, [
-          'therapistId',
-          'therapist_id',
-        ]);
+        final therapistFromBody = _readInt(data, ['therapistId', 'therapist_id']);
         therapistId = therapistFromBody ?? therapistId;
       } else if (userRole == 'therapist') {
         if (accountId == null) {
@@ -215,11 +197,7 @@ class PatientHandler extends BaseHandler {
         therapistId = accountId;
       }
 
-      final updatedPatient = _patientFromRequestMap(
-        data: data,
-        therapistId: therapistId,
-        base: existing,
-      );
+      final updatedPatient = _patientFromRequestMap(data: data, therapistId: therapistId, base: existing);
 
       final result = await _controller.updatePatient(
         patientId,
@@ -235,9 +213,7 @@ class PatientHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao atualizar paciente: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao atualizar paciente: ${e.toString()}');
     }
   }
 
@@ -271,17 +247,11 @@ class PatientHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      return internalServerErrorResponse(
-        'Erro ao remover paciente: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao remover paciente: ${e.toString()}');
     }
   }
 
-  Patient _patientFromRequestMap({
-    required Map<String, dynamic> data,
-    required int therapistId,
-    Patient? base,
-  }) {
+  Patient _patientFromRequestMap({required Map<String, dynamic> data, required int therapistId, Patient? base}) {
     DateTime? _parseDate(dynamic value) {
       if (value == null) return null;
       if (value is DateTime) return value;
@@ -321,17 +291,10 @@ class PatientHandler extends BaseHandler {
     List<String>? _parseStringList(dynamic value) {
       if (value == null) return null;
       if (value is List) {
-        return value
-            .map((e) => e?.toString() ?? '')
-            .where((element) => element.isNotEmpty)
-            .toList();
+        return value.map((e) => e?.toString() ?? '').where((element) => element.isNotEmpty).toList();
       }
       if (value is String && value.isNotEmpty) {
-        return value
-            .split(',')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+        return value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
       }
       return null;
     }
@@ -340,83 +303,36 @@ class PatientHandler extends BaseHandler {
       id: base?.id,
       therapistId: therapistId,
       userId: _readInt(data, ['userId', 'user_id']) ?? base?.userId,
-      fullName:
-          _readString(data, ['fullName', 'full_name']) ?? base?.fullName ?? '',
-      birthDate:
-          _parseDate(_read<dynamic>(data, ['birthDate', 'birth_date'])) ??
-          base?.birthDate,
+      fullName: _readString(data, ['fullName', 'full_name']) ?? base?.fullName ?? '',
+      birthDate: _parseDate(_read<dynamic>(data, ['birthDate', 'birth_date'])) ?? base?.birthDate,
       age: _readInt(data, ['age']) ?? base?.age,
       cpf: _readString(data, ['cpf']) ?? base?.cpf,
       rg: _readString(data, ['rg']) ?? base?.rg,
       gender: _readString(data, ['gender']) ?? base?.gender,
-      maritalStatus:
-          _readString(data, ['maritalStatus', 'marital_status']) ??
-          base?.maritalStatus,
+      maritalStatus: _readString(data, ['maritalStatus', 'marital_status']) ?? base?.maritalStatus,
       address: _readString(data, ['address']) ?? base?.address,
       email: _readString(data, ['email']) ?? base?.email,
-      phones:
-          _parseStringList(_read<dynamic>(data, ['phones'])) ?? base?.phones,
+      phones: _parseStringList(_read<dynamic>(data, ['phones'])) ?? base?.phones,
       profession: _readString(data, ['profession']) ?? base?.profession,
       education: _readString(data, ['education']) ?? base?.education,
       emergencyContact:
-          _parseJson(
-            _read<dynamic>(data, ['emergencyContact', 'emergency_contact']),
-          ) ??
-          base?.emergencyContact,
-      legalGuardian:
-          _parseJson(
-            _read<dynamic>(data, ['legalGuardian', 'legal_guardian']),
-          ) ??
-          base?.legalGuardian,
-      healthInsurance:
-          _readString(data, ['healthInsurance', 'health_insurance']) ??
-          base?.healthInsurance,
+          _parseJson(_read<dynamic>(data, ['emergencyContact', 'emergency_contact'])) ?? base?.emergencyContact,
+      legalGuardian: _parseJson(_read<dynamic>(data, ['legalGuardian', 'legal_guardian'])) ?? base?.legalGuardian,
+      healthInsurance: _readString(data, ['healthInsurance', 'health_insurance']) ?? base?.healthInsurance,
       healthInsuranceCard:
-          _readString(data, ['healthInsuranceCard', 'health_insurance_card']) ??
-          base?.healthInsuranceCard,
+          _readString(data, ['healthInsuranceCard', 'health_insurance_card']) ?? base?.healthInsuranceCard,
       preferredPaymentMethod:
-          _readString(data, [
-            'preferredPaymentMethod',
-            'preferred_payment_method',
-          ]) ??
-          base?.preferredPaymentMethod,
-      sessionPrice:
-          _parseDouble(
-            _read<dynamic>(data, ['sessionPrice', 'session_price']),
-          ) ??
-          base?.sessionPrice,
+          _readString(data, ['preferredPaymentMethod', 'preferred_payment_method']) ?? base?.preferredPaymentMethod,
+      sessionPrice: _parseDouble(_read<dynamic>(data, ['sessionPrice', 'session_price'])) ?? base?.sessionPrice,
       consentSignedAt:
-          _parseDate(
-            _read<dynamic>(data, ['consentSignedAt', 'consent_signed_at']),
-          ) ??
-          base?.consentSignedAt,
-      lgpdConsentAt:
-          _parseDate(
-            _read<dynamic>(data, ['lgpdConsentAt', 'lgpd_consent_at']),
-          ) ??
-          base?.lgpdConsentAt,
+          _parseDate(_read<dynamic>(data, ['consentSignedAt', 'consent_signed_at'])) ?? base?.consentSignedAt,
+      lgpdConsentAt: _parseDate(_read<dynamic>(data, ['lgpdConsentAt', 'lgpd_consent_at'])) ?? base?.lgpdConsentAt,
       status: _readString(data, ['status']) ?? base?.status ?? 'active',
-      inactivationReason:
-          _readString(data, ['inactivationReason', 'inactivation_reason']) ??
-          base?.inactivationReason,
+      inactivationReason: _readString(data, ['inactivationReason', 'inactivation_reason']) ?? base?.inactivationReason,
       treatmentStartDate:
-          _parseDate(
-            _read<dynamic>(data, [
-              'treatmentStartDate',
-              'treatment_start_date',
-            ]),
-          ) ??
-          base?.treatmentStartDate,
+          _parseDate(_read<dynamic>(data, ['treatmentStartDate', 'treatment_start_date'])) ?? base?.treatmentStartDate,
       lastSessionDate:
-          _parseDate(
-            _read<dynamic>(data, ['lastSessionDate', 'last_session_date']),
-          ) ??
-          base?.lastSessionDate,
-      behavioralProfiles:
-          _parseStringList(
-            _read<dynamic>(data, ['behavioralProfiles', 'behavioral_profiles']),
-          ) ??
-          base?.behavioralProfiles,
+          _parseDate(_read<dynamic>(data, ['lastSessionDate', 'last_session_date'])) ?? base?.lastSessionDate,
       tags: _parseStringList(_read<dynamic>(data, ['tags'])) ?? base?.tags,
       notes: _readString(data, ['notes']) ?? base?.notes,
       photoUrl: _readString(data, ['photoUrl', 'photo_url']) ?? base?.photoUrl,

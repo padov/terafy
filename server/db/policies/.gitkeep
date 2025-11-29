@@ -1,0 +1,5 @@
+# Policies Directory
+# Coloque aqui todas as RLS policies
+# Cada arquivo por tabela ou grupo de tabelas relacionadas
+# Exemplo: therapists_policies.sql
+

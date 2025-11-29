@@ -1,7 +1,6 @@
 import 'package:shelf/shelf.dart';
 import 'package:server/core/services/jwt_service.dart';
 import 'package:server/features/auth/token_blacklist.repository.dart';
-import 'package:common/common.dart';
 
 Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
   return (Handler handler) {
@@ -17,21 +16,12 @@ Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
 
       // Normaliza o path: remove espaços, garante que comece com /
       final normalizedPath = path.trim().replaceAll('//', '/');
-      final cleanPath = normalizedPath.startsWith('/')
-          ? normalizedPath
-          : '/$normalizedPath';
-
-      AppLogger.debug(
-        '[AUTH_MIDDLEWARE] Path: "$cleanPath" | Method: ${request.method}',
-      );
+      final cleanPath = normalizedPath.startsWith('/') ? normalizedPath : '/$normalizedPath';
 
       // Verifica se é uma rota pública
       final isPublicRoute = publicRoutes.any((route) {
         // Verifica correspondência exata
         if (cleanPath == route) {
-          AppLogger.debug(
-            '[AUTH_MIDDLEWARE] ✅ Rota pública encontrada (exata): $route',
-          );
           return true;
         }
 
@@ -39,11 +29,6 @@ Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
         if (cleanPath.startsWith(route)) {
           final remaining = cleanPath.substring(route.length);
           final match = remaining.isEmpty || remaining.startsWith('/');
-          if (match) {
-            AppLogger.debug(
-              '[AUTH_MIDDLEWARE] ✅ Rota pública encontrada (prefixo): $route',
-            );
-          }
           return match;
         }
 
@@ -54,18 +39,10 @@ Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
         return handler(request);
       }
 
-      AppLogger.debug(
-        '[AUTH_MIDDLEWARE] ❌ Rota protegida - verificando token...',
-      );
-
       // Extrai o token do header Authorization
       final authHeader = request.headers['authorization'];
       if (authHeader == null || !authHeader.startsWith('Bearer ')) {
-        return Response(
-          401,
-          body: '{"error": "Token não fornecido"}',
-          headers: {'Content-Type': 'application/json'},
-        );
+        return Response(401, body: '{"error": "Token não fornecido"}', headers: {'Content-Type': 'application/json'});
       }
 
       final token = authHeader.substring(7); // Remove "Bearer "
@@ -95,11 +72,7 @@ Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
         if (jti != null) {
           final isBlacklisted = await blacklistRepository.isBlacklisted(jti);
           if (isBlacklisted) {
-            return Response(
-              401,
-              body: '{"error": "Token revogado"}',
-              headers: {'Content-Type': 'application/json'},
-            );
+            return Response(401, body: '{"error": "Token revogado"}', headers: {'Content-Type': 'application/json'});
           }
         }
       }
@@ -136,9 +109,7 @@ String? getAccountType(Request request) {
 
 int? getAccountId(Request request) {
   final accountIdStr = request.headers['x-account-id'];
-  return accountIdStr != null && accountIdStr.isNotEmpty
-      ? int.tryParse(accountIdStr)
-      : null;
+  return accountIdStr != null && accountIdStr.isNotEmpty ? int.tryParse(accountIdStr) : null;
 }
 
 // NOTA: requireRole e requireAnyRole foram movidos para authorization_middleware.dart
