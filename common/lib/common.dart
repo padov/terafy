@@ -10,6 +10,8 @@ export 'src/models/session.model.dart';
 export 'src/models/financial_transaction.model.dart';
 export 'src/models/anamnesis.model.dart';
 export 'src/models/anamnesis_template.model.dart';
+export 'src/models/therapeutic_plan.model.dart';
+export 'src/models/therapeutic_objective.model.dart';
 
 // Exporta logger
 export 'src/logger/app_logger.dart';

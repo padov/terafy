@@ -25,6 +25,9 @@ import 'package:server/features/financial/financial.handler.dart';
 import 'package:server/features/financial/financial.repository.dart';
 import 'package:server/features/therapist/therapist.handler.dart';
 import 'package:server/features/therapist/therapist.repository.dart';
+import 'package:server/features/therapeutic_plan/therapeutic_plan.controller.dart';
+import 'package:server/features/therapeutic_plan/therapeutic_plan.handler.dart';
+import 'package:server/features/therapeutic_plan/therapeutic_plan.repository.dart';
 import 'package:server/features/user/user.handler.dart';
 import 'package:server/features/user/user.repository.dart';
 import 'package:server/features/anamnesis/anamnesis.controller.dart';
@@ -107,6 +110,9 @@ void main() async {
   final anamnesisRepository = AnamnesisRepository(dbConnection);
   final anamnesisController = AnamnesisController(anamnesisRepository);
   final anamnesisHandler = AnamnesisHandler(anamnesisController);
+  final therapeuticPlanRepository = TherapeuticPlanRepository(dbConnection);
+  final therapeuticPlanController = TherapeuticPlanController(therapeuticPlanRepository);
+  final therapeuticPlanHandler = TherapeuticPlanHandler(therapeuticPlanController);
   final refreshTokenRepository = RefreshTokenRepository(dbConnection);
   final blacklistRepository = TokenBlacklistRepository(dbConnection);
   final authHandler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
@@ -122,7 +128,9 @@ void main() async {
     ..mount('/sessions', sessionHandler.router.call) // Monta as rotas de sessões
     ..mount('/financial', financialHandler.router.call) // Monta as rotas financeiras
     ..mount('/home', homeHandler.router.call) // Monta as rotas da home
-    ..mount('/anamnesis', anamnesisHandler.router.call); // Monta as rotas de anamnese
+    ..mount('/anamnesis', anamnesisHandler.router.call) // Monta as rotas de anamnese
+    ..mount('/therapeutic-plans', therapeuticPlanHandler.router.call) // Monta as rotas de planos terapêuticos
+    ..mount('/home', homeHandler.router.call); // Monta as rotas da home
 
   // --- Criação do Pipeline e Servidor ---
   final handler = Pipeline()

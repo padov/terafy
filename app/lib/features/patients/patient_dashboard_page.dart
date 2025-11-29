@@ -142,6 +142,7 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
                       const SizedBox(height: 16),
                       _buildSummaryCards(patient),
                       _buildSessionsHistoryCard(context, patient),
+                      _buildTherapeuticPlansCard(context, patient),
                       _buildAIButton(context, patient, isAnalyzing),
                       _buildQuickSummaryCard(context, patient),
                       _buildSectionCard(
@@ -572,6 +573,62 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
     );
   }
 
+  Widget _buildTherapeuticPlansCard(BuildContext context, Patient patient) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.lightBorderColor),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pushNamed(
+              AppRouter.therapeuticPlansRoute,
+              arguments: {'patientId': patient.id, 'patientName': patient.fullName},
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.description_outlined, color: Colors.purple, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Planos Terapêuticos',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.offBlack),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Gerenciar planos e objetivos terapêuticos',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAIButton(BuildContext context, Patient patient, bool isAnalyzing) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -786,6 +843,10 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
                   icon: const Icon(Icons.edit, size: 20),
                   onPressed: () {
                     _showEditNotesDialog(context, patient);
+                    // TODO: Abrir editor de observações
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('Editor de observações em breve!')));
                   },
                   color: Colors.grey[600],
                   padding: EdgeInsets.zero,
@@ -1135,6 +1196,8 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
         _buildInfoItem(icon: Icons.work, label: 'Profissão', value: patient.profession ?? 'Não informado'),
         const SizedBox(height: 16),
         _buildInfoItem(icon: Icons.school, label: 'Escolaridade', value: patient.education ?? 'Não informado'),
+        const SizedBox(height: 16),
+        _buildInfoItem(icon: Icons.people, label: 'Vida Social', value: 'Informações não disponíveis'),
       ],
     );
   }
@@ -1154,6 +1217,10 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
           label: 'Número da Carteirinha',
           value: patient.insuranceCardNumber ?? 'Não informado',
         ),
+        const SizedBox(height: 16),
+        _buildInfoItem(icon: Icons.medication, label: 'Medicações em Uso', value: 'Informações não disponíveis'),
+        const SizedBox(height: 16),
+        _buildInfoItem(icon: Icons.warning_amber, label: 'Alergias', value: 'Nenhuma alergia conhecida'),
       ],
     );
   }

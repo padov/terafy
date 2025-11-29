@@ -7,7 +7,7 @@ services:
   postgres_db:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.postgres
+      dockerfile: docker/Dockerfile
     container_name: terafy_postgres_local
     restart: unless-stopped
     environment:

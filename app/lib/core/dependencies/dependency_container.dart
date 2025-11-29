@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:terafy/core/data/datasources/remote/auth_remote_data_source.dart';
 import 'package:terafy/core/data/repositories/auth_repository_impl.dart';
 import 'package:terafy/core/data/repositories/home_repository_impl.dart';
@@ -11,6 +12,7 @@ import 'package:terafy/core/data/repositories/therapist_repository_impl.dart';
 import 'package:terafy/core/data/repositories/financial_repository_impl.dart';
 import 'package:terafy/core/data/repositories/anamnesis_repository_impl.dart';
 import 'package:terafy/core/data/repositories/anamnesis_template_repository_impl.dart';
+import 'package:terafy/core/data/repositories/therapeutic_plan_repository_impl.dart';
 import 'package:terafy/core/domain/repositories/auth_repository.dart';
 import 'package:terafy/core/domain/repositories/home_repository.dart';
 import 'package:terafy/core/domain/repositories/patient_repository.dart';
@@ -20,6 +22,7 @@ import 'package:terafy/core/domain/repositories/therapist_repository.dart';
 import 'package:terafy/core/domain/repositories/financial_repository.dart';
 import 'package:terafy/core/domain/repositories/anamnesis_repository.dart';
 import 'package:terafy/core/domain/repositories/anamnesis_template_repository.dart';
+import 'package:terafy/core/domain/repositories/therapeutic_plan_repository.dart';
 import 'package:terafy/core/domain/usecases/auth/get_current_user_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/login_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/logout_usecase.dart';
@@ -53,6 +56,16 @@ import 'package:terafy/core/domain/usecases/financial/create_transaction_usecase
 import 'package:terafy/core/domain/usecases/financial/update_transaction_usecase.dart';
 import 'package:terafy/core/domain/usecases/financial/delete_transaction_usecase.dart';
 import 'package:terafy/core/domain/usecases/financial/get_financial_summary_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/get_plans_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/get_plan_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/create_plan_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/update_plan_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/delete_plan_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/get_objectives_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/get_objective_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/create_objective_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/update_objective_usecase.dart';
+import 'package:terafy/core/domain/usecases/therapeutic_plan/delete_objective_usecase.dart';
 import 'package:terafy/core/interceptors/auth_interceptor.dart';
 import 'package:terafy/core/services/auth_service.dart';
 import 'package:terafy/core/services/secure_storage_service.dart';
@@ -78,6 +91,7 @@ class DependencyContainer {
   late final HomeRepository homeRepository;
   late final AnamnesisRepository anamnesisRepository;
   late final AnamnesisTemplateRepository anamnesisTemplateRepository;
+  late final TherapeuticPlanRepository therapeuticPlanRepository;
   late final LoginUseCase loginUseCase;
   late final RegisterUserUseCase registerUserUseCase;
   late final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -111,6 +125,16 @@ class DependencyContainer {
   late final UpdateTransactionUseCase updateTransactionUseCase;
   late final DeleteTransactionUseCase deleteTransactionUseCase;
   late final GetFinancialSummaryUseCase getFinancialSummaryUseCase;
+  late final GetPlansUseCase getPlansUseCase;
+  late final GetPlanUseCase getPlanUseCase;
+  late final CreatePlanUseCase createPlanUseCase;
+  late final UpdatePlanUseCase updatePlanUseCase;
+  late final DeletePlanUseCase deletePlanUseCase;
+  late final GetObjectivesUseCase getObjectivesUseCase;
+  late final GetObjectiveUseCase getObjectiveUseCase;
+  late final CreateObjectiveUseCase createObjectiveUseCase;
+  late final UpdateObjectiveUseCase updateObjectiveUseCase;
+  late final DeleteObjectiveUseCase deleteObjectiveUseCase;
   late final SecureStorageService secureStorageService;
   late AuthService authService; // Não é final para permitir substituição em testes
   late final HttpClient httpClient;
@@ -158,6 +182,7 @@ class DependencyContainer {
     homeRepository = HomeRepositoryImpl(httpClient: httpClient);
     anamnesisRepository = AnamnesisRepositoryImpl(httpClient: httpClient);
     anamnesisTemplateRepository = AnamnesisTemplateRepositoryImpl(httpClient: httpClient);
+    therapeuticPlanRepository = TherapeuticPlanRepositoryImpl(httpClient: httpClient);
 
     // Use Cases
     loginUseCase = LoginUseCase(authRepository);
@@ -193,6 +218,16 @@ class DependencyContainer {
     updateTransactionUseCase = UpdateTransactionUseCase(financialRepository);
     deleteTransactionUseCase = DeleteTransactionUseCase(financialRepository);
     getFinancialSummaryUseCase = GetFinancialSummaryUseCase(financialRepository);
+    getPlansUseCase = GetPlansUseCase(therapeuticPlanRepository);
+    getPlanUseCase = GetPlanUseCase(therapeuticPlanRepository);
+    createPlanUseCase = CreatePlanUseCase(therapeuticPlanRepository);
+    updatePlanUseCase = UpdatePlanUseCase(therapeuticPlanRepository);
+    deletePlanUseCase = DeletePlanUseCase(therapeuticPlanRepository);
+    getObjectivesUseCase = GetObjectivesUseCase(therapeuticPlanRepository);
+    getObjectiveUseCase = GetObjectiveUseCase(therapeuticPlanRepository);
+    createObjectiveUseCase = CreateObjectiveUseCase(therapeuticPlanRepository);
+    updateObjectiveUseCase = UpdateObjectiveUseCase(therapeuticPlanRepository);
+    deleteObjectiveUseCase = DeleteObjectiveUseCase(therapeuticPlanRepository);
   }
 
   /// Substitui o AuthService (útil para testes)
