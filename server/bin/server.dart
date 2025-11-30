@@ -36,6 +36,9 @@ import 'package:server/features/anamnesis/anamnesis.repository.dart';
 import 'package:server/features/ai/handlers/ai_handler.dart';
 import 'package:server/features/ai/ai_analysis_repository.dart';
 import 'package:server/core/services/ai/ai_factory.dart';
+import 'package:server/features/subscription/subscription.controller.dart';
+import 'package:server/features/subscription/subscription.handler.dart';
+import 'package:server/features/subscription/subscription.repository.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
 import 'package:path/path.dart' as p;
@@ -175,7 +178,9 @@ void main() async {
   final therapistRepository = TherapistRepository(dbConnection);
   final therapistHandler = TherapistHandler(therapistRepository, userRepository);
   final patientRepository = PatientRepository(dbConnection);
-  final patientController = PatientController(patientRepository);
+  final subscriptionRepository = SubscriptionRepository(dbConnection);
+  final subscriptionController = SubscriptionController(subscriptionRepository, therapistRepository);
+  final patientController = PatientController(patientRepository, subscriptionController);
   final patientHandler = PatientHandler(patientController);
   final scheduleRepository = ScheduleRepository(dbConnection);
   final scheduleController = ScheduleController(scheduleRepository);
@@ -197,6 +202,7 @@ void main() async {
   final anamnesisRepository = AnamnesisRepository(dbConnection);
   final anamnesisController = AnamnesisController(anamnesisRepository);
   final anamnesisHandler = AnamnesisHandler(anamnesisController);
+  final subscriptionHandler = SubscriptionHandler(subscriptionController);
   final refreshTokenRepository = RefreshTokenRepository(dbConnection);
   final blacklistRepository = TokenBlacklistRepository(dbConnection);
   final authHandler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
@@ -216,7 +222,8 @@ void main() async {
     ..mount('/financial', financialHandler.router.call) // Monta as rotas financeiras
     ..mount('/home', homeHandler.router.call) // Monta as rotas da home
     ..mount('/anamnesis', anamnesisHandler.router.call) // Monta as rotas de anamnese
-    ..mount('/ai', aiHandler.router.call); // Monta as rotas de IA
+    ..mount('/ai', aiHandler.router.call) // Monta as rotas de IA
+    ..mount('/subscription', subscriptionHandler.router.call); // Monta as rotas de assinatura
 
   // --- Criação do Pipeline e Servidor ---
   final handler = Pipeline()

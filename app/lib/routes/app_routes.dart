@@ -19,6 +19,7 @@ import 'package:terafy/features/sessions/new_session_page.dart';
 import 'package:terafy/features/sessions/session_evolution_page.dart';
 import 'package:terafy/features/profile/edit_profile_page.dart';
 import 'package:terafy/features/anamnesis/pages/public_anamnesis_page.dart';
+import 'package:terafy/features/subscription/subscription_page.dart';
 
 class AppRouter {
   static const String splashRoute = '/';
@@ -45,6 +46,7 @@ class AppRouter {
   static const String newSessionRoute = '/session/new';
   static const String sessionEvolutionRoute = '/session/evolution';
   static const String editProfileRoute = '/profile/edit';
+  static const String subscriptionRoute = '/subscription';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // Handle public anamnesis route (Dynamic URL: /anamnesis/public/:token)
@@ -127,6 +129,8 @@ class AppRouter {
         );
       case editProfileRoute:
         return MaterialPageRoute(builder: (_) => const EditProfilePage());
+      case subscriptionRoute:
+        return MaterialPageRoute(builder: (_) => const SubscriptionPage());
       // case forgotPasswordRoute:
       //   return MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
       default:

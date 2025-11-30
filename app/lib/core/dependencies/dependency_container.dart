@@ -13,6 +13,7 @@ import 'package:terafy/core/data/repositories/financial_repository_impl.dart';
 import 'package:terafy/core/data/repositories/anamnesis_repository_impl.dart';
 import 'package:terafy/core/data/repositories/anamnesis_template_repository_impl.dart';
 import 'package:terafy/core/data/repositories/ai_analysis_repository_impl.dart';
+import 'package:terafy/core/data/repositories/subscription_repository_impl.dart';
 import 'package:terafy/core/domain/repositories/auth_repository.dart';
 import 'package:terafy/core/domain/repositories/home_repository.dart';
 import 'package:terafy/core/domain/repositories/patient_repository.dart';
@@ -23,6 +24,7 @@ import 'package:terafy/core/domain/repositories/financial_repository.dart';
 import 'package:terafy/core/domain/repositories/anamnesis_repository.dart';
 import 'package:terafy/core/domain/repositories/anamnesis_template_repository.dart';
 import 'package:terafy/core/domain/repositories/ai_analysis_repository.dart';
+import 'package:terafy/core/domain/repositories/subscription_repository.dart';
 import 'package:terafy/core/domain/usecases/auth/get_current_user_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/login_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/logout_usecase.dart';
@@ -62,6 +64,7 @@ import 'package:terafy/core/services/auth_service.dart';
 import 'package:terafy/core/services/secure_storage_service.dart';
 import 'package:terafy/core/services/patients_cache_service.dart';
 import 'package:terafy/core/services/session_manager.dart';
+import 'package:terafy/core/subscription/subscription_service.dart';
 import 'package:terafy/package/http.dart';
 
 // Este é um container de dependências simples. Em projetos maiores,
@@ -84,6 +87,8 @@ class DependencyContainer {
   late final AnamnesisRepository anamnesisRepository;
   late final AnamnesisTemplateRepository anamnesisTemplateRepository;
   late final AiAnalysisRepository aiAnalysisRepository;
+  late final SubscriptionRepository subscriptionRepository;
+  late final SubscriptionService subscriptionService;
   late final LoginUseCase loginUseCase;
   late final RegisterUserUseCase registerUserUseCase;
   late final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -186,6 +191,7 @@ class DependencyContainer {
     secureStorageService = SecureStorageService();
     authService = testAuthService ?? AuthService();
     patientsCacheService = PatientsCacheService();
+    subscriptionService = SubscriptionService();
 
     httpClient = DioHttpClient(baseUrl: _baseUrl, enableLogger: kDebugMode);
     dio = (httpClient as DioHttpClient).dio;
@@ -207,6 +213,7 @@ class DependencyContainer {
     anamnesisRepository = AnamnesisRepositoryImpl(httpClient: httpClient);
     anamnesisTemplateRepository = AnamnesisTemplateRepositoryImpl(httpClient: httpClient);
     aiAnalysisRepository = AiAnalysisRepositoryImpl(httpClient: httpClient);
+    subscriptionRepository = SubscriptionRepositoryImpl(httpClient: httpClient);
 
     // Use Cases
     loginUseCase = LoginUseCase(authRepository);

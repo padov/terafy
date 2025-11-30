@@ -41,6 +41,7 @@ class PatientDashboardPage extends StatelessWidget {
         getPatientUseCase: container.getPatientUseCase,
         updatePatientUseCase: container.updatePatientUseCase,
         patientsCacheService: container.patientsCacheService,
+        subscriptionRepository: container.subscriptionRepository,
       )..add(const LoadPatients()),
       child: _PatientDashboardContent(patientId: patientId),
     );

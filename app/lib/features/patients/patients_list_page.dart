@@ -8,6 +8,7 @@ import 'package:terafy/features/patients/bloc/patients_bloc_models.dart';
 import 'package:terafy/features/patients/models/patient.dart';
 import 'package:terafy/features/patients/patient_dashboard_page.dart';
 import 'package:terafy/features/patients/widgets/patient_card.dart';
+import 'package:terafy/features/patients/widgets/patient_limit_warning.dart';
 import 'package:terafy/features/patients/widgets/quick_add_patient_modal.dart';
 
 class PatientsListPage extends StatelessWidget {
@@ -23,6 +24,7 @@ class PatientsListPage extends StatelessWidget {
         getPatientUseCase: container.getPatientUseCase,
         updatePatientUseCase: container.updatePatientUseCase,
         patientsCacheService: container.patientsCacheService,
+        subscriptionRepository: container.subscriptionRepository,
       )..add(const LoadPatients()),
       child: const _PatientsListPageContent(),
     );
@@ -129,6 +131,15 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
                     },
                   ),
                 ),
+
+                // Aviso de limite de pacientes
+                if (state.patientCount != null && state.patientLimit != null && state.isNearLimit)
+                  PatientLimitWarning(
+                    patientCount: state.patientCount!,
+                    patientLimit: state.patientLimit!,
+                    usagePercentage: state.usagePercentage,
+                    isAtLimit: state.isAtLimit,
+                  ),
 
                 // Lista de pacientes
                 Expanded(
