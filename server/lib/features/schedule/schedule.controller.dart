@@ -1,5 +1,6 @@
 import 'package:common/common.dart';
 import 'package:server/features/schedule/schedule.repository.dart';
+import 'package:server/features/schedule/services/appointment_reminder_service.dart';
 
 class ScheduleException implements Exception {
   ScheduleException(this.message, this.statusCode);
@@ -12,9 +13,13 @@ class ScheduleException implements Exception {
 }
 
 class ScheduleController {
-  ScheduleController(this._repository);
+  ScheduleController(
+    this._repository, {
+    AppointmentReminderService? reminderService,
+  }) : _reminderService = reminderService;
 
   final ScheduleRepository _repository;
+  final AppointmentReminderService? _reminderService;
 
   /// Trata erros e retorna uma mensagem amigável para o usuário
   ScheduleException _handleError(dynamic error, String defaultMessage) {
@@ -134,13 +139,30 @@ class ScheduleController {
   }) async {
     AppLogger.func();
     try {
-      return await _repository.createAppointment(
+      final created = await _repository.createAppointment(
         appointment: appointment,
         userId: userId,
         userRole: userRole,
         accountId: accountId,
         bypassRLS: userRole == 'admin',
       );
+
+      // Cria mensagens de lembrete se configurado
+      if (_reminderService != null && appointment.reminders != null && appointment.reminders!.isNotEmpty) {
+        try {
+          await _reminderService!.createReminderMessages(
+            appointment: created,
+            userId: userId,
+            userRole: userRole,
+          );
+        } catch (e) {
+          // Loga erro mas não falha a criação do agendamento
+          AppLogger.error(e, StackTrace.current);
+          AppLogger.warning('Erro ao criar lembretes, mas agendamento foi criado com sucesso');
+        }
+      }
+
+      return created;
     } catch (e) {
       throw _handleError(e, 'Erro ao criar agendamento: ${e.toString()}');
     }

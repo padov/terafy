@@ -18,6 +18,7 @@ import 'package:server/features/patient/patient.repository.dart';
 import 'package:server/features/schedule/schedule.controller.dart';
 import 'package:server/features/schedule/schedule.handler.dart';
 import 'package:server/features/schedule/schedule.repository.dart';
+import 'package:server/features/schedule/services/appointment_reminder_service.dart';
 import 'package:server/features/session/session.controller.dart';
 import 'package:server/features/session/session.handler.dart';
 import 'package:server/features/session/session.repository.dart';
@@ -31,6 +32,27 @@ import 'package:server/features/user/user.repository.dart';
 import 'package:server/features/anamnesis/anamnesis.controller.dart';
 import 'package:server/features/anamnesis/anamnesis.handler.dart';
 import 'package:server/features/anamnesis/anamnesis.repository.dart';
+import 'package:server/features/messaging/messaging.controller.dart';
+import 'package:server/features/messaging/messaging.handler.dart';
+import 'package:server/features/messaging/messaging.repository.dart';
+import 'package:server/features/messaging/domain/message_channel.dart';
+import 'package:server/features/messaging/domain/message_provider.dart';
+import 'package:server/features/messaging/providers/email_message_provider.dart';
+import 'package:server/features/messaging/providers/sms_message_provider.dart';
+import 'package:server/features/messaging/providers/whatsapp_message_provider.dart';
+import 'package:server/features/messaging/providers/push_message_provider.dart';
+import 'package:server/features/messaging/services/message_template_service.dart';
+import 'package:server/features/messaging/services/reminder_scheduler.dart';
+import 'package:server/features/messaging/usecases/get_message_history_usecase.dart';
+import 'package:server/features/messaging/usecases/send_appointment_reminder_usecase.dart';
+import 'package:server/features/messaging/usecases/send_message_usecase.dart';
+import 'package:server/features/whatsapp/whatsapp.controller.dart';
+import 'package:server/features/whatsapp/whatsapp.handler.dart';
+import 'package:server/features/whatsapp/whatsapp.repository.dart';
+import 'package:server/features/whatsapp/services/conversation_manager.dart';
+import 'package:server/features/whatsapp/services/whatsapp_appointment_service.dart';
+import 'package:server/features/whatsapp/services/whatsapp_confirmation_service.dart';
+import 'package:server/features/whatsapp/whatsapp.webhook_handler.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
 
@@ -108,8 +130,6 @@ void main() async {
   final patientController = PatientController(patientRepository);
   final patientHandler = PatientHandler(patientController);
   final scheduleRepository = ScheduleRepository(dbConnection);
-  final scheduleController = ScheduleController(scheduleRepository);
-  final scheduleHandler = ScheduleHandler(scheduleController);
   final sessionRepository = SessionRepository(dbConnection);
   final financialRepository = FinancialRepository(dbConnection);
   final sessionController = SessionController(sessionRepository, financialRepository);
@@ -125,6 +145,89 @@ void main() async {
   final blacklistRepository = TokenBlacklistRepository(dbConnection);
   final authHandler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
 
+  // --- Sistema de Mensagens ---
+  final messageRepository = MessageRepositoryImpl(dbConnection);
+  final emailProvider = EmailMessageProvider();
+  final smsProvider = SMSMessageProvider();
+  final whatsappProvider = WhatsAppMessageProvider();
+  final pushProvider = PushMessageProvider();
+  final messageProviders = <MessageChannel, MessageProvider>{
+    MessageChannel.email: emailProvider,
+    MessageChannel.sms: smsProvider,
+    MessageChannel.whatsapp: whatsappProvider,
+    MessageChannel.push: pushProvider,
+  };
+  final templateService = MessageTemplateService();
+  final sendMessageUseCase = SendMessageUseCase(messageRepository, messageProviders);
+  final sendAppointmentReminderUseCase = SendAppointmentReminderUseCase(
+    messageRepository,
+    templateService,
+    sendMessageUseCase,
+  );
+  final getMessageHistoryUseCase = GetMessageHistoryUseCase(messageRepository);
+
+  // --- Appointment Reminder Service (usa messageRepository) ---
+  final appointmentReminderService = AppointmentReminderService(
+    messageRepository,
+    patientRepository,
+    therapistRepository,
+  );
+  
+  // ScheduleController com reminderService
+  final scheduleController = ScheduleController(
+    scheduleRepository,
+    reminderService: appointmentReminderService,
+  );
+  final scheduleHandler = ScheduleHandler(scheduleController);
+
+  // --- Sistema WhatsApp ---
+  final whatsappRepository = WhatsAppRepository(dbConnection);
+  final whatsappConversationManager = ConversationManager(
+    whatsappRepository,
+    patientRepository,
+    scheduleRepository,
+  );
+  final whatsappAppointmentService = WhatsAppAppointmentService(
+    scheduleController,
+    scheduleRepository,
+    sendAppointmentReminderUseCase,
+  );
+  final whatsappConfirmationService = WhatsAppConfirmationService(
+    messageRepository,
+    whatsappProvider,
+    scheduleRepository,
+    patientRepository,
+    therapistRepository,
+  );
+  final whatsappWebhookHandler = WhatsAppWebhookHandler(
+    whatsappConversationManager,
+    whatsappRepository,
+    whatsappProvider,
+  );
+  final whatsappController = WhatsAppController(
+    whatsappRepository,
+    whatsappConversationManager,
+    whatsappAppointmentService,
+    whatsappConfirmationService,
+    whatsappWebhookHandler,
+    scheduleRepository,
+  );
+  final whatsappHandler = WhatsAppHandler(whatsappController);
+
+  // --- Reminder Scheduler (usa WhatsAppConfirmationService) ---
+  final reminderScheduler = ReminderScheduler(
+    messageRepository,
+    sendMessageUseCase,
+    whatsappConfirmationService: whatsappConfirmationService,
+  );
+  final messagingController = MessagingController(
+    sendMessageUseCase,
+    sendAppointmentReminderUseCase,
+    getMessageHistoryUseCase,
+    reminderScheduler,
+  );
+  final messagingHandler = MessagingHandler(messagingController);
+
   // --- Configuração do Roteador Principal ---
   final appRouter = Router()
     ..get('/ping', (Request request) => Response.ok('pong'))
@@ -136,7 +239,9 @@ void main() async {
     ..mount('/sessions', sessionHandler.router.call) // Monta as rotas de sessões
     ..mount('/financial', financialHandler.router.call) // Monta as rotas financeiras
     ..mount('/home', homeHandler.router.call) // Monta as rotas da home
-    ..mount('/anamnesis', anamnesisHandler.router.call); // Monta as rotas de anamnese
+    ..mount('/anamnesis', anamnesisHandler.router.call) // Monta as rotas de anamnese
+    ..mount('/messages', messagingHandler.router.call) // Monta as rotas de mensagens
+    ..mount('/whatsapp', whatsappHandler.router.call); // Monta as rotas de WhatsApp
 
   // --- Criação do Pipeline e Servidor ---
   final handler = Pipeline()
