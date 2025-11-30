@@ -41,12 +41,7 @@ class AddQuickPatient extends PatientsEvent {
   final String? email;
   final DateTime? dateOfBirth;
 
-  const AddQuickPatient({
-    required this.fullName,
-    required this.phone,
-    this.email,
-    this.dateOfBirth,
-  });
+  const AddQuickPatient({required this.fullName, required this.phone, this.email, this.dateOfBirth});
 
   @override
   List<Object?> get props => [fullName, phone, email, dateOfBirth];
@@ -87,10 +82,7 @@ class UpdatePatientNotes extends PatientsEvent {
   final String patientId;
   final String? notes;
 
-  const UpdatePatientNotes({
-    required this.patientId,
-    this.notes,
-  });
+  const UpdatePatientNotes({required this.patientId, this.notes});
 
   @override
   List<Object?> get props => [patientId, notes];
@@ -117,13 +109,29 @@ class PatientsLoaded extends PatientsState {
   final List<Patient> filteredPatients;
   final String? searchQuery;
   final PatientStatus? statusFilter;
+  final int? patientCount;
+  final int? patientLimit;
+  final bool? canCreatePatient;
 
   const PatientsLoaded({
     required this.patients,
     required this.filteredPatients,
     this.searchQuery,
     this.statusFilter,
+    this.patientCount,
+    this.patientLimit,
+    this.canCreatePatient,
   });
+
+  int get usagePercentage {
+    if (patientLimit == null || patientLimit == 0) return 0;
+    final limit = patientLimit!;
+    final count = patientCount ?? 0;
+    return ((count / limit) * 100).round();
+  }
+
+  bool get isNearLimit => usagePercentage >= 80;
+  bool get isAtLimit => usagePercentage >= 100;
 
   @override
   List<Object?> get props => [
@@ -131,6 +139,9 @@ class PatientsLoaded extends PatientsState {
     filteredPatients,
     searchQuery,
     statusFilter,
+    patientCount,
+    patientLimit,
+    canCreatePatient,
   ];
 }
 

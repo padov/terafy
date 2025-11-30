@@ -8,6 +8,7 @@ import 'package:terafy/features/patients/bloc/patients_bloc_models.dart';
 import 'package:terafy/features/patients/models/patient.dart';
 import 'package:terafy/features/patients/patient_dashboard_page.dart';
 import 'package:terafy/features/patients/widgets/patient_card.dart';
+import 'package:terafy/features/patients/widgets/patient_limit_warning.dart';
 import 'package:terafy/features/patients/widgets/quick_add_patient_modal.dart';
 
 class PatientsListPage extends StatelessWidget {
@@ -23,6 +24,7 @@ class PatientsListPage extends StatelessWidget {
         getPatientUseCase: container.getPatientUseCase,
         updatePatientUseCase: container.updatePatientUseCase,
         patientsCacheService: container.patientsCacheService,
+        subscriptionRepository: container.subscriptionRepository,
       )..add(const LoadPatients()),
       child: const _PatientsListPageContent(),
     );
@@ -33,8 +35,7 @@ class _PatientsListPageContent extends StatefulWidget {
   const _PatientsListPageContent();
 
   @override
-  State<_PatientsListPageContent> createState() =>
-      _PatientsListPageContentState();
+  State<_PatientsListPageContent> createState() => _PatientsListPageContentState();
 }
 
 class _PatientsListPageContentState extends State<_PatientsListPageContent> {
@@ -51,37 +52,23 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(
-          'patients.title'.tr(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text('patients.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.offBlack,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterOptions(context),
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.filter_list), onPressed: () => _showFilterOptions(context))],
       ),
       body: BlocConsumer<PatientsBloc, PatientsState>(
         listener: (context, state) {
           print('state: $state');
           if (state is PatientAdded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('patients.added_success'.tr()),
-                backgroundColor: Colors.green,
-              ),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('patients.added_success'.tr()), backgroundColor: Colors.green));
           } else if (state is PatientsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
           }
         },
         builder: (context, state) {
@@ -100,10 +87,7 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
                 children: [
                   const Icon(Icons.error_outline, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
+                  Text(state.message, style: const TextStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
@@ -129,23 +113,15 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
                       hintText: 'patients.search_hint'.tr(),
                       filled: true,
                       fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear),
                               onPressed: () {
                                 _searchController.clear();
-                                context.read<PatientsBloc>().add(
-                                  const SearchPatients(''),
-                                );
+                                context.read<PatientsBloc>().add(const SearchPatients(''));
                               },
                             )
                           : null,
@@ -156,18 +132,23 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
                   ),
                 ),
 
+                // Aviso de limite de pacientes
+                if (state.patientCount != null && state.patientLimit != null && state.isNearLimit)
+                  PatientLimitWarning(
+                    patientCount: state.patientCount!,
+                    patientLimit: state.patientLimit!,
+                    usagePercentage: state.usagePercentage,
+                    isAtLimit: state.isAtLimit,
+                  ),
+
                 // Lista de pacientes
                 Expanded(
                   child: state.filteredPatients.isEmpty
                       ? _buildEmptyState(context)
                       : RefreshIndicator(
                           onRefresh: () async {
-                            context.read<PatientsBloc>().add(
-                              const RefreshPatients(),
-                            );
-                            await Future.delayed(
-                              const Duration(milliseconds: 500),
-                            );
+                            context.read<PatientsBloc>().add(const RefreshPatients());
+                            await Future.delayed(const Duration(milliseconds: 500));
                           },
                           child: ListView.builder(
                             itemCount: state.filteredPatients.length,
@@ -180,10 +161,7 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
 
                                   await Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => PatientDashboardPage(
-                                        patientId: patient.id,
-                                        bloc: bloc,
-                                      ),
+                                      builder: (_) => PatientDashboardPage(patientId: patient.id, bloc: bloc),
                                     ),
                                   );
 
@@ -209,10 +187,7 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
         onPressed: () => _showQuickAddModal(context),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.person_add),
-        label: Text(
-          'patients.add_button'.tr(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        label: Text('patients.add_button'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
     );
   }
@@ -226,11 +201,7 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
           const SizedBox(height: 16),
           Text(
             'patients.empty_state'.tr(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
@@ -257,17 +228,14 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (modalContext) => BlocProvider.value(
-        value: patientsBloc,
-        child: const QuickAddPatientModal(),
-      ),
+      builder: (modalContext) => BlocProvider.value(value: patientsBloc, child: const QuickAddPatientModal()),
     );
   }
 
   void _showFilterOptions(BuildContext context) {
     // Captura o BLoC ANTES de abrir o bottom sheet
     final patientsBloc = context.read<PatientsBloc>();
-    
+
     showModalBottomSheet(
       context: context,
       builder: (bottomSheetContext) => Container(
@@ -276,18 +244,10 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'patients.filter_title'.tr(),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            Text('patients.filter_title'.tr(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             _buildFilterOption(bottomSheetContext, 'patients.filter_all'.tr(), null, patientsBloc),
-            _buildFilterOption(
-              bottomSheetContext,
-              'patients.filter_active'.tr(),
-              PatientStatus.active,
-              patientsBloc,
-            ),
+            _buildFilterOption(bottomSheetContext, 'patients.filter_active'.tr(), PatientStatus.active, patientsBloc),
             _buildFilterOption(bottomSheetContext, 'Avaliado', PatientStatus.evaluated, patientsBloc),
             _buildFilterOption(
               bottomSheetContext,
@@ -301,12 +261,7 @@ class _PatientsListPageContentState extends State<_PatientsListPageContent> {
     );
   }
 
-  Widget _buildFilterOption(
-    BuildContext context,
-    String label,
-    PatientStatus? status,
-    PatientsBloc bloc,
-  ) {
+  Widget _buildFilterOption(BuildContext context, String label, PatientStatus? status, PatientsBloc bloc) {
     return ListTile(
       title: Text(label),
       onTap: () {

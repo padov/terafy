@@ -101,6 +101,8 @@ class _HomePageContent extends StatelessWidget {
               userPhotoUrl: data.userPhotoUrl,
               notificationCount: data.notificationCount,
               plan: data.plan,
+              patientCount: data.patientCount,
+              patientLimit: data.patientLimit,
               onNotificationTap: () {
                 // TODO: Navigate to notifications
               },

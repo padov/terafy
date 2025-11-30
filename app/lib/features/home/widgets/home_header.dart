@@ -10,6 +10,8 @@ class HomeHeader extends StatelessWidget {
   final String? userPhotoUrl;
   final int notificationCount;
   final TherapistPlan? plan;
+  final int? patientCount;
+  final int? patientLimit;
   final VoidCallback? onNotificationTap;
 
   const HomeHeader({
@@ -19,6 +21,8 @@ class HomeHeader extends StatelessWidget {
     this.userPhotoUrl,
     this.notificationCount = 0,
     this.plan,
+    this.patientCount,
+    this.patientLimit,
     this.onNotificationTap,
   });
 
@@ -154,23 +158,44 @@ class HomeHeader extends StatelessWidget {
                       Text(userRole, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14)),
                       if (plan != null) ...[
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: plan!.id == 0 ? Colors.amber.withOpacity(0.2) : AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: plan!.id == 0 ? Colors.amber : Colors.white.withOpacity(0.5),
-                              width: 1,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pushNamed(AppRouter.subscriptionRoute);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: plan!.id == 0 ? Colors.amber.withOpacity(0.2) : AppColors.primary.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: plan!.id == 0 ? Colors.amber : Colors.white.withOpacity(0.5),
+                                width: 1,
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            plan!.name.toUpperCase(),
-                            style: TextStyle(
-                              color: plan!.id == 0 ? Colors.amber : Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  plan!.name.toUpperCase(),
+                                  style: TextStyle(
+                                    color: plan!.id == 0 ? Colors.amber : Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                if (patientCount != null && patientLimit != null) ...[
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '($patientCount/$patientLimit)',
+                                    style: TextStyle(
+                                      color: plan!.id == 0 ? Colors.amber : Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),

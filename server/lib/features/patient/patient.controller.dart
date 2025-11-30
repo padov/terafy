@@ -1,6 +1,7 @@
 import 'package:common/common.dart';
 import 'package:postgres/postgres.dart';
 import 'package:server/features/patient/patient.repository.dart';
+import 'package:server/features/subscription/subscription.controller.dart';
 
 class PatientException implements Exception {
   final String message;
@@ -14,8 +15,9 @@ class PatientException implements Exception {
 
 class PatientController {
   final PatientRepository _repository;
+  final SubscriptionController? _subscriptionController;
 
-  PatientController(this._repository);
+  PatientController(this._repository, [this._subscriptionController]);
 
   Future<List<Patient>> listPatients({
     required int userId,
@@ -74,6 +76,20 @@ class PatientController {
     AppLogger.func();
 
     try {
+      // Valida limite de pacientes se subscription controller estiver disponível
+      if (_subscriptionController != null && !bypassRLS) {
+        final canCreate = await _subscriptionController!.canCreatePatient(userId);
+        if (!canCreate) {
+          final usage = await _subscriptionController!.getUsageInfo(userId);
+          final patientCount = usage['patient_count'] as int;
+          final patientLimit = usage['patient_limit'] as int;
+          throw PatientException(
+            'Limite de pacientes atingido. Você possui $patientCount de $patientLimit pacientes permitidos no seu plano atual. Faça upgrade para adicionar mais pacientes.',
+            403,
+          );
+        }
+      }
+
       return await _repository.createPatient(
         patient,
         userId: userId,
@@ -81,14 +97,24 @@ class PatientController {
         accountId: accountId ?? patient.therapistId,
         bypassRLS: bypassRLS,
       );
+    } on PatientException {
+      rethrow;
     } on ServerException catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       if (e.code == '23505') {
         throw PatientException('CPF já cadastrado para outro paciente.', 409);
       }
+      // Verifica se é erro de limite de pacientes (trigger do banco)
+      if (e.message.contains('Limite de pacientes atingido')) {
+        throw PatientException(e.message, 403);
+      }
       throw PatientException('Erro ao criar paciente: ${e.message}', 500);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
+      // Verifica se é erro de limite de pacientes (trigger do banco)
+      if (e.toString().contains('Limite de pacientes atingido')) {
+        throw PatientException(e.toString(), 403);
+      }
       throw PatientException('Erro ao criar paciente: ${e.toString()}', 500);
     }
   }

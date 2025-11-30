@@ -18,6 +18,7 @@ import 'package:terafy/features/sessions/session_details_page.dart';
 import 'package:terafy/features/sessions/new_session_page.dart';
 import 'package:terafy/features/sessions/session_evolution_page.dart';
 import 'package:terafy/features/profile/edit_profile_page.dart';
+import 'package:terafy/features/subscription/subscription_page.dart';
 
 class AppRouter {
   static const String splashRoute = '/';
@@ -40,6 +41,7 @@ class AppRouter {
   static const String newSessionRoute = '/session/new';
   static const String sessionEvolutionRoute = '/session/evolution';
   static const String editProfileRoute = '/profile/edit';
+  static const String subscriptionRoute = '/subscription';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -60,16 +62,12 @@ class AppRouter {
       case appointmentDetailsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final appointmentId = args['appointmentId'] as String;
-        return MaterialPageRoute(
-          builder: (_) => AppointmentDetailsPage(appointmentId: appointmentId),
-        );
+        return MaterialPageRoute(builder: (_) => AppointmentDetailsPage(appointmentId: appointmentId));
       case financialRoute:
         return MaterialPageRoute(builder: (_) => const FinancialPage());
       case paymentDetailsRoute:
         final paymentId = settings.arguments as String;
-        return MaterialPageRoute(
-          builder: (_) => PaymentDetailsPage(paymentId: paymentId),
-        );
+        return MaterialPageRoute(builder: (_) => PaymentDetailsPage(paymentId: paymentId));
       case financialReportsRoute:
         return MaterialPageRoute(builder: (_) => const FinancialReportsPage());
       case patientsRoute:
@@ -77,62 +75,46 @@ class AppRouter {
       case patientDashboardRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final patientId = args['patientId'] as String;
-        return MaterialPageRoute(
-          builder: (_) => PatientDashboardPage(patientId: patientId),
-        );
+        return MaterialPageRoute(builder: (_) => PatientDashboardPage(patientId: patientId));
       case patientRegistrationRoute:
-        return MaterialPageRoute(
-          builder: (_) => const PatientRegistrationPage(),
-        );
+        return MaterialPageRoute(builder: (_) => const PatientRegistrationPage());
       case sessionsHistoryRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final patientId = args['patientId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) => SessionsHistoryPage(
-            patientId: patientId,
-            patientName: patientName,
-          ),
+          builder: (_) => SessionsHistoryPage(patientId: patientId, patientName: patientName),
         );
       case sessionDetailsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final sessionId = args['sessionId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) => SessionDetailsPage(
-            sessionId: sessionId,
-            patientName: patientName,
-          ),
+          builder: (_) => SessionDetailsPage(sessionId: sessionId, patientName: patientName),
         );
       case newSessionRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final patientId = args['patientId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) =>
-              NewSessionPage(patientId: patientId, patientName: patientName),
+          builder: (_) => NewSessionPage(patientId: patientId, patientName: patientName),
         );
       case sessionEvolutionRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final sessionId = args['sessionId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) => SessionEvolutionPage(
-            sessionId: sessionId,
-            patientName: patientName,
-          ),
+          builder: (_) => SessionEvolutionPage(sessionId: sessionId, patientName: patientName),
         );
       case editProfileRoute:
         return MaterialPageRoute(builder: (_) => const EditProfilePage());
+      case subscriptionRoute:
+        return MaterialPageRoute(builder: (_) => const SubscriptionPage());
       // case forgotPasswordRoute:
       //   return MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
       default:
         return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('Nenhuma rota definida para ${settings.name}'),
-            ),
-          ),
+          builder: (_) => Scaffold(body: Center(child: Text('Nenhuma rota definida para ${settings.name}'))),
         );
     }
   }

@@ -65,6 +65,8 @@ class HomeData extends Equatable {
   final int notificationCount;
   final String? therapistName;
   final TherapistPlan? plan;
+  final int? patientCount;
+  final int? patientLimit;
   final DailyStats stats;
   final List<Appointment> todayAppointments;
   final List<Reminder> reminders;
@@ -78,6 +80,8 @@ class HomeData extends Equatable {
     this.notificationCount = 0,
     this.therapistName,
     this.plan,
+    this.patientCount,
+    this.patientLimit,
     required this.stats,
     required this.todayAppointments,
     required this.reminders,
@@ -93,6 +97,8 @@ class HomeData extends Equatable {
     notificationCount,
     therapistName,
     plan,
+    patientCount,
+    patientLimit,
     stats,
     todayAppointments,
     reminders,
@@ -107,12 +113,7 @@ class TherapistPlan extends Equatable {
   final double price;
   final int patientLimit;
 
-  const TherapistPlan({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.patientLimit,
-  });
+  const TherapistPlan({required this.id, required this.name, required this.price, required this.patientLimit});
 
   @override
   List<Object?> get props => [id, name, price, patientLimit];
@@ -132,12 +133,7 @@ class DailyStats extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-    todayPatients,
-    pendingAppointments,
-    monthlyRevenue,
-    completionRate,
-  ];
+  List<Object?> get props => [todayPatients, pendingAppointments, monthlyRevenue, completionRate];
 }
 
 class Appointment extends Equatable {
@@ -158,14 +154,7 @@ class Appointment extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-    id,
-    patientName,
-    time,
-    serviceType,
-    status,
-    startTime,
-  ];
+  List<Object?> get props => [id, patientName, time, serviceType, status, startTime];
 }
 
 enum AppointmentStatus { reserved, confirmed, completed, cancelled }
@@ -176,12 +165,7 @@ class Reminder extends Equatable {
   final String description;
   final ReminderType type;
 
-  const Reminder({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.type,
-  });
+  const Reminder({required this.id, required this.title, required this.description, required this.type});
 
   @override
   List<Object?> get props => [id, title, description, type];
@@ -195,12 +179,7 @@ class RecentPatient extends Equatable {
   final String lastVisit;
   final String? photoUrl;
 
-  const RecentPatient({
-    required this.id,
-    required this.name,
-    required this.lastVisit,
-    this.photoUrl,
-  });
+  const RecentPatient({required this.id, required this.name, required this.lastVisit, this.photoUrl});
 
   @override
   List<Object?> get props => [id, name, lastVisit, photoUrl];
