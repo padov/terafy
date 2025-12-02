@@ -1,23 +1,23 @@
 # Testes de Integração - Terafy Backend
 
-Este documento descreve como executar os testes de integração que usam o banco de dados real.
+Este documento descreve como executar os testes de integração que testam **endpoints HTTP completos** com o banco de dados real.
 
 ## 🎯 O que são Testes de Integração?
 
-Os testes de integração testam a aplicação **com o banco de dados real**, validando:
+Os testes de integração testam a aplicação **end-to-end via HTTP**, validando:
 
-- ✅ **Constraints do banco** (UNIQUE, CHECK, FOREIGN KEY)
-- ✅ **ENUMs** (valores permitidos)
-- ✅ **RLS (Row Level Security)** - políticas de segurança
-- ✅ **Triggers** (se houver)
-- ✅ **Integridade referencial**
-- ✅ **Comportamento real** da aplicação + banco
+- ✅ **Endpoints HTTP completos** (rotas, middlewares, handlers)
+- ✅ **Autenticação e autorização** (JWT, roles, RLS)
+- ✅ **Constraints do banco** (UNIQUE, CHECK, FOREIGN KEY) via respostas HTTP
+- ✅ **ENUMs** (valores permitidos) via validação de entrada
+- ✅ **RLS (Row Level Security)** via tokens diferentes
+- ✅ **Fluxos completos** como o cliente usa a API
 
 ## 📋 Pré-requisitos
 
 1. **PostgreSQL rodando** (via Docker ou local)
-2. **Banco de teste criado**: `terafy_test_db`
-3. **Migrations executadas** no banco de teste
+2. **Banco de teste criado**: `terafy_test_db` (criado automaticamente)
+3. **Migrations executadas** no banco de teste (executadas automaticamente)
 
 ## 🗄️ Banco de Dados de Teste
 
@@ -32,37 +32,21 @@ As credenciais padrão são:
 - **User**: `postgres`
 - **Password**: `mysecretpassword`
 
-Para alterar, edite `test/features/auth/helpers/integration_test_db.dart`
+Para alterar, edite `test/helpers/integration_test_db.dart`
 
 ## 🚀 Como Executar
 
-### 1. Criar o Banco de Teste
-
-O helper cria automaticamente, mas você pode criar manualmente:
-
-```bash
-psql -U postgres -c "CREATE DATABASE terafy_test_db;"
-```
-
-### 2. Executar Migrations
-
-O helper executa automaticamente, mas você pode executar manualmente:
-
-```bash
-# Via dbmate (se configurado)
-dbmate --env-file server/.env --migrations-dir server/db/migrations --database-url "postgres://postgres:mysecretpassword@localhost:5432/terafy_test_db?sslmode=disable" up
-
-# Ou manualmente via psql
-psql -U postgres -d terafy_test_db -f server/db/migrations/[arquivo].sql
-```
-
-### 3. Executar Testes de Integração
+### Executar Testes de Integração
 
 ```bash
 cd server
 
 # Todos os testes de integração
 dart test test/features/auth/auth.integration_test.dart
+dart test test/features/therapist/therapist.integration_test.dart
+dart test test/features/session/session.integration_test.dart
+dart test test/features/financial/financial.integration_test.dart
+dart test test/features/schedule/schedule.integration_test.dart
 
 # Com output detalhado
 dart test test/features/auth/auth.integration_test.dart --reporter expanded
@@ -72,87 +56,115 @@ dart test test/features/auth/auth.integration_test.dart --reporter expanded
 
 ```
 test/
+├── helpers/
+│   ├── integration_test_db.dart      # Helper para banco de teste
+│   ├── test_server_setup.dart       # Setup do servidor HTTP completo
+│   └── http_test_helpers.dart       # Helpers para requisições HTTP
 └── features/
     └── auth/
-        ├── auth.integration_test.dart    # Testes de integração
+        ├── auth.integration_test.dart    # Testes de integração HTTP
         ├── auth.controller_test.dart     # Testes unitários (mocks)
-        ├── auth.handler_test.dart        # Testes unitários (mocks)
-        └── helpers/
-            ├── integration_test_db.dart  # Helper para banco de teste
-            └── test_auth_repositories.dart # Mocks para testes unitários
+        └── auth.handler_test.dart        # Testes unitários (mocks)
 ```
 
 ## 🔄 Fluxo dos Testes
 
 1. **setUpAll**: Executa uma vez antes de todos os testes
    - Cria banco `terafy_test_db` se não existir
-   - Executa todas as migrations
+   - **Busca migrations automaticamente** da pasta `db/migrations/`
+   - Executa todas as migrations na ordem
    - Limpa dados iniciais
 
 2. **setUp**: Executa antes de cada teste
    - Limpa todas as tabelas
-   - Cria novas conexões e repositories
+   - Cria Handler HTTP completo (igual ao servidor real)
+   - Cria usuários de teste e obtém tokens
 
 3. **Teste**: Executa o teste
-   - Usa banco real
-   - Valida constraints, ENUMs, RLS, etc.
+   - Faz requisições HTTP reais
+   - Valida respostas HTTP (status codes, JSON)
+   - Testa middlewares (CORS, auth, logging)
+   - Valida constraints/RLS/ENUMs indiretamente via API
 
 4. **tearDown**: Executa após cada teste
    - Limpa todas as tabelas novamente
 
 ## ✅ O que é Testado
 
-### Login
-- ✅ Criação de tokens no banco
-- ✅ Atualização de `lastLoginAt`
-- ✅ Constraints de email único
-- ✅ Constraints de `account_type` e `account_id`
+### Auth (`/auth/*`)
+- ✅ `POST /auth/register` - Criação de usuário e tokens
+- ✅ `POST /auth/login` - Login e geração de tokens
+- ✅ `POST /auth/refresh` - Renovação de access token
+- ✅ `GET /auth/me` - Dados do usuário autenticado
+- ✅ `POST /auth/logout` - Revogação de tokens
+- ✅ Validação de email único (via 409 Conflict)
+- ✅ Validação de dados obrigatórios (via 400 Bad Request)
 
-### Registro
-- ✅ Criação de usuário no banco
-- ✅ Criação de refresh token no banco
-- ✅ Validação de ENUMs (`user_role`, `account_status`)
+### Therapist (`/therapists/*`)
+- ✅ `POST /therapists/me` - Criação de therapist
+- ✅ `GET /therapists/me` - Busca therapist do usuário
+- ✅ `PUT /therapists/me` - Atualização de therapist
+- ✅ `GET /therapists` - Lista todos (admin only)
+- ✅ RLS via API (therapist vê apenas seus dados)
+- ✅ Validação de email único (via 409 Conflict)
 
-### Refresh Token
-- ✅ Renovação usando token do banco
-- ✅ Validação de token revogado
-- ✅ Atualização de `last_used_at`
+### Session (`/sessions/*`)
+- ✅ `POST /sessions` - Criação de sessão
+- ✅ `GET /sessions` - Lista sessões
+- ✅ `GET /sessions/next-number` - Próximo número de sessão
 
-### Logout
-- ✅ Revogação de refresh token no banco
-- ✅ Adição de access token à blacklist
+### Financial (`/financial/*`)
+- ✅ `POST /financial` - Criação de transação
+- ✅ `GET /financial` - Lista transações
+- ✅ `GET /financial/summary` - Resumo financeiro
 
-### Validações do Banco
-- ✅ ENUM `user_role` (therapist, patient, admin)
-- ✅ ENUM `account_status` (active, suspended, canceled)
-- ✅ Constraint de email único
-- ✅ Constraint de `account_type` e `account_id`
+### Schedule (`/schedule/*`)
+- ✅ `GET /schedule/settings` - Configurações de agenda
+- ✅ `GET /schedule/appointments` - Lista agendamentos
+- ✅ `POST /schedule/appointments` - Cria agendamento
+
+## 🆕 Mudanças da Nova Estrutura
+
+### Antes (Repository/Controller)
+- Testava Repository/Controller diretamente
+- Não testava rotas, middlewares, validação HTTP
+- Código duplicado em helpers
+
+### Agora (HTTP Endpoints)
+- ✅ Testa endpoints HTTP completos
+- ✅ Testa middlewares (CORS, auth, logging)
+- ✅ Testa rotas e validação de entrada
+- ✅ Helpers centralizados em `test/helpers/`
+- ✅ Migrations descobertas automaticamente
+- ✅ Mais realista (como o cliente usa)
 
 ## ⚠️ Importante
 
 1. **Banco Separado**: Os testes usam `terafy_test_db`, não `terafy_db`
 2. **Dados Limpos**: Cada teste começa com banco limpo
-3. **Migrations**: São executadas automaticamente no `setUpAll`
-4. **RLS**: Testes validam políticas de Row Level Security
+3. **Migrations Automáticas**: São descobertas e executadas automaticamente
+4. **RLS**: Testes validam políticas de Row Level Security via tokens diferentes
+5. **Constraints**: Validadas indiretamente via respostas HTTP (400/409)
 
 ## 🔧 Troubleshooting
 
 ### Erro: "database does not exist"
+O helper cria automaticamente, mas você pode criar manualmente:
 ```bash
-# Cria o banco manualmente
 psql -U postgres -c "CREATE DATABASE terafy_test_db;"
 ```
 
 ### Erro: "relation does not exist"
+As migrations são executadas automaticamente. Se falhar:
 ```bash
-# Executa migrations manualmente
 cd server
-dart run test/features/auth/helpers/integration_test_db.dart
+# Verifica se migrations existem
+ls db/migrations/
 ```
 
 ### Erro de conexão
 - Verifique se PostgreSQL está rodando
-- Verifique credenciais em `integration_test_db.dart`
+- Verifique credenciais em `test/helpers/integration_test_db.dart`
 - Verifique se porta 5432 está acessível
 
 ## 📊 Comparação: Unitários vs Integração
@@ -160,15 +172,17 @@ dart run test/features/auth/helpers/integration_test_db.dart
 | Aspecto | Testes Unitários | Testes de Integração |
 |---------|------------------|----------------------|
 | **Banco** | ❌ Mocks em memória | ✅ PostgreSQL real |
+| **HTTP** | ❌ Não testa | ✅ Testa endpoints completos |
+| **Middlewares** | ❌ Não testa | ✅ Testa CORS, auth, logging |
+| **Rotas** | ❌ Não testa | ✅ Testa rotas e parâmetros |
 | **Velocidade** | ⚡ Muito rápidos | 🐢 Mais lentos |
-| **Constraints** | ❌ Não testa | ✅ Testa |
-| **RLS** | ❌ Não testa | ✅ Testa |
-| **ENUMs** | ❌ Não testa | ✅ Testa |
+| **Constraints** | ❌ Não testa | ✅ Testa via HTTP |
+| **RLS** | ❌ Não testa | ✅ Testa via tokens |
+| **ENUMs** | ❌ Não testa | ✅ Testa via validação |
 | **Isolamento** | ✅ Total | ⚠️ Depende do banco |
 
 ## 💡 Recomendação
 
 - **Desenvolvimento**: Use testes unitários (rápidos)
 - **CI/CD**: Execute ambos (unitários + integração)
-- **Validação**: Use integração para validar regras do banco
-
+- **Validação**: Use integração para validar API completa

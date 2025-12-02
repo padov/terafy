@@ -9,7 +9,7 @@ help: ## Display this help.
 .PHONY: up
 up: ## Start PostgreSQL container for local development.
 	@echo "Starting PostgreSQL container for local development..."
-	@docker compose up -d
+	cd docker && docker compose up -d
 
 .PHONY: down
 down: ## Stop and remove PostgreSQL container.

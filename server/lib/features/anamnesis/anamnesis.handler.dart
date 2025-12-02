@@ -48,6 +48,8 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       return successResponse(anamnesis.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao buscar anamnese: ${e.toString()}');
@@ -84,6 +86,8 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       return successResponse(anamnesis.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao buscar anamnese: ${e.toString()}');
@@ -103,11 +107,10 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       final body = await request.readAsString();
-      if (body.trim().isEmpty) {
-        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido ou corpo da requisição vazio');
       }
-
-      final data = jsonDecode(body) as Map<String, dynamic>;
 
       final patientId = _readInt(data, ['patientId', 'patient_id']);
       if (patientId == null) {
@@ -140,6 +143,8 @@ class AnamnesisHandler extends BaseHandler {
       );
 
       return createdResponse(created.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao criar anamnese: ${e.toString()}');
@@ -176,11 +181,10 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       final body = await request.readAsString();
-      if (body.trim().isEmpty) {
-        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido ou corpo da requisição vazio');
       }
-
-      final data = jsonDecode(body) as Map<String, dynamic>;
 
       final updatedAnamnesis = _anamnesisFromRequestMap(
         data: data,
@@ -203,6 +207,8 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       return successResponse(result.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao atualizar anamnese: ${e.toString()}');
@@ -235,6 +241,8 @@ class AnamnesisHandler extends BaseHandler {
       );
 
       return successResponse({'message': 'Anamnese removida com sucesso'});
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao remover anamnese: ${e.toString()}');
@@ -283,6 +291,8 @@ class AnamnesisHandler extends BaseHandler {
       );
 
       return successResponse(templates.map((template) => template.toJson()).toList());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao listar templates: ${e.toString()}');
@@ -319,6 +329,8 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       return successResponse(template.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao buscar template: ${e.toString()}');
@@ -338,11 +350,10 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       final body = await request.readAsString();
-      if (body.trim().isEmpty) {
-        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido ou corpo da requisição vazio');
       }
-
-      final data = jsonDecode(body) as Map<String, dynamic>;
 
       int? therapistId = _readInt(data, ['therapistId', 'therapist_id']);
 
@@ -366,6 +377,8 @@ class AnamnesisHandler extends BaseHandler {
       );
 
       return createdResponse(created.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao criar template: ${e.toString()}');
@@ -402,11 +415,10 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       final body = await request.readAsString();
-      if (body.trim().isEmpty) {
-        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido ou corpo da requisição vazio');
       }
-
-      final data = jsonDecode(body) as Map<String, dynamic>;
 
       final updatedTemplate = _templateFromRequestMap(data: data, therapistId: existing.therapistId, base: existing);
 
@@ -424,6 +436,8 @@ class AnamnesisHandler extends BaseHandler {
       }
 
       return successResponse(result.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao atualizar template: ${e.toString()}');
@@ -456,6 +470,8 @@ class AnamnesisHandler extends BaseHandler {
       );
 
       return successResponse({'message': 'Template removido com sucesso'});
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao remover template: ${e.toString()}');
@@ -540,6 +556,21 @@ class AnamnesisHandler extends BaseHandler {
       createdAt: base?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
+  }
+
+  /// Faz o parse do body da requisição de forma segura
+  /// Retorna null se o JSON for inválido
+  static Map<String, dynamic>? _parseRequestBody(String body) {
+    if (body.trim().isEmpty) {
+      return null;
+    }
+    try {
+      return jsonDecode(body) as Map<String, dynamic>?;
+    } on FormatException {
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   static String? _readString(Map<String, dynamic> data, List<String> keys) {

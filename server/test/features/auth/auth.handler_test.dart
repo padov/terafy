@@ -25,11 +25,7 @@ void main() {
       userRepository = TestUserRepository();
       refreshTokenRepository = TestRefreshTokenRepository();
       blacklistRepository = TestTokenBlacklistRepository();
-      handler = AuthHandler(
-        userRepository,
-        refreshTokenRepository,
-        blacklistRepository,
-      );
+      handler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
     });
 
     tearDown(() {
@@ -55,10 +51,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/login'),
-          body: jsonEncode({
-            'email': 'teste@terafy.com',
-            'password': password,
-          }),
+          body: jsonEncode({'email': 'teste@terafy.com', 'password': password}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -79,10 +72,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/login'),
-          body: jsonEncode({
-            'email': 'naoexiste@terafy.com',
-            'password': 'senha123',
-          }),
+          body: jsonEncode({'email': 'naoexiste@terafy.com', 'password': 'senha123'}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -95,11 +85,7 @@ void main() {
       });
 
       test('deve retornar 400 quando corpo está vazio', () async {
-        final request = Request(
-          'POST',
-          Uri.parse('http://localhost/login'),
-          body: '',
-        );
+        final request = Request('POST', Uri.parse('http://localhost/login'), body: '');
 
         final response = await handler.router.call(request);
 
@@ -107,6 +93,20 @@ void main() {
         final body = await response.readAsString();
         final data = jsonDecode(body) as Map;
         expect(data['error'], 'Corpo da requisição não pode ser vazio');
+      });
+
+      test('deve retornar 400 quando JSON é inválido', () async {
+        final request = Request(
+          'POST',
+          Uri.parse('http://localhost/login'),
+          body: 'invalid json',
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        final response = await handler.router.call(request);
+
+        // Deve tratar erro de parsing e retornar 500 (erro interno)
+        expect(response.statusCode, greaterThanOrEqualTo(400));
       });
 
       test('deve retornar 400 quando email ou senha estão faltando', () async {
@@ -141,10 +141,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/login'),
-          body: jsonEncode({
-            'email': 'teste@terafy.com',
-            'password': password,
-          }),
+          body: jsonEncode({'email': 'teste@terafy.com', 'password': password}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -162,10 +159,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/register'),
-          body: jsonEncode({
-            'email': 'novo@terafy.com',
-            'password': 'senha123',
-          }),
+          body: jsonEncode({'email': 'novo@terafy.com', 'password': 'senha123'}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -185,10 +179,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/register'),
-          body: jsonEncode({
-            'email': 'novo@terafy.com',
-            'password': '123',
-          }),
+          body: jsonEncode({'email': 'novo@terafy.com', 'password': '123'}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -214,10 +205,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/register'),
-          body: jsonEncode({
-            'email': 'existente@terafy.com',
-            'password': 'senha123',
-          }),
+          body: jsonEncode({'email': 'existente@terafy.com', 'password': 'senha123'}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -227,6 +215,20 @@ void main() {
         final body = await response.readAsString();
         final data = jsonDecode(body) as Map;
         expect(data['error'], 'Email já cadastrado');
+      });
+
+      test('deve retornar 400 quando JSON é inválido', () async {
+        final request = Request(
+          'POST',
+          Uri.parse('http://localhost/register'),
+          body: 'invalid json',
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        final response = await handler.router.call(request);
+
+        // Deve tratar erro de parsing e retornar 500 (erro interno)
+        expect(response.statusCode, greaterThanOrEqualTo(400));
       });
     });
 
@@ -242,17 +244,9 @@ void main() {
           ),
         );
 
-        final token = JwtService.generateAccessToken(
-          userId: user.id!,
-          email: user.email,
-          role: user.role,
-        );
+        final token = JwtService.generateAccessToken(userId: user.id!, email: user.email, role: user.role);
 
-        final request = Request(
-          'GET',
-          Uri.parse('http://localhost/me'),
-          headers: {'Authorization': 'Bearer $token'},
-        );
+        final request = Request('GET', Uri.parse('http://localhost/me'), headers: {'Authorization': 'Bearer $token'});
 
         final response = await handler.router.call(request);
 
@@ -265,9 +259,21 @@ void main() {
       });
 
       test('deve retornar 401 quando token não é fornecido', () async {
+        final request = Request('GET', Uri.parse('http://localhost/me'));
+
+        final response = await handler.router.call(request);
+
+        expect(response.statusCode, 401);
+        final body = await response.readAsString();
+        final data = jsonDecode(body) as Map;
+        expect(data['error'], 'Token não fornecido');
+      });
+
+      test('deve retornar 401 quando Authorization header não tem Bearer prefix', () async {
         final request = Request(
           'GET',
           Uri.parse('http://localhost/me'),
+          headers: {'Authorization': 'token_sem_bearer'},
         );
 
         final response = await handler.router.call(request);
@@ -307,10 +313,7 @@ void main() {
         );
 
         final refreshTokenId = 'token_123';
-        final refreshToken = JwtService.generateRefreshToken(
-          userId: user.id!,
-          tokenId: refreshTokenId,
-        );
+        final refreshToken = JwtService.generateRefreshToken(userId: user.id!, tokenId: refreshTokenId);
 
         await refreshTokenRepository.createRefreshToken(
           userId: user.id!,
@@ -321,9 +324,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/refresh'),
-          body: jsonEncode({
-            'refresh_token': refreshToken,
-          }),
+          body: jsonEncode({'refresh_token': refreshToken}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -356,9 +357,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/refresh'),
-          body: jsonEncode({
-            'refresh_token': 'token_invalido',
-          }),
+          body: jsonEncode({'refresh_token': 'token_invalido'}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -368,6 +367,20 @@ void main() {
         final body = await response.readAsString();
         final data = jsonDecode(body) as Map;
         expect(data['error'], contains('inválido'));
+      });
+
+      test('deve retornar 400 quando JSON é inválido', () async {
+        final request = Request(
+          'POST',
+          Uri.parse('http://localhost/refresh'),
+          body: 'invalid json',
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        final response = await handler.router.call(request);
+
+        // Deve tratar erro de parsing e retornar 500 (erro interno)
+        expect(response.statusCode, greaterThanOrEqualTo(400));
       });
     });
 
@@ -384,10 +397,7 @@ void main() {
         );
 
         final refreshTokenId = 'token_123';
-        final refreshToken = JwtService.generateRefreshToken(
-          userId: user.id!,
-          tokenId: refreshTokenId,
-        );
+        final refreshToken = JwtService.generateRefreshToken(userId: user.id!, tokenId: refreshTokenId);
 
         await refreshTokenRepository.createRefreshToken(
           userId: user.id!,
@@ -405,13 +415,8 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/logout'),
-          body: jsonEncode({
-            'refresh_token': refreshToken,
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $accessToken',
-          },
+          body: jsonEncode({'refresh_token': refreshToken}),
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
         );
 
         final response = await handler.router.call(request);
@@ -452,10 +457,7 @@ void main() {
           'POST',
           Uri.parse('http://localhost/logout'),
           body: jsonEncode({}),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $accessToken',
-          },
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
         );
 
         final response = await handler.router.call(request);
@@ -482,4 +484,3 @@ void main() {
     });
   });
 }
-

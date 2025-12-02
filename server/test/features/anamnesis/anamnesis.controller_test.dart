@@ -394,6 +394,340 @@ void main() {
         ),
       );
     });
+
+    test('createAnamnesis trata erro de constraint unique', () async {
+      when(
+        () => repository.getAnamnesisByPatientId(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => null);
+
+      when(
+        () => repository.createAnamnesis(
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('23505: duplicate key'));
+
+      await expectLater(
+        () => controller.createAnamnesis(
+          anamnesis: sampleAnamnesis,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(
+          isA<AnamnesisException>()
+              .having((e) => e.statusCode, 'statusCode', 409),
+        ),
+      );
+    });
+
+    test('getAnamnesisByPatientId trata erros do repository', () async {
+      when(
+        () => repository.getAnamnesisByPatientId(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.getAnamnesisByPatientId(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('updateAnamnesis trata erros do repository', () async {
+      when(
+        () => repository.updateAnamnesis(
+          1,
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.updateAnamnesis(
+          1,
+          anamnesis: sampleAnamnesis,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('deleteAnamnesis trata erros do repository', () async {
+      when(
+        () => repository.deleteAnamnesis(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.deleteAnamnesis(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('listTemplates trata erros do repository', () async {
+      when(
+        () => repository.getTemplates(
+          therapistId: 1,
+          category: null,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.listTemplates(
+          therapistId: 1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('getTemplateById trata erros do repository', () async {
+      when(
+        () => repository.getTemplateById(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.getTemplateById(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('createTemplate trata erros do repository', () async {
+      when(
+        () => repository.createTemplate(
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.createTemplate(
+          template: sampleTemplate,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('updateTemplate trata erros do repository', () async {
+      when(
+        () => repository.updateTemplate(
+          1,
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.updateTemplate(
+          1,
+          template: sampleTemplate,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('deleteTemplate trata erros do repository', () async {
+      when(
+        () => repository.deleteTemplate(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenThrow(Exception('Erro de conexão'));
+
+      await expectLater(
+        () => controller.deleteTemplate(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+        ),
+        throwsA(isA<AnamnesisException>()),
+      );
+    });
+
+    test('createAnamnesis usa accountId quando fornecido', () async {
+      when(
+        () => repository.getAnamnesisByPatientId(
+          1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 2,
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => null);
+
+      when(
+        () => repository.createAnamnesis(
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 2,
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => sampleAnamnesis);
+
+      await controller.createAnamnesis(
+        anamnesis: sampleAnamnesis,
+        userId: 1,
+        userRole: 'therapist',
+        accountId: 2,
+      );
+
+      verify(
+        () => repository.createAnamnesis(
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 2,
+          bypassRLS: false,
+        ),
+      ).called(1);
+    });
+
+    test('listTemplates com categoria filtra corretamente', () async {
+      when(
+        () => repository.getTemplates(
+          therapistId: 1,
+          category: 'adult',
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => [sampleTemplate]);
+
+      final result = await controller.listTemplates(
+        therapistId: 1,
+        category: 'adult',
+        userId: 1,
+        userRole: 'therapist',
+        accountId: 1,
+      );
+
+      expect(result, hasLength(1));
+      verify(
+        () => repository.getTemplates(
+          therapistId: 1,
+          category: 'adult',
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).called(1);
+    });
+
+    test('updateAnamnesis retorna null quando repository retorna null', () async {
+      when(
+        () => repository.updateAnamnesis(
+          1,
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => null);
+
+      final result = await controller.updateAnamnesis(
+        1,
+        anamnesis: sampleAnamnesis,
+        userId: 1,
+        userRole: 'therapist',
+        accountId: 1,
+      );
+
+      expect(result, isNull);
+    });
+
+    test('updateTemplate retorna null quando repository retorna null', () async {
+      when(
+        () => repository.updateTemplate(
+          1,
+          any(),
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => null);
+
+      final result = await controller.updateTemplate(
+        1,
+        template: sampleTemplate,
+        userId: 1,
+        userRole: 'therapist',
+        accountId: 1,
+      );
+
+      expect(result, isNull);
+    });
   });
 }
 

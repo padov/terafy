@@ -1,251 +1,525 @@
-# Como Rodar os Testes Manualmente
+# 🧪 Como Rodar os Testes - Guia Completo
 
-Este guia mostra como executar cada tipo de teste do módulo de Login.
+Este guia explica como executar todos os tipos de testes do projeto Terafy.
 
-## 📋 Tipos de Testes
+## 📋 Índice
 
-1. **Testes Unitários do BLoC** - Testam a lógica de negócio
-2. **Testes de Integração** - Testam a UI completa e interações
-3. **Testes de Widget** - Testam componentes isolados (em desenvolvimento)
-
----
-
-## 1️⃣ Testes Unitários do BLoC
-
-Testam a lógica de negócio, estados e eventos do `LoginBloc`.
-
-### Rodar todos os testes do BLoC:
-```bash
-cd app
-flutter test test/features/login/bloc/
-```
-
-### Rodar um arquivo específico:
-```bash
-# Testes principais do login
-flutter test test/features/login/bloc/login_bloc_test.dart
-
-# Testes de refresh token
-flutter test test/features/login/bloc/login_bloc_refresh_test.dart
-```
-
-### Rodar um teste específico:
-```bash
-# Por nome do teste
-flutter test test/features/login/bloc/login_bloc_test.dart --plain-name "Login com credenciais válidas"
-```
-
-### Ver saída detalhada:
-```bash
-flutter test test/features/login/bloc/login_bloc_test.dart --reporter expanded
-```
+1. [Testes Rápidos](#testes-rápidos)
+2. [Testes do Backend](#testes-do-backend)
+3. [Testes do Frontend](#testes-do-frontend)
+4. [Testes de Integração](#testes-de-integração)
+5. [Cobertura de Código](#cobertura-de-código)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 2️⃣ Testes de Integração
+## 🚀 Testes Rápidos
 
-Testam a UI completa, navegação, interações e **validam alterações visuais**.
+### Executar Todos os Testes (Backend + Frontend)
 
-### ⚠️ Pré-requisitos:
-- Backend rodando em `http://localhost:8080`
-- Banco de dados com migrations executadas
-- Usuário de teste criado (ou criar durante os testes)
+```bash
+# Na raiz do projeto
+./scripts/run-all-tests.sh
+```
 
-### Rodar testes de integração:
+Este comando executa:
+- ✅ Todos os testes do backend
+- ✅ Todos os testes do frontend
+- ✅ Validação de cobertura mínima (80%)
+- ✅ Geração de relatórios LCOV
+
+**Tempo estimado:** 2-5 minutos
+
+---
+
+## 📦 Testes do Backend
+
+### Todos os Testes do Backend
+
+```bash
+# Opção 1: Script automatizado (recomendado)
+./deploy/run-backend-tests.sh
+
+# Opção 2: Comando direto
+cd server
+dart pub get
+dart test
+```
+
+### Testes Específicos
+
+```bash
+cd server
+
+# Testes de uma feature específica
+dart test test/features/therapist/ --fail-fast
+dart test test/features/schedule/ --fail-fast
+dart test test/features/auth/ --fail-fast
+dart test test/features/patient/ --fail-fast
+dart test test/features/session/ --fail-fast
+dart test test/features/financial/ --fail-fast
+
+# Todas as features
+dart test test/features/ --fail-fast
+
+# Teste de um arquivo específico
+dart test test/features/therapist/therapist.repository_test.dart
+
+# Testes de repository
+dart test test/features/*/**.repository_test.dart
+
+# Testes de controller
+dart test test/features/*/**.controller_test.dart
+
+# Testes de handler
+dart test test/features/*/**.handler_test.dart
+
+# Testes de integração
+dart test test/features/*/**.integration_test.dart
+```
+
+### Testes com Cobertura
+
+```bash
+cd server
+dart test --coverage=coverage
+```
+
+### Ver Relatório de Cobertura
+
+```bash
+cd server
+
+# Gerar relatório LCOV
+dart pub global activate coverage
+dart pub global run coverage:format_coverage \
+    --lcov \
+    --in=coverage \
+    --out=coverage/lcov.info \
+    --packages=.dart_tool/package_config.json \
+    --report-on=lib
+
+# Gerar HTML (requer lcov instalado)
+brew install lcov  # macOS
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+```
+
+---
+
+## 📱 Testes do Frontend
+
+### Todos os Testes do Frontend
+
+```bash
+# Opção 1: Script automatizado (recomendado)
+./deploy/run-frontend-tests.sh
+
+# Opção 2: Comando direto
+cd app
+flutter pub get
+flutter test
+```
+
+### Testes Específicos
+
 ```bash
 cd app
-flutter test integration_test/login_visual_test.dart
+
+# Testes de uma feature específica
+flutter test test/features/home/
+
+# Teste de um arquivo específico
+flutter test test/features/home/bloc/home_bloc_test.dart
+
+# Testes de BLoCs
+flutter test test/features/*/bloc/*_bloc_test.dart
+
+# Testes de widgets
+flutter test test/features/*/widgets/*_widgets_test.dart
 ```
 
-### Rodar um teste específico:
+### Testes com Cobertura
+
 ```bash
-# Com --no-pub para acelerar (não reinstala dependências)
-flutter test integration_test/login_visual_test.dart --no-pub --plain-name "1.1.1 - Login with valid credentials"
+cd app
+flutter test --coverage
 ```
 
-### Ver saída detalhada:
+### Ver Relatório de Cobertura
+
 ```bash
-flutter test integration_test/login_visual_test.dart --reporter expanded
+cd app
+
+# O Flutter já gera lcov.info automaticamente
+# Para visualizar HTML (requer lcov instalado)
+brew install lcov  # macOS
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
 ```
 
-### Rodar em um dispositivo/emulador específico:
+---
+
+## 🔗 Testes de Integração
+
+### Testes de Integração do Backend
+
+Os testes de integração do backend usam um banco de dados PostgreSQL real.
+
+**Pré-requisitos:**
+- PostgreSQL rodando
+- Banco de dados de teste configurado
+- Variáveis de ambiente configuradas
+
 ```bash
+cd server
+
+# Executar todos os testes de integração
+dart test test/features/*/**.integration_test.dart
+
+# Executar teste específico
+dart test test/features/therapist/therapist.integration_test.dart
+```
+
+### Testes de Integração do Frontend
+
+Os testes de integração do frontend testam fluxos completos end-to-end.
+
+**Pré-requisitos:**
+- Backend rodando (`make server-dev`)
+- Usuário de teste criado (`make create-test-user`)
+- Dispositivo/emulador conectado
+
+```bash
+cd app
+
 # Listar dispositivos disponíveis
 flutter devices
 
-# Rodar em um dispositivo específico
-flutter test integration_test/login_visual_test.dart -d <device-id>
+# Executar todos os testes de integração
+flutter test integration_test/
+
+# Executar teste específico
+flutter test integration_test/login_visual_test.dart
+
+# Executar em dispositivo específico
+flutter test integration_test/login_visual_test.dart -d chrome
+flutter test integration_test/login_visual_test.dart -d macos
+flutter test integration_test/login_visual_test.dart -d emulator-5554
 ```
+
+### Testes de Integração Rápidos (com --no-pub)
+
+Para acelerar testes durante desenvolvimento:
+
+```bash
+cd app
+flutter test integration_test/login_visual_test.dart --no-pub
+```
+
+**⚠️ Nota:** Use `--no-pub` apenas se as dependências não mudaram.
 
 ---
 
-## 3️⃣ Testes de Widget
+## 📊 Cobertura de Código
 
-Testam componentes isolados da UI (atualmente com problemas de setup).
+### Gerar Relatórios Completos
 
-### ⚠️ Nota:
-Os testes de widget estão em desenvolvimento e podem ter problemas de setup devido às dependências do `DependencyContainer`.
-
-### Tentar rodar:
 ```bash
-cd app
-flutter test test/features/login/widgets/login_form_widget_test.dart
+# Na raiz do projeto
+./scripts/generate-coverage-report.sh
+```
+
+Este script:
+- ✅ Executa testes com cobertura (backend + frontend)
+- ✅ Gera relatórios LCOV
+- ✅ Gera relatórios HTML (se lcov estiver instalado)
+- ✅ Valida threshold mínimo (80%)
+- ✅ Exibe resumo de cobertura
+
+### Ver Cobertura por Feature
+
+Para ver a cobertura detalhada por feature/diretório:
+
+```bash
+# Backend
+./scripts/show-coverage-by-feature.sh backend
+
+# Frontend
+./scripts/show-coverage-by-feature.sh frontend
+```
+
+Este comando mostra uma tabela com:
+- Cobertura de cada feature (auth, therapist, financial, etc.)
+- Número de arquivos e linhas cobertas
+- Porcentagem de cobertura com indicadores visuais:
+  - ✅ 80% ou mais
+  - ⚠️  Entre 50% e 79%
+  - ❌ Menos de 50%
+
+### Visualizar Relatórios HTML
+
+Para visualizar relatórios HTML completos (requer `lcov`):
+
+```bash
+# Instalar lcov (se necessário)
+brew install lcov  # macOS
+sudo apt-get install lcov  # Linux
+
+# Gerar relatórios HTML
+./scripts/generate-coverage-report.sh
+
+# Abrir relatórios
+open coverage-reports/backend/html/index.html
+open coverage-reports/frontend/html/index.html
+
+# Ou gerar manualmente
+cd server
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+```
+
+### Threshold Mínimo
+
+O projeto exige **mínimo de 80% de cobertura**. Os scripts validam automaticamente:
+
+```bash
+# Backend - falha se cobertura < 80%
+./deploy/run-backend-tests.sh
+
+# Frontend - falha se cobertura < 80%
+./deploy/run-frontend-tests.sh
 ```
 
 ---
 
 ## 🎯 Comandos Úteis
 
-### Rodar TODOS os testes de login:
+### Executar Testes em Modo Watch (Backend)
+
 ```bash
-cd app
-flutter test test/features/login/
+cd server
+dart test --watch
 ```
 
-### Rodar TODOS os testes do projeto:
+### Executar Testes em Modo Watch (Frontend)
+
 ```bash
 cd app
-flutter test
+flutter test --watch
 ```
 
-### Rodar com cobertura:
+### Executar Apenas Testes que Falharam
+
 ```bash
+# Backend
+cd server
+dart test --reporter expanded
+
+# Frontend
 cd app
-flutter test --coverage
-```
-
-### Ver relatório de cobertura:
-```bash
-cd app
-# Após rodar com --coverage, o arquivo será gerado em:
-# coverage/lcov.info
-# 
-# Para visualizar, instale lcov e gere HTML:
-# brew install lcov
-# genhtml coverage/lcov.info -o coverage/html
-# open coverage/html/index.html
-```
-
-### Rodar apenas testes que falharam:
-```bash
 flutter test --reporter expanded
 ```
 
-### Rodar testes em modo verbose:
+### Executar Testes com Output Detalhado
+
 ```bash
+# Backend
+cd server
+dart test --reporter expanded
+
+# Frontend
+cd app
 flutter test --verbose
 ```
 
----
+### Executar Teste Específico por Nome
 
-## 📊 Resumo Rápido
-
-| Tipo de Teste | Comando | Valida Visual? |
-|---------------|---------|---------------|
-| **Unitário (BLoC)** | `flutter test test/features/login/bloc/` | ❌ Não |
-| **Integração** | `flutter test integration_test/login_visual_test.dart` | ✅ Sim |
-| **Widget** | `flutter test test/features/login/widgets/` | ✅ Sim (em dev) |
-
----
-
-## 🔍 Debugging
-
-### Ver logs detalhados:
 ```bash
-flutter test --verbose test/features/login/bloc/login_bloc_test.dart
-```
+# Backend
+cd server
+dart test --name "deve criar therapist com dados válidos"
 
-### Rodar um teste específico e parar no primeiro erro:
-```bash
-flutter test test/features/login/bloc/login_bloc_test.dart --stop-on-first-failure
-```
-
-### ⚡ Acelerar Testes de Integração
-
-**Importante**: O Flutter não tem uma flag `--keep-app-running` nativa, mas você pode otimizar:
-
-#### Opção 1: Usar `--no-pub` (evita reinstalar dependências)
-```bash
-flutter test integration_test/login_visual_test.dart --no-pub --plain-name "1.1.1 - Login with valid credentials"
-```
-
-#### Opção 2: Rodar múltiplos testes de uma vez (app inicia uma vez)
-```bash
-# Roda todos os testes do arquivo (mais rápido que rodar um por vez)
-flutter test integration_test/login_visual_test.dart --no-pub
-```
-
-#### Opção 3: Usar `flutter drive` (melhor para desenvolvimento iterativo)
-```bash
-# Primeiro, inicie o app manualmente ou use um script
-# Depois, rode os testes com driver customizado
-flutter drive \
-  --driver=test_driver/integration_test_driver.dart \
-  --target=integration_test/login_visual_test.dart \
-  --device-id=<device-id>
-```
-
-#### Opção 4: Hot Reload durante desenvolvimento
-```bash
-# 1. Inicie o app em modo debug
-flutter run
-
-# 2. Em outro terminal, rode os testes
-flutter test integration_test/login_visual_test.dart --no-pub
+# Frontend
+cd app
+flutter test --plain-name "renderiza campos de email e senha"
 ```
 
 ---
 
-## 📝 Exemplos Práticos
+## 🔧 Integração Automática
 
-### Exemplo 1: Validar que o login funciona após mudança no código
+### Git Hook (Pre-Push)
+
+Os testes são executados automaticamente antes de cada push:
+
 ```bash
-# 1. Rodar testes unitários (rápido)
-flutter test test/features/login/bloc/login_bloc_test.dart
-
-# 2. Se passou, rodar testes de integração (mais lento, mas valida visual)
-flutter test integration_test/login_visual_test.dart
+git push
+# Os testes rodam automaticamente
 ```
 
-### Exemplo 2: Testar apenas um cenário específico
+**Pular testes (não recomendado):**
 ```bash
-# Teste unitário específico
-flutter test test/features/login/bloc/login_bloc_test.dart --plain-name "Login com credenciais inválidas"
-
-# Teste de integração específico
-flutter test integration_test/login_visual_test.dart --plain-name "Login with invalid credentials"
+SKIP_TESTS=1 git push
 ```
 
-### Exemplo 3: Verificar cobertura de testes
+### Build/Deploy
+
+Os testes são executados automaticamente antes do build:
+
 ```bash
-flutter test --coverage test/features/login/
-# Ver relatório em coverage/lcov.info
+./deploy/prepare-deploy.sh
+# PASSO 0: Executa todos os testes
+# Se falharem, o build é abortado
 ```
 
 ---
 
-## 🚨 Troubleshooting
+## 🐛 Troubleshooting
 
-### Erro: "No devices found"
+### Erro: "Dart/Flutter não encontrado"
+
 ```bash
-# Para testes de integração, você precisa de um dispositivo/emulador
-flutter devices
-# Se não houver, inicie um emulador ou conecte um dispositivo físico
+# Verificar instalação
+dart --version
+flutter --version
+
+# Adicionar ao PATH (se necessário)
+export PATH="$PATH:/path/to/dart/bin"
+export PATH="$PATH:/path/to/flutter/bin"
 ```
 
-### Erro: "Backend não está rodando"
-- Certifique-se de que o backend está em `http://localhost:8080`
-- Verifique se o banco de dados está configurado corretamente
+### Erro: "Dependências não encontradas"
 
-### Erro: "DependencyContainer não inicializado"
-- Os testes de widget podem ter esse problema
-- Use os testes de integração que já têm o setup completo
+```bash
+# Backend
+cd server
+dart pub get
+
+# Frontend
+cd app
+flutter pub get
+```
+
+### Erro: "Testes de integração falhando"
+
+**Backend:**
+- Verificar se PostgreSQL está rodando
+- Verificar variáveis de ambiente em `.env`
+- Verificar se banco de teste existe
+
+**Frontend:**
+- Verificar se backend está rodando: `make server-dev`
+- Criar usuário de teste: `make create-test-user`
+- Verificar dispositivo conectado: `flutter devices`
+
+### Erro: "Cobertura abaixo do mínimo"
+
+```bash
+# Ver relatório detalhado
+./scripts/generate-coverage-report.sh
+
+# Identificar arquivos sem cobertura
+open coverage-reports/backend/html/index.html
+open coverage-reports/frontend/html/index.html
+
+# Adicionar testes para aumentar cobertura
+```
+
+### Erro: "Timeout em testes de integração"
+
+Aumentar timeout nos testes:
+
+```dart
+// No arquivo de teste
+await tester.pumpAndSettle(const Duration(seconds: 10));
+```
+
+### Limpar Cache e Reexecutar
+
+```bash
+# Backend
+cd server
+dart pub cache repair
+dart pub get
+dart test
+
+# Frontend
+cd app
+flutter clean
+flutter pub get
+flutter test
+```
 
 ---
 
-## 📚 Referências
+## 📚 Estrutura de Testes
 
-- [Flutter Testing Docs](https://docs.flutter.dev/testing)
-- [Integration Testing](https://docs.flutter.dev/testing/integration-tests)
-- [Widget Testing](https://docs.flutter.dev/testing/widget-tests)
+### Backend
 
+```
+server/test/
+├── features/
+│   ├── auth/
+│   │   ├── auth.controller_test.dart
+│   │   ├── auth.handler_test.dart
+│   │   └── auth.integration_test.dart
+│   ├── therapist/
+│   │   ├── therapist.repository_test.dart
+│   │   ├── therapist.controller_test.dart
+│   │   ├── therapist.handler_test.dart
+│   │   └── therapist.integration_test.dart
+│   └── ...
+└── helpers/
+```
+
+### Frontend
+
+```
+app/test/
+├── features/
+│   ├── login/
+│   │   ├── bloc/login_bloc_test.dart
+│   │   └── widgets/login_form_widget_test.dart
+│   ├── home/
+│   │   ├── bloc/home_bloc_test.dart
+│   │   └── widgets/home_widgets_test.dart
+│   └── ...
+app/integration_test/
+├── login_visual_test.dart
+├── patients_integration_test.dart
+└── ...
+```
+
+---
+
+## ✅ Checklist Antes de Fazer Push
+
+- [ ] Todos os testes passam localmente
+- [ ] Cobertura está acima de 80%
+- [ ] Não há warnings do linter
+- [ ] Testes de integração passam (se aplicável)
+- [ ] Documentação está atualizada
+
+---
+
+## 📖 Recursos Adicionais
+
+- [Documentação Completa de Testes](./TESTING.md)
+- [Dart Testing Guide](https://dart.dev/guides/testing)
+- [Flutter Testing Guide](https://docs.flutter.dev/testing)
+- [Integration Testing Guide](https://docs.flutter.dev/testing/integration-tests)
+
+---
+
+## 💡 Dicas
+
+1. **Use scripts automatizados**: Prefira `./scripts/run-all-tests.sh` ao invés de comandos manuais
+2. **Teste antes de commitar**: Execute testes localmente antes de fazer push
+3. **Mantenha cobertura alta**: Adicione testes para novas features
+4. **Use watch mode**: Durante desenvolvimento, use `--watch` para testes automáticos
+5. **Valide integração**: Sempre teste fluxos completos após mudanças significativas
+
+---
+
+**Última atualização:** Dezembro 2024

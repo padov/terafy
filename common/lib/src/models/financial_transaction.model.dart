@@ -115,23 +115,15 @@ class FinancialTransaction {
       amount: (json['amount'] as num).toDouble(),
       paymentMethod: json['paymentMethod'] as String,
       status: json['status'] as String,
-      dueDate: json['dueDate'] != null
-          ? DateTime.parse(json['dueDate'] as String)
-          : null,
-      paidAt: json['paidAt'] != null
-          ? DateTime.parse(json['paidAt'] as String)
-          : null,
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate'] as String) : null,
+      paidAt: json['paidAt'] != null ? DateTime.parse(json['paidAt'] as String) : null,
       receiptNumber: json['receiptNumber'] as String?,
       category: json['category'] as String,
       notes: json['notes'] as String?,
       invoiceNumber: json['invoiceNumber'] as String?,
       invoiceIssued: json['invoiceIssued'] as bool? ?? false,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : null,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : null,
     );
   }
 
@@ -157,34 +149,63 @@ class FinancialTransaction {
 
   factory FinancialTransaction.fromMap(Map<String, dynamic> map) {
     return FinancialTransaction(
-      id: map['id'] as int?,
-      therapistId: map['therapist_id'] as int,
-      patientId: map['patient_id'] as int,
-      sessionId: map['session_id'] as int?,
-      transactionDate: (map['transaction_date'] as DateTime)
-          .toLocal(), // PostgreSQL retorna TIMESTAMP WITH TIME ZONE
-      type: map['type'] as String,
-      amount: (map['amount'] as num).toDouble(),
-      paymentMethod: map['payment_method'] as String,
-      status: map['status'] as String,
-      dueDate: map['due_date'] != null
-          ? (map['due_date'] as DateTime).toLocal()
-          : null,
-      paidAt: map['paid_at'] != null
-          ? (map['paid_at'] as DateTime).toLocal()
-          : null,
-      receiptNumber: map['receipt_number'] as String?,
-      category: map['category'] as String,
-      notes: map['notes'] as String?,
-      invoiceNumber: map['invoice_number'] as String?,
-      invoiceIssued: (map['invoice_issued'] as bool?) ?? false,
-      createdAt: map['created_at'] != null
-          ? (map['created_at'] as DateTime).toLocal()
-          : null,
-      updatedAt: map['updated_at'] != null
-          ? (map['updated_at'] as DateTime).toLocal()
-          : null,
+      id: _parseInt(map['id']),
+      therapistId: _parseInt(map['therapist_id']) ?? 0,
+      patientId: _parseInt(map['patient_id']) ?? 0,
+      sessionId: _parseInt(map['session_id']),
+      transactionDate: _parseDate(map['transaction_date']) ?? DateTime.now(),
+      type: _parseString(map['type']) ?? 'recebimento',
+      amount: _parseDouble(map['amount']) ?? 0.0,
+      paymentMethod: _parseString(map['payment_method']) ?? 'dinheiro',
+      status: _parseString(map['status']) ?? 'pendente',
+      dueDate: _parseDate(map['due_date']),
+      paidAt: _parseDate(map['paid_at']),
+      receiptNumber: _parseString(map['receipt_number']),
+      category: _parseString(map['category']) ?? 'sessao',
+      notes: _parseString(map['notes']),
+      invoiceNumber: _parseString(map['invoice_number']),
+      invoiceIssued: _parseBool(map['invoice_issued']) ?? false,
+      createdAt: _parseDate(map['created_at']),
+      updatedAt: _parseDate(map['updated_at']),
     );
   }
-}
 
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value.toLocal();
+    final str = value.toString();
+    final parsed = DateTime.tryParse(str);
+    return parsed?.toLocal();
+  }
+
+  static String? _parseString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    // PostgreSQL ENUMs podem vir como UndecodedBytes
+    return value.toString();
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    // PostgreSQL NUMERIC pode vir como String ou tipo especial
+    return double.tryParse(value.toString());
+  }
+
+  static bool? _parseBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    final str = value.toString().toLowerCase();
+    return str == 'true' || str == '1' || str == 't';
+  }
+}

@@ -205,6 +205,13 @@ class ScheduleHandler extends BaseHandler {
         accountId: therapistId ?? accountId,
       );
 
+      // Verificação adicional de segurança: therapist só acessa seus próprios agendamentos
+      // (camada adicional caso o RLS não bloqueie corretamente)
+      // TODO: coisa estranha isso aqui, nao deveria acontecer
+      if (userRole == 'therapist' && therapistId != null && appointment.therapistId != therapistId) {
+        return errorResponse('Agendamento não encontrado', statusCode: 404);
+      }
+
       return successResponse(appointment.toJson());
     } on ScheduleException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
