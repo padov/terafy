@@ -52,6 +52,7 @@ services:
       - ./functions:/app/db/functions:ro
       - ./triggers:/app/db/triggers:ro
       - ./policies:/app/db/policies:ro
+      - ./.env:/app/.env:ro
 
   # Nginx como reverse proxy (opcional)
   nginx:
@@ -66,9 +67,8 @@ services:
       # Volume para arquivos estáticos do Flutter Web (app.terafy.app.br)
       # Os arquivos do Flutter Web estão em ./web/app/ (gerado no build)
       - ./web/app:/usr/share/nginx/html/app:ro
-      # 
-      # Para o site institucional (www.terafy.app.br), quando estiver pronto:
-      # - ./web/www:/usr/share/nginx/html/www:ro
+      # Volume para o site institucional (www.terafy.app.br)
+      - ./web/www:/usr/share/nginx/html/www:ro 
       # Volumes para certificados SSL do Let's Encrypt
       - certbot_certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro
