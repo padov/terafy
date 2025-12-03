@@ -43,11 +43,7 @@ class RLSContext {
 
     // Define o account_id se fornecido
     if (accountId != null) {
-      await _setConfig(
-        conn,
-        key: 'app.account_id',
-        value: accountId.toString(),
-      );
+      await _setConfig(conn, key: 'app.account_id', value: accountId.toString());
     }
   }
 
@@ -60,14 +56,9 @@ class RLSContext {
     await conn.execute("RESET app.account_id");
   }
 
-  static Future<void> _setConfig(
-    Connection conn, {
-    required String key,
-    required String value,
-  }) {
-    return conn.execute(
-      Sql.named("SELECT set_config(@key, @value, true)"),
-      parameters: {'key': key, 'value': value},
-    );
+  static Future<void> _setConfig(Connection conn, {required String key, required String value}) {
+    // Escapa aspas simples para evitar SQL Injection
+    final escapedValue = value.replaceAll("'", "''");
+    return conn.execute("SET $key = '$escapedValue'");
   }
 }

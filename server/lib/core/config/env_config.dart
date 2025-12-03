@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:common/common.dart';
 import 'package:dotenv/dotenv.dart';
 
 class EnvConfig {
@@ -12,15 +13,18 @@ class EnvConfig {
 
     _env = DotEnv(includePlatformEnvironment: true);
 
-    // Tenta carregar o arquivo .env se existir
+    // Tenta carregar o arquivo .env - OBRIGATÓRIO
     final envFile = File(filename);
-    if (envFile.existsSync()) {
-      _env!.load([filename]);
-      print('✅ Arquivo .env carregado: ${envFile.absolute.path}');
-    } else {
-      print('⚠️  Arquivo .env não encontrado: ${envFile.absolute.path}');
-      print('   Usando apenas variáveis de ambiente do sistema');
+    if (!envFile.existsSync()) {
+      throw StateError(
+        '❌ Arquivo .env não encontrado: ${envFile.absolute.path}\n'
+        '   A aplicação não pode iniciar sem as configurações necessárias.\n'
+        '   Por favor, crie o arquivo .env baseado no .env.example',
+      );
     }
+
+    _env!.load([filename]);
+    AppLogger.info('Arquivo .env carregado com sucesso: ${envFile.absolute.path}');
 
     _loaded = true;
   }

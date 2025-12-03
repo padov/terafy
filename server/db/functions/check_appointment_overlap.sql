@@ -6,11 +6,14 @@
 -- Quando usar: Trigger BEFORE INSERT/UPDATE na tabela appointments
 
 CREATE OR REPLACE FUNCTION check_appointment_overlap()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER  -- Executa com privilégios do dono da função para contornar RLS
+AS $$
 DECLARE
   v_overlapping_count INTEGER;
 BEGIN
   -- Verifica se há agendamentos sobrepostos para o mesmo terapeuta
+  -- SECURITY DEFINER permite que a função veja todos os agendamentos, mesmo com RLS ativo
   SELECT COUNT(*)
   INTO v_overlapping_count
   FROM appointments

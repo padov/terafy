@@ -88,6 +88,12 @@ class PatientHandler extends BaseHandler {
         bypassRLS: userRole == 'admin',
       );
 
+      // Verificação adicional de segurança: therapist só acessa seus próprios pacientes
+      // (camada adicional caso o RLS não bloqueie corretamente)
+      if (userRole == 'therapist' && accountId != null && patient.therapistId != accountId) {
+        return errorResponse('Paciente não encontrado', statusCode: 404);
+      }
+
       return successResponse(patient.toJson());
     } on PatientException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
@@ -110,11 +116,10 @@ class PatientHandler extends BaseHandler {
       }
 
       final body = await request.readAsString();
-      if (body.trim().isEmpty) {
-        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido ou corpo da requisição vazio');
       }
-
-      final data = jsonDecode(body) as Map<String, dynamic>;
 
       int? therapistId = _readInt(data, ['therapistId', 'therapist_id']);
 
@@ -178,11 +183,10 @@ class PatientHandler extends BaseHandler {
       );
 
       final body = await request.readAsString();
-      if (body.trim().isEmpty) {
-        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido ou corpo da requisição vazio');
       }
-
-      final data = jsonDecode(body) as Map<String, dynamic>;
 
       int therapistId = existing.therapistId;
       if (userRole == 'admin') {
@@ -340,6 +344,19 @@ class PatientHandler extends BaseHandler {
       createdAt: base?.createdAt,
       updatedAt: DateTime.now(),
     );
+  }
+
+  static Map<String, dynamic>? _parseRequestBody(String body) {
+    if (body.trim().isEmpty) {
+      return null;
+    }
+    try {
+      return jsonDecode(body) as Map<String, dynamic>?;
+    } on FormatException {
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   static String? _readString(Map<String, dynamic> data, List<String> keys) {

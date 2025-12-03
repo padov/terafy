@@ -69,12 +69,12 @@ class FinancialRepository {
                   therapist_id,
                   patient_id,
                   session_id,
-                  transaction_date,
+                  transaction_date::timestamp AS transaction_date,
                   type::text AS type,
                   amount,
                   payment_method::text AS payment_method,
                   status::text AS status,
-                  due_date,
+                  due_date::timestamp AS due_date,
                   paid_at,
                   receipt_number,
                   category::text AS category,
@@ -132,12 +132,12 @@ class FinancialRepository {
                therapist_id,
                patient_id,
                session_id,
-               transaction_date,
+               transaction_date::timestamp AS transaction_date,
                type::text AS type,
                amount,
                payment_method::text AS payment_method,
                status::text AS status,
-               due_date,
+               due_date::timestamp AS due_date,
                paid_at,
                receipt_number,
                category::text AS category,
@@ -232,12 +232,12 @@ class FinancialRepository {
                therapist_id,
                patient_id,
                session_id,
-               transaction_date,
+               transaction_date::timestamp AS transaction_date,
                type::text AS type,
                amount,
                payment_method::text AS payment_method,
                status::text AS status,
-               due_date,
+               due_date::timestamp AS due_date,
                paid_at,
                receipt_number,
                category::text AS category,
@@ -356,12 +356,12 @@ class FinancialRepository {
                  therapist_id,
                  patient_id,
                  session_id,
-                 transaction_date,
+                 transaction_date::timestamp AS transaction_date,
                  type::text AS type,
                  amount,
                  payment_method::text AS payment_method,
                  status::text AS status,
-                 due_date,
+                 due_date::timestamp AS due_date,
                  paid_at,
                  receipt_number,
                  category::text AS category,
@@ -392,12 +392,12 @@ class FinancialRepository {
                   therapist_id,
                   patient_id,
                   session_id,
-                  transaction_date,
+                  transaction_date::timestamp AS transaction_date,
                   type::text AS type,
                   amount,
                   payment_method::text AS payment_method,
                   status::text AS status,
-                  due_date,
+                  due_date::timestamp AS due_date,
                   paid_at,
                   receipt_number,
                   category::text AS category,
@@ -516,15 +516,32 @@ class FinancialRepository {
 
       final row = result.first;
       return {
-        'totalPaidCount': row[0] as int,
-        'totalPaidAmount': (row[1] as num).toDouble(),
-        'totalPendingCount': row[2] as int,
-        'totalPendingAmount': (row[3] as num).toDouble(),
-        'totalOverdueCount': row[4] as int,
-        'totalOverdueAmount': (row[5] as num).toDouble(),
-        'totalCount': row[6] as int,
-        'totalAmount': (row[7] as num).toDouble(),
+        'totalPaidCount': _parseInt(row[0]) ?? 0,
+        'totalPaidAmount': _parseDouble(row[1]) ?? 0.0,
+        'totalPendingCount': _parseInt(row[2]) ?? 0,
+        'totalPendingAmount': _parseDouble(row[3]) ?? 0.0,
+        'totalOverdueCount': _parseInt(row[4]) ?? 0,
+        'totalOverdueAmount': _parseDouble(row[5]) ?? 0.0,
+        'totalCount': _parseInt(row[6]) ?? 0,
+        'totalAmount': _parseDouble(row[7]) ?? 0.0,
       };
     });
+  }
+
+  // Helpers para parsing de tipos do PostgreSQL
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    // PostgreSQL NUMERIC pode vir como String ou tipo especial
+    return double.tryParse(value.toString());
   }
 }

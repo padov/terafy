@@ -22,10 +22,10 @@ Representa o profissional que utiliza o sistema.
 - Formação acadêmica
 - Apresentação profissional
 - Endereço do consultório
-- Plano de assinatura (Gratuito, Básico, Premium)
+- Plano de assinatura (Gratuito, Básico, Premium) - TODO
 - Data de início do plano
 - Limite de pacientes (conforme plano)
-- Configurações de agenda
+- Configurações de agenda - TODO
 - Preferências de notificação
 - Dados bancários para recebimento
 - Status da conta (ativo, suspenso, cancelado)
@@ -94,6 +94,9 @@ Representa a pessoa atendida pelo terapeuta.
 
 ### 1.3 Anamnese
 Primeira avaliação completa do paciente.
+
+**TODO**
+- Fazer a tela de personalização de Anamnense
 
 **Atributos:**
 - ID único

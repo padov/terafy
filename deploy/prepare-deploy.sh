@@ -29,6 +29,33 @@ echo "📌 Versão: $VERSION"
 echo ""
 
 # ============================================
+# PASSO 0: Executar Testes
+# ============================================
+echo "🧪 PASSO 0: Executando testes antes do build..."
+echo ""
+
+# Executar testes do backend
+echo "📦 Testando backend..."
+if ! "$NEW_DEPLOY_DIR/run-backend-tests.sh"; then
+    echo ""
+    echo "❌ Erro: Testes do backend falharam! Build abortado."
+    exit 1
+fi
+
+# Executar testes do frontend
+echo ""
+echo "📱 Testando frontend..."
+if ! "$NEW_DEPLOY_DIR/run-frontend-tests.sh"; then
+    echo ""
+    echo "❌ Erro: Testes do frontend falharam! Build abortado."
+    exit 1
+fi
+
+echo ""
+echo "✅ Todos os testes passaram! Continuando com o build..."
+echo ""
+
+# ============================================
 # PASSO 1: Build do executável Linux
 # ============================================
 echo "📦 PASSO 1: Compilando executável Linux..."
@@ -106,6 +133,7 @@ mkdir -p "$DEPLOY_DIR/functions"
 mkdir -p "$DEPLOY_DIR/policies"
 mkdir -p "$DEPLOY_DIR/triggers"
 mkdir -p "$DEPLOY_DIR/web/app"
+mkdir -p "$DEPLOY_DIR/web/www"
 
 echo "📋 Copiando arquivos necessários..."
 echo "  📍 NEW_DEPLOY_DIR: $NEW_DEPLOY_DIR"
@@ -188,6 +216,17 @@ if [ "$SKIP_WEB" != "true" ] && [ -d "$WEB_BUILD_DIR" ]; then
     echo "  ✅ Flutter Web: $WEB_FILE_COUNT arquivos em web/app/"
 else
     echo "  ⚠️  Flutter Web: não incluído (build não disponível)"
+fi
+
+# 12. Website Institucional
+WEBSITE_DIR="$PROJECT_ROOT/website"
+if [ -d "$WEBSITE_DIR" ]; then
+    echo "🌐 Copiando Website Institucional..."
+    cp -r "$WEBSITE_DIR"/* "$DEPLOY_DIR/web/www/"
+    WEBSITE_FILE_COUNT=$(find "$DEPLOY_DIR/web/www" -type f | wc -l | tr -d ' ')
+    echo "  ✅ Website Institucional: $WEBSITE_FILE_COUNT arquivos em web/www/"
+else
+    echo "  ⚠️  Website Institucional: não encontrado (pasta website/ não existe)"
 fi
 
 # 8. README para a VM (opcional, mas útil)

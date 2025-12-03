@@ -56,7 +56,15 @@ class SessionHandler extends BaseHandler {
         );
       }
 
-      final session = Session.fromJson({...data, 'therapistId': therapistId});
+      final session = Session.fromJson({
+        ...data,
+        'therapistId': therapistId,
+        'sessionNumber': data['sessionNumber'] ?? 0, // Será calculado pelo controller se <= 0
+        'type': data['type'] ?? 'presential',
+        'modality': data['modality'] ?? 'individual',
+        'status': data['status'] ?? 'scheduled',
+        'paymentStatus': data['paymentStatus'] ?? 'pending',
+      });
 
       final created = await _controller.createSession(
         session: session,
@@ -241,6 +249,11 @@ class SessionHandler extends BaseHandler {
       final session = Session.fromJson({
         ...data,
         if (therapistId != null) 'therapistId': therapistId,
+        'sessionNumber': data['sessionNumber'] ?? 0, // Será calculado pelo controller se <= 0
+        'type': data['type'] ?? 'presential',
+        'modality': data['modality'] ?? 'individual',
+        'status': data['status'] ?? 'scheduled',
+        'paymentStatus': data['paymentStatus'] ?? 'pending',
       });
 
       final updated = await _controller.updateSession(

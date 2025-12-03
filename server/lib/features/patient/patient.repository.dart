@@ -79,10 +79,18 @@ class PatientRepository {
         parameters: parameters.isEmpty ? null : parameters,
       );
 
-      return results.map((row) {
+      var patients = results.map((row) {
         final map = row.toColumnMap();
         return Patient.fromMap(map);
       }).toList();
+
+      // Verificação adicional de segurança: therapist só vê seus próprios pacientes
+      // (camada adicional caso o RLS não bloqueie corretamente)
+      if (!bypassRLS && userRole == 'therapist' && accountId != null) {
+        patients = patients.where((p) => p.therapistId == accountId).toList();
+      }
+
+      return patients;
     });
   }
 
@@ -147,7 +155,15 @@ class PatientRepository {
         return null;
       }
 
-      return Patient.fromMap(results.first.toColumnMap());
+      final patient = Patient.fromMap(results.first.toColumnMap());
+
+      // Verificação adicional de segurança: therapist só acessa seus próprios pacientes
+      // (camada adicional caso o RLS não bloqueie corretamente)
+      if (!bypassRLS && userRole == 'therapist' && accountId != null && patient.therapistId != accountId) {
+        return null;
+      }
+
+      return patient;
     });
   }
 
@@ -303,6 +319,22 @@ class PatientRepository {
         );
       }
 
+      // Verificação adicional de segurança: therapist só atualiza seus próprios pacientes
+      // (camada adicional caso o RLS não bloqueie corretamente)
+      if (!bypassRLS && userRole == 'therapist' && accountId != null) {
+        // Busca o paciente atual para verificar se pertence ao therapist
+        final currentPatient = await getPatientById(
+          id,
+          userId: userId,
+          userRole: userRole,
+          accountId: accountId,
+          bypassRLS: false,
+        );
+        if (currentPatient == null || currentPatient.therapistId != accountId) {
+          return null;
+        }
+      }
+
       final data = patient.toDatabaseMap();
 
       final result = await conn.execute(
@@ -404,6 +436,22 @@ class PatientRepository {
         await RLSContext.clearContext(conn);
       } else {
         await RLSContext.setContext(conn: conn, userId: userId, userRole: userRole, accountId: accountId);
+      }
+
+      // Verificação adicional de segurança: therapist só remove seus próprios pacientes
+      // (camada adicional caso o RLS não bloqueie corretamente)
+      if (!bypassRLS && userRole == 'therapist' && accountId != null) {
+        // Busca o paciente atual para verificar se pertence ao therapist
+        final currentPatient = await getPatientById(
+          id,
+          userId: userId,
+          userRole: userRole,
+          accountId: accountId,
+          bypassRLS: false,
+        );
+        if (currentPatient == null || currentPatient.therapistId != accountId) {
+          return false;
+        }
       }
 
       final result = await conn.execute(

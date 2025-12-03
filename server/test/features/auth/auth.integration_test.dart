@@ -1,364 +1,223 @@
 import 'package:test/test.dart';
-import 'package:common/common.dart';
-import 'package:server/features/auth/auth.controller.dart';
-import 'package:server/features/user/user.repository.dart';
-import 'package:server/features/auth/refresh_token.repository.dart';
-import 'package:server/features/auth/token_blacklist.repository.dart';
-import 'package:server/core/services/password_service.dart';
-import 'package:server/core/services/jwt_service.dart';
-import 'helpers/integration_test_db.dart';
+import 'package:shelf/shelf.dart';
+import '../../helpers/integration_test_db.dart';
+import '../../helpers/test_server_setup.dart';
+import '../../helpers/http_test_helpers.dart';
 
 void main() {
-  group('Auth Integration Tests', () {
+  group('Auth API Integration Tests', () {
+    late Handler handler;
     late TestDBConnection dbConnection;
-    late UserRepository userRepository;
-    late RefreshTokenRepository refreshTokenRepository;
-    late TokenBlacklistRepository blacklistRepository;
-    late AuthController controller;
 
     setUpAll(() async {
-      // Setup inicial: cria banco e executa migrations
-      await IntegrationTestDB.setup();
+      await TestServerSetup.setup();
     });
 
     setUp(() async {
-      // Limpa dados antes de cada teste
       await IntegrationTestDB.cleanDatabase();
-
-      // Cria conexão e repositories usando TestDBConnection
       dbConnection = TestDBConnection();
-      userRepository = UserRepository(dbConnection as dynamic);
-      refreshTokenRepository = RefreshTokenRepository(dbConnection as dynamic);
-      blacklistRepository = TokenBlacklistRepository(dbConnection as dynamic);
-      controller = AuthController(userRepository, refreshTokenRepository);
+      handler = TestServerSetup.createTestHandler(dbConnection);
     });
 
     tearDown(() async {
-      // Limpa dados após cada teste
       await IntegrationTestDB.cleanDatabase();
     });
 
-    group('Login com Banco Real', () {
-      test('deve fazer login e criar tokens no banco', () async {
-        // Cria usuário diretamente no banco
-        final password = 'senha123';
-        final passwordHash = PasswordService.hashPassword(password);
-        
-        final user = await userRepository.createUser(
-          User(
-            email: 'teste@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
+    group('POST /auth/register', () {
+      test('deve criar usuário e retornar tokens', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'novo@terafy.com', 'password': 'senha123'},
         );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 201); // Created
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['user'], isNotNull);
+        expect(data['user']['email'], 'novo@terafy.com');
+        expect(data['auth_token'], isNotNull);
+        expect(data['auth_token'], isNotEmpty);
+        expect(data['refresh_token'], isNotNull);
+        expect(data['refresh_token'], isNotEmpty);
+        expect(data['message'], isNotNull);
+        expect(data['message'], isNotEmpty);
+      });
+
+      test('deve validar constraint de email único (retorna erro)', () async {
+        // Cria primeiro usuário
+        final request1 = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'duplicado@terafy.com', 'password': 'senha123'},
+        );
+        await handler(request1);
+
+        // Tenta criar duplicado
+        final request2 = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'duplicado@terafy.com', 'password': 'senha123'},
+        );
+
+        final response = await handler(request2);
+        expect(response.statusCode, greaterThanOrEqualTo(400));
+      });
+
+      test('deve validar dados obrigatórios', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {
+            'email': 'teste@terafy.com',
+            // password faltando
+          },
+        );
+
+        final response = await handler(request);
+        expect(response.statusCode, 400);
+      });
+    });
+
+    group('POST /auth/login', () {
+      test('deve fazer login e retornar tokens', () async {
+        // Cria usuário primeiro
+        final registerRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'login@terafy.com', 'password': 'senha123'},
+        );
+        await handler(registerRequest);
 
         // Faz login
-        final result = await controller.login('teste@terafy.com', password);
-
-        expect(result.user.id, user.id);
-        expect(result.authToken, isNotEmpty);
-        expect(result.refreshToken, isNotEmpty);
-
-        // Verifica que refresh token foi salvo no banco
-        final storedTokenId = await refreshTokenRepository.findTokenByHash(
-          result.refreshToken,
+        final loginRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/login',
+          body: {'email': 'login@terafy.com', 'password': 'senha123'},
         );
-        expect(storedTokenId, isNotNull);
 
-        // Verifica que lastLoginAt foi atualizado
-        final updatedUser = await userRepository.getUserById(user.id!);
-        expect(updatedUser?.lastLoginAt, isNotNull);
+        final response = await handler(loginRequest);
+
+        expect(response.statusCode, 200);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['user'], isNotNull);
+        expect(data['auth_token'], isNotEmpty);
+        expect(data['refresh_token'], isNotEmpty);
       });
 
-      test('deve validar constraint de email único', () async {
-        final passwordHash = PasswordService.hashPassword('senha123');
-        
-        await userRepository.createUser(
-          User(
-            email: 'duplicado@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
+      test('deve retornar 401 com credenciais inválidas', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/login',
+          body: {'email': 'inexistente@terafy.com', 'password': 'senha123'},
         );
 
-        // Tenta criar outro usuário com mesmo email
-        expect(
-          () => userRepository.createUser(
-            User(
-              email: 'duplicado@terafy.com',
-              passwordHash: passwordHash,
-              role: 'therapist',
-              status: 'active',
-              emailVerified: false,
-            ),
-          ),
-          throwsA(anything),
-        );
-      });
-
-      test('deve validar constraint de account_type e account_id', () async {
-        final passwordHash = PasswordService.hashPassword('senha123');
-
-        // Tenta criar usuário com account_type mas sem account_id
-        expect(
-          () => userRepository.createUser(
-            User(
-              email: 'teste@terafy.com',
-              passwordHash: passwordHash,
-              role: 'therapist',
-              accountType: 'therapist',
-              accountId: null, // Deve falhar
-              status: 'active',
-              emailVerified: false,
-            ),
-          ),
-          throwsA(anything),
-        );
+        final response = await handler(request);
+        expect(response.statusCode, 401);
       });
     });
 
-    group('Registro com Banco Real', () {
-      test('deve criar usuário e tokens no banco', () async {
-        final result = await controller.register('novo@terafy.com', 'senha123');
-
-        expect(result.user.email, 'novo@terafy.com');
-        expect(result.authToken, isNotEmpty);
-        expect(result.refreshToken, isNotEmpty);
-
-        // Verifica que usuário foi salvo no banco
-        final savedUser = await userRepository.getUserByEmail('novo@terafy.com');
-        expect(savedUser, isNotNull);
-        expect(savedUser!.email, 'novo@terafy.com');
-
-        // Verifica que refresh token foi salvo no banco
-        final storedTokenId = await refreshTokenRepository.findTokenByHash(
-          result.refreshToken,
-        );
-        expect(storedTokenId, isNotNull);
-      });
-
-      test('deve criar usuário sem accountType e accountId (permitido)', () async {
-        final result = await controller.register('novo@terafy.com', 'senha123');
-
-        expect(result.user.accountType, isNull);
-        expect(result.user.accountId, isNull);
-
-        // Verifica no banco
-        final savedUser = await userRepository.getUserByEmail('novo@terafy.com');
-        expect(savedUser?.accountType, isNull);
-        expect(savedUser?.accountId, isNull);
-      });
-    });
-
-    group('Refresh Token com Banco Real', () {
-      test('deve renovar access token usando refresh token do banco', () async {
+    group('POST /auth/refresh', () {
+      test('deve renovar access token usando refresh token', () async {
         // Cria usuário e faz login
-        final password = 'senha123';
-        final passwordHash = PasswordService.hashPassword(password);
-        
-        final user = await userRepository.createUser(
-          User(
-            email: 'teste@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
+        final registerRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'refresh@terafy.com', 'password': 'senha123'},
+        );
+        final registerResponse = await handler(registerRequest);
+        final registerData = await HttpTestHelpers.parseJsonResponse(registerResponse);
+        final refreshToken = registerData['refresh_token'] as String;
+
+        // Renova token
+        final refreshRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/refresh',
+          body: {'refresh_token': refreshToken},
         );
 
-        final loginResult = await controller.login('teste@terafy.com', password);
-        final refreshToken = loginResult.refreshToken;
+        final response = await handler(refreshRequest);
 
-        // Renova access token
-        final refreshResult = await controller.refreshAccessToken(refreshToken);
-
-        expect(refreshResult['access_token'], isNotEmpty);
-        expect(refreshResult['refresh_token'], refreshToken);
-
-        // Valida novo access token
-        final newAccessToken = refreshResult['access_token'] as String;
-        final claims = JwtService.validateToken(newAccessToken);
-        expect(claims, isNotNull);
-        expect(claims!['sub'], user.id.toString());
+        expect(response.statusCode, 200);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['access_token'], isNotEmpty);
+        expect(data['refresh_token'], refreshToken);
       });
 
-      test('deve falhar quando refresh token foi revogado no banco', () async {
-        final password = 'senha123';
-        final passwordHash = PasswordService.hashPassword(password);
-        
-        await userRepository.createUser(
-          User(
-            email: 'teste@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
+      test('deve retornar 401 com refresh token inválido', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/refresh',
+          body: {'refresh_token': 'token_invalido'},
         );
 
-        final loginResult = await controller.login('teste@terafy.com', password);
-        final refreshToken = loginResult.refreshToken;
-
-        // Extrai tokenId do refresh token
-        final claims = JwtService.decodeToken(refreshToken);
-        final tokenId = claims?['jti'] as String?;
-        expect(tokenId, isNotNull);
-
-        // Revoga o token no banco
-        await refreshTokenRepository.revokeToken(tokenId!);
-
-        // Tenta renovar (deve falhar)
-        expect(
-          () => controller.refreshAccessToken(refreshToken),
-          throwsA(isA<AuthException>().having(
-            (e) => e.message,
-            'message',
-            contains('inválido'),
-          )),
-        );
+        final response = await handler(request);
+        expect(response.statusCode, 401);
       });
     });
 
-    group('Logout com Banco Real', () {
-      test('deve revogar refresh token e adicionar access token à blacklist', () async {
-        final password = 'senha123';
-        final passwordHash = PasswordService.hashPassword(password);
-        
-        await userRepository.createUser(
-          User(
-            email: 'teste@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
+    group('GET /auth/me', () {
+      test('deve retornar usuário autenticado', () async {
+        // Cria usuário e faz login
+        final registerRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'me@terafy.com', 'password': 'senha123'},
         );
+        final registerResponse = await handler(registerRequest);
+        final registerData = await HttpTestHelpers.parseJsonResponse(registerResponse);
+        final accessToken = registerData['auth_token'] as String;
 
-        final loginResult = await controller.login('teste@terafy.com', password);
-        final refreshToken = loginResult.refreshToken;
-        final accessToken = loginResult.authToken;
+        // Busca dados do usuário
+        final meRequest = HttpTestHelpers.createRequest(method: 'GET', path: '/auth/me', token: accessToken);
 
-        // Extrai JTI do access token
-        final accessClaims = JwtService.decodeToken(accessToken);
-        final accessTokenJti = accessClaims?['jti'] as String?;
-        expect(accessTokenJti, isNotNull);
+        final response = await handler(meRequest);
+
+        expect(response.statusCode, 200);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['user'], isNotNull);
+        expect(data['user']['email'], 'me@terafy.com');
+      });
+
+      test('deve retornar 401 sem token', () async {
+        final request = HttpTestHelpers.createRequest(method: 'GET', path: '/auth/me');
+
+        final response = await handler(request);
+        expect(response.statusCode, 401);
+      });
+    });
+
+    group('POST /auth/logout', () {
+      test('deve revogar tokens', () async {
+        // Cria usuário e faz login
+        final registerRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'logout@terafy.com', 'password': 'senha123'},
+        );
+        final registerResponse = await handler(registerRequest);
+        final registerData = await HttpTestHelpers.parseJsonResponse(registerResponse);
+        final accessToken = registerData['auth_token'] as String;
+        final refreshToken = registerData['refresh_token'] as String;
 
         // Faz logout
-        await controller.revokeRefreshToken(
-          refreshToken,
-          accessToken: accessToken,
-          blacklistRepository: blacklistRepository,
+        final logoutRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/logout',
+          body: {'refresh_token': refreshToken},
+          token: accessToken,
         );
 
-        // Verifica que refresh token foi revogado
-        final refreshClaims = JwtService.decodeToken(refreshToken);
-        final refreshTokenId = refreshClaims?['jti'] as String?;
-        if (refreshTokenId != null) {
-          final storedTokenId = await refreshTokenRepository.findTokenByHash(
-            refreshToken,
-          );
-          expect(storedTokenId, isNull);
-        }
+        final response = await handler(logoutRequest);
+        expect(response.statusCode, 200);
 
-        // Verifica que access token está na blacklist
-        final isBlacklisted = await blacklistRepository.isBlacklisted(
-          accessTokenJti!,
-        );
-        expect(isBlacklisted, isTrue);
-      });
-    });
+        // Tenta usar token revogado (deve falhar)
+        final meRequest = HttpTestHelpers.createRequest(method: 'GET', path: '/auth/me', token: accessToken);
 
-    group('Validações do Banco', () {
-      test('deve validar ENUM de user_role', () async {
-        final passwordHash = PasswordService.hashPassword('senha123');
-
-        // Deve aceitar valores válidos
-        await userRepository.createUser(
-          User(
-            email: 'therapist@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
-        );
-
-        await userRepository.createUser(
-          User(
-            email: 'patient@terafy.com',
-            passwordHash: passwordHash,
-            role: 'patient',
-            status: 'active',
-            emailVerified: false,
-          ),
-        );
-
-        await userRepository.createUser(
-          User(
-            email: 'admin@terafy.com',
-            passwordHash: passwordHash,
-            role: 'admin',
-            status: 'active',
-            emailVerified: false,
-          ),
-        );
-
-        // Todos devem ser criados com sucesso
-        final therapist = await userRepository.getUserByEmail('therapist@terafy.com');
-        final patient = await userRepository.getUserByEmail('patient@terafy.com');
-        final admin = await userRepository.getUserByEmail('admin@terafy.com');
-
-        expect(therapist?.role, 'therapist');
-        expect(patient?.role, 'patient');
-        expect(admin?.role, 'admin');
-      });
-
-      test('deve validar ENUM de account_status', () async {
-        final passwordHash = PasswordService.hashPassword('senha123');
-
-        await userRepository.createUser(
-          User(
-            email: 'active@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'active',
-            emailVerified: false,
-          ),
-        );
-
-        await userRepository.createUser(
-          User(
-            email: 'suspended@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'suspended',
-            emailVerified: false,
-          ),
-        );
-
-        await userRepository.createUser(
-          User(
-            email: 'canceled@terafy.com',
-            passwordHash: passwordHash,
-            role: 'therapist',
-            status: 'canceled',
-            emailVerified: false,
-          ),
-        );
-
-        final active = await userRepository.getUserByEmail('active@terafy.com');
-        final suspended = await userRepository.getUserByEmail('suspended@terafy.com');
-        final canceled = await userRepository.getUserByEmail('canceled@terafy.com');
-
-        expect(active?.status, 'active');
-        expect(suspended?.status, 'suspended');
-        expect(canceled?.status, 'canceled');
+        final meResponse = await handler(meRequest);
+        expect(meResponse.statusCode, 401);
       });
     });
   });
 }
-

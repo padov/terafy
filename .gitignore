@@ -1,0 +1,6 @@
+# Coverage reports
+coverage/
+coverage-reports/
+*.lcov.info
+*.lcov
+

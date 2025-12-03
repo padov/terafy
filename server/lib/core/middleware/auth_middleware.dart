@@ -40,6 +40,7 @@ Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
       }
 
       // Extrai o token do header Authorization
+      // Nota: Shelf trata headers como case-insensitive, então 'authorization' funciona mesmo se o header for 'Authorization'
       final authHeader = request.headers['authorization'];
       if (authHeader == null || !authHeader.startsWith('Bearer ')) {
         return Response(401, body: '{"error": "Token não fornecido"}', headers: {'Content-Type': 'application/json'});

@@ -25,12 +25,17 @@ class ScheduleController {
 
     final errorString = error.toString().toLowerCase();
 
+    // Log para debug - ajuda a identificar mensagens de erro não capturadas
+    AppLogger.debug('Tratando erro: $errorString');
+
     // Detecta erro de conflito de horário da trigger
     // A trigger lança: "Conflito de horário: já existe um agendamento..."
     if (errorString.contains('conflito de horário') ||
         errorString.contains('já existe um agendamento') ||
         errorString.contains('appointment overlap') ||
-        (errorString.contains('horário') && errorString.contains('ocupado'))) {
+        errorString.contains('overlap') ||
+        (errorString.contains('horário') && errorString.contains('ocupado')) ||
+        (errorString.contains('horário') && errorString.contains('período'))) {
       return ScheduleException(
         'Este horário já está ocupado. Por favor, escolha outro horário.',
         409, // Conflict
@@ -141,7 +146,8 @@ class ScheduleController {
         accountId: accountId,
         bypassRLS: userRole == 'admin',
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error('Erro ao criar agendamento: $e', stackTrace);
       throw _handleError(e, 'Erro ao criar agendamento: ${e.toString()}');
     }
   }
