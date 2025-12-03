@@ -1,0 +1,10 @@
+# Robots.txt - Terafy Website
+# Este arquivo impede que motores de busca indexem o site enquanto está em desenvolvimento
+
+User-agent: *
+Disallow: /
+
+# Quando o produto estiver pronto, altere para:
+# User-agent: *
+# Allow: /
+

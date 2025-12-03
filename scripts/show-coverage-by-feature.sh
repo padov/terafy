@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script para mostrar cobertura por feature/diretório
-# Uso: ./scripts/show-coverage-by-feature.sh [backend|frontend]
+# Uso: ./scripts/show-coverage-by-feature.sh [backend|frontend|both]
 
 set -e
 
@@ -8,32 +8,32 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SERVER_DIR="$PROJECT_ROOT/server"
 APP_DIR="$PROJECT_ROOT/app"
 
-# Determina qual cobertura mostrar
-TYPE="${1:-backend}"
-
-if [ "$TYPE" == "backend" ]; then
-    COVERAGE_FILE="$SERVER_DIR/coverage/lcov.info"
-    SOURCE_DIR="$SERVER_DIR/lib"
-    TITLE="Backend"
-elif [ "$TYPE" == "frontend" ]; then
-    COVERAGE_FILE="$APP_DIR/coverage/lcov.info"
-    SOURCE_DIR="$APP_DIR/lib"
-    TITLE="Frontend"
-else
-    echo "❌ Erro: Tipo inválido. Use 'backend' ou 'frontend'"
-    echo "   Uso: ./scripts/show-coverage-by-feature.sh [backend|frontend]"
-    exit 1
-fi
-
-if [ ! -f "$COVERAGE_FILE" ]; then
-    echo "❌ Erro: Arquivo de cobertura não encontrado: $COVERAGE_FILE"
-    echo "   Execute primeiro: ./deploy/run-${TYPE}-tests.sh"
-    exit 1
-fi
-
-echo "📊 Cobertura por Feature - $TITLE"
-echo "════════════════════════════════════════════════"
-echo ""
+# Função para mostrar cobertura de um tipo específico
+show_coverage() {
+    local TYPE=$1
+    local COVERAGE_FILE=""
+    local SOURCE_DIR=""
+    local TITLE=""
+    
+    if [ "$TYPE" == "backend" ]; then
+        COVERAGE_FILE="$SERVER_DIR/coverage/lcov.info"
+        SOURCE_DIR="$SERVER_DIR/lib"
+        TITLE="Backend"
+    elif [ "$TYPE" == "frontend" ]; then
+        COVERAGE_FILE="$APP_DIR/coverage/lcov.info"
+        SOURCE_DIR="$APP_DIR/lib"
+        TITLE="Frontend"
+    fi
+    
+    if [ ! -f "$COVERAGE_FILE" ]; then
+        echo "❌ Erro: Arquivo de cobertura não encontrado: $COVERAGE_FILE"
+        echo "   Execute primeiro: ./deploy/run-${TYPE}-tests.sh"
+        return 1
+    fi
+    
+    echo "📊 Cobertura por Feature - $TITLE"
+    echo "════════════════════════════════════════════════"
+    echo ""
 
 # Processa arquivo LCOV e agrupa por feature
 TEMP_DIR=$(mktemp -d)
@@ -172,6 +172,68 @@ fi
 
 echo ""
 echo "💡 Para visualizar HTML completo (requer lcov):"
-echo "   brew install lcov"
-echo "   cd $SERVER_DIR && genhtml coverage/lcov.info -o coverage/html"
-echo "   open coverage/html/index.html"
+if [ "$TYPE" == "backend" ]; then
+    echo "   brew install lcov"
+    echo "   cd $SERVER_DIR && genhtml coverage/lcov.info -o coverage/html"
+    echo "   open coverage/html/index.html"
+elif [ "$TYPE" == "frontend" ]; then
+    echo "   brew install lcov"
+    echo "   cd $APP_DIR && genhtml coverage/lcov.info -o coverage/html"
+    echo "   open coverage/html/index.html"
+fi
+}
+
+# Determina qual cobertura mostrar
+MODE="${1:-backend}"
+
+if [ "$MODE" == "both" ]; then
+    echo "╔════════════════════════════════════════════════╗"
+    echo "║     📊 RELATÓRIO DE COBERTURA COMPLETO        ║"
+    echo "╚════════════════════════════════════════════════╝"
+    echo ""
+    
+    # Mostra backend
+    show_coverage "backend"
+    BACKEND_STATUS=$?
+    
+    echo ""
+    echo ""
+    
+    # Mostra frontend
+    show_coverage "frontend"
+    FRONTEND_STATUS=$?
+    
+    echo ""
+    echo "════════════════════════════════════════════════"
+    echo "📋 RESUMO"
+    echo "════════════════════════════════════════════════"
+    
+    if [ $BACKEND_STATUS -eq 0 ]; then
+        echo "✅ Backend:  Cobertura disponível"
+    else
+        echo "❌ Backend:  Cobertura não encontrada"
+    fi
+    
+    if [ $FRONTEND_STATUS -eq 0 ]; then
+        echo "✅ Frontend: Cobertura disponível"
+    else
+        echo "❌ Frontend: Cobertura não encontrada"
+    fi
+    
+    echo ""
+    echo "💡 Dica: Execute os testes antes de gerar cobertura:"
+    echo "   ./deploy/run-backend-tests.sh"
+    echo "   ./deploy/run-frontend-tests.sh"
+    
+elif [ "$MODE" == "backend" ] || [ "$MODE" == "frontend" ]; then
+    show_coverage "$MODE"
+else
+    echo "❌ Erro: Modo inválido. Use 'backend', 'frontend' ou 'both'"
+    echo ""
+    echo "📖 Uso:"
+    echo "   ./scripts/show-coverage-by-feature.sh backend   # Mostra apenas backend"
+    echo "   ./scripts/show-coverage-by-feature.sh frontend  # Mostra apenas frontend"
+    echo "   ./scripts/show-coverage-by-feature.sh both      # Mostra ambos"
+    echo ""
+    exit 1
+fi

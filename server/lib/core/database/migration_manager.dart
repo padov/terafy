@@ -14,10 +14,11 @@ class MigrationManager {
   ///
   /// A migration de controle (que contém "create_migrations_table" no nome)
   /// será sempre a primeira, seguida das demais ordenadas alfabeticamente.
-  static Future<List<String>> getAllMigrationFiles() async {
+  static Future<List<String>> getAllMigrationFiles({String? migrationsDirOverride}) async {
     // Tenta diferentes caminhos possíveis
     final currentDir = Directory.current.path;
     final possiblePaths = [
+      if (migrationsDirOverride != null) migrationsDirOverride,
       '/app/db/migrations', // Docker: migrations montadas via volume (PRIMEIRO - produção)
       '/app/migrations', // Docker: migrations montadas via volume (compatibilidade)
       'migrations', // Caminho relativo simples
@@ -273,10 +274,11 @@ class MigrationManager {
   }
 
   /// Executa uma migration específica
-  static Future<void> executeMigration(Connection conn, String migrationName) async {
+  static Future<void> executeMigration(Connection conn, String migrationName, {String? migrationsDirOverride}) async {
     // Descobre o diretório de migrations (usa os mesmos caminhos de getAllMigrationFiles)
     final currentDir = Directory.current.path;
     final possiblePaths = [
+      if (migrationsDirOverride != null) migrationsDirOverride,
       '/app/db/migrations', // Docker: migrations montadas via volume (PRIMEIRO - produção)
       '/app/migrations', // Docker: migrations montadas via volume (compatibilidade)
       'migrations', // Caminho relativo simples
@@ -345,80 +347,7 @@ class MigrationManager {
 
       // Divide em comandos SQL (separados por ;)
       // Mas respeita dollar-quoted strings ($$ ou $tag$) que podem conter ;
-      final commands = <String>[];
-      String currentCommand = '';
-      bool inDollarQuote = false;
-      String? dollarTag; // null para $$, ou o tag para $tag$
-
-      // Processa caractere por caractere para detectar dollar-quoted strings
-      for (int i = 0; i < cleanedContent.length; i++) {
-        final char = cleanedContent[i];
-        final nextChar = i + 1 < cleanedContent.length ? cleanedContent[i + 1] : '';
-
-        // Detecta início/fim de dollar-quoted string
-        if (char == '\$') {
-          // Verifica se é início de dollar-quote
-          if (!inDollarQuote) {
-            // Procura o próximo $ para determinar o tag
-            int tagEnd = i + 1;
-            while (tagEnd < cleanedContent.length && cleanedContent[tagEnd] != '\$') {
-              tagEnd++;
-            }
-            if (tagEnd < cleanedContent.length) {
-              dollarTag = cleanedContent.substring(i + 1, tagEnd);
-              inDollarQuote = true;
-              currentCommand += char;
-              continue;
-            }
-          } else {
-            // Verifica se é fim de dollar-quote
-            final tag = dollarTag;
-            if (tag != null) {
-              // Verifica se o tag corresponde
-              final tagStart = i + 1;
-              if (tagStart + tag.length < cleanedContent.length) {
-                final potentialTag = cleanedContent.substring(tagStart, tagStart + tag.length);
-                if (potentialTag == tag &&
-                    tagStart + tag.length < cleanedContent.length &&
-                    cleanedContent[tagStart + tag.length] == '\$') {
-                  // Encontrou o fim do dollar-quote
-                  currentCommand += '\$' + tag + '\$';
-                  i += tag.length + 1; // Pula o tag e o $
-                  inDollarQuote = false;
-                  dollarTag = null;
-                  continue;
-                }
-              }
-            } else {
-              // É $$ simples
-              if (nextChar == '\$') {
-                currentCommand += '\$\$';
-                i++; // Pula o próximo $
-                inDollarQuote = false;
-                dollarTag = null;
-                continue;
-              }
-            }
-          }
-        }
-
-        currentCommand += char;
-
-        // Só divide por ; se não estiver dentro de dollar-quote
-        if (char == ';' && !inDollarQuote) {
-          final cmd = currentCommand.trim();
-          if (cmd.isNotEmpty && cmd != ';') {
-            commands.add(cmd);
-          }
-          currentCommand = '';
-        }
-      }
-
-      // Adiciona o último comando se não terminou com ;
-      final lastCmd = currentCommand.trim();
-      if (lastCmd.isNotEmpty) {
-        commands.add(lastCmd);
-      }
+      final commands = _splitSqlCommands(cleanedContent);
 
       // Executa cada comando na ordem exata
       // O driver PostgreSQL do Dart não suporta múltiplos comandos em uma única execução
@@ -460,7 +389,11 @@ class MigrationManager {
   }
 
   /// Executa todas as migrations pendentes
-  static Future<void> runPendingMigrations(Connection conn) async {
+  static Future<void> runPendingMigrations(
+    Connection conn, {
+    String? migrationsDirOverride,
+    String? dbObjectsDirOverride,
+  }) async {
     AppLogger.info('🔄 Verificando migrations pendentes...');
 
     try {
@@ -468,7 +401,7 @@ class MigrationManager {
       await ensureMigrationsTable(conn);
 
       // Descobre todas as migrations do diretório
-      final allMigrations = await getAllMigrationFiles();
+      final allMigrations = await getAllMigrationFiles(migrationsDirOverride: migrationsDirOverride);
       AppLogger.info('Migrations encontradas no diretório: ${allMigrations.length}');
 
       // Busca migrations já executadas
@@ -485,7 +418,7 @@ class MigrationManager {
 
         // Executa cada migration pendente
         for (final migration in pendingMigrations) {
-          await executeMigration(conn, migration);
+          await executeMigration(conn, migration, migrationsDirOverride: migrationsDirOverride);
         }
 
         AppLogger.info('✅ Todas as migrations foram executadas com sucesso!');
@@ -493,7 +426,7 @@ class MigrationManager {
 
       // Sempre recria todas as functions, triggers e policies após verificar migrations
       // Isso garante que qualquer alteração nos arquivos seja aplicada ao banco
-      await _recreateFunctionsTriggersPolicies(conn);
+      await _recreateFunctionsTriggersPolicies(conn, dbObjectsDirOverride: dbObjectsDirOverride);
     } catch (e, stackTrace) {
       AppLogger.error('❌ Erro ao executar migrations: $e');
       AppLogger.error('Stack trace: $stackTrace');
@@ -509,9 +442,10 @@ class MigrationManager {
   /// - policies/ (ordem alfabética)
   ///
   /// Antes de recriar, apaga todas as existentes para garantir limpeza completa
-  static Future<void> _recreateFunctionsTriggersPolicies(Connection conn) async {
+  static Future<void> _recreateFunctionsTriggersPolicies(Connection conn, {String? dbObjectsDirOverride}) async {
     final currentDir = Directory.current.path;
     final possibleBasePaths = [
+      if (dbObjectsDirOverride != null) dbObjectsDirOverride,
       '/app/db', // Docker
       'server/db', // Se executado da raiz do projeto
       '$currentDir/server/db', // Caminho absoluto
