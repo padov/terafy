@@ -15,11 +15,9 @@ import 'package:terafy/features/login/bloc/login_bloc_models.dart';
 
 class _MockLoginUseCase extends Mock implements LoginUseCase {}
 
-class _MockSignInWithGoogleUseCase extends Mock
-    implements SignInWithGoogleUseCase {}
+class _MockSignInWithGoogleUseCase extends Mock implements SignInWithGoogleUseCase {}
 
-class _MockGetCurrentUserUseCase extends Mock
-    implements GetCurrentUserUseCase {}
+class _MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 
 class _MockRefreshTokenUseCase extends Mock implements RefreshTokenUseCase {}
 
@@ -40,12 +38,7 @@ void main() {
   late _MockSecureStorageService secureStorageService;
   late _MockAuthService authService;
 
-  final client = Client(
-    id: '1',
-    name: 'Terapeuta Teste',
-    email: 'teste@terafy.com',
-    accountId: 123,
-  );
+  final client = Client(id: '1', name: 'Terapeuta Teste', email: 'teste@terafy.app.br', accountId: 123);
 
   final clientWithoutAccount = Client(
     id: '2',
@@ -77,28 +70,14 @@ void main() {
 
     // Configurações padrão para mocks
     when(() => secureStorageService.getToken()).thenAnswer((_) async => null);
-    when(
-      () => secureStorageService.getRefreshToken(),
-    ).thenAnswer((_) async => null);
-    when(
-      () => secureStorageService.getUserIdentifier(),
-    ).thenAnswer((_) async => null);
-    when(
-      () => secureStorageService.saveToken(any()),
-    ).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.saveRefreshToken(any()),
-    ).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.saveUserIdentifier(any()),
-    ).thenAnswer((_) async => {});
+    when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => null);
+    when(() => secureStorageService.getUserIdentifier()).thenAnswer((_) async => null);
+    when(() => secureStorageService.saveToken(any())).thenAnswer((_) async => {});
+    when(() => secureStorageService.saveRefreshToken(any())).thenAnswer((_) async => {});
+    when(() => secureStorageService.saveUserIdentifier(any())).thenAnswer((_) async => {});
     when(() => secureStorageService.deleteToken()).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.deleteRefreshToken(),
-    ).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.deleteUserIdentifier(),
-    ).thenAnswer((_) async => {});
+    when(() => secureStorageService.deleteRefreshToken()).thenAnswer((_) async => {});
+    when(() => secureStorageService.deleteUserIdentifier()).thenAnswer((_) async => {});
 
     when(() => authService.canCheckBiometrics()).thenAnswer((_) async => false);
     when(() => authService.authenticate()).thenAnswer((_) async => true);
@@ -116,12 +95,8 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       '1.1.1 - Login com credenciais válidas - emite LoginSuccess',
       setUp: () {
-        when(() => loginUseCase('teste@terafy.com', '123456')).thenAnswer(
-          (_) async => AuthResult(
-            authToken: 'access-token',
-            refreshAuthToken: 'refresh-token',
-            client: client,
-          ),
+        when(() => loginUseCase('teste@terafy.app.br', '123456')).thenAnswer(
+          (_) async => AuthResult(authToken: 'access-token', refreshAuthToken: 'refresh-token', client: client),
         );
       },
       build: () {
@@ -131,28 +106,18 @@ void main() {
       },
       wait: const Duration(milliseconds: 50),
       act: (bloc) => bloc.add(
-        const LoginButtonPressed(
-          email: 'teste@terafy.com',
-          password: '123456',
-          isBiometricsEnabled: false,
-        ),
+        const LoginButtonPressed(email: 'teste@terafy.app.br', password: '123456', isBiometricsEnabled: false),
       ),
       expect: () => [
         isA<LoginLoading>(),
         isA<LoginSuccess>()
             .having((s) => s.client, 'client', equals(client))
-            .having(
-              (s) => s.requiresProfileCompletion,
-              'requiresProfileCompletion',
-              isFalse,
-            ),
+            .having((s) => s.requiresProfileCompletion, 'requiresProfileCompletion', isFalse),
       ],
       verify: (_) {
-        verify(() => loginUseCase('teste@terafy.com', '123456')).called(1);
+        verify(() => loginUseCase('teste@terafy.app.br', '123456')).called(1);
         verify(() => secureStorageService.saveToken('access-token')).called(1);
-        verify(
-          () => secureStorageService.saveRefreshToken('refresh-token'),
-        ).called(1);
+        verify(() => secureStorageService.saveRefreshToken('refresh-token')).called(1);
         verifyNever(() => secureStorageService.saveUserIdentifier(any()));
       },
     );
@@ -160,16 +125,10 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       '1.1.1 - Login com credenciais válidas e biometria habilitada',
       setUp: () {
-        when(() => loginUseCase('teste@terafy.com', '123456')).thenAnswer(
-          (_) async => AuthResult(
-            authToken: 'access-token',
-            refreshAuthToken: 'refresh-token',
-            client: client,
-          ),
+        when(() => loginUseCase('teste@terafy.app.br', '123456')).thenAnswer(
+          (_) async => AuthResult(authToken: 'access-token', refreshAuthToken: 'refresh-token', client: client),
         );
-        when(
-          () => authService.canCheckBiometrics(),
-        ).thenAnswer((_) async => true);
+        when(() => authService.canCheckBiometrics()).thenAnswer((_) async => true);
         when(() => authService.authenticate()).thenAnswer((_) async => true);
       },
       build: () {
@@ -178,29 +137,16 @@ void main() {
       },
       wait: const Duration(milliseconds: 50),
       act: (bloc) => bloc.add(
-        const LoginButtonPressed(
-          email: 'teste@terafy.com',
-          password: '123456',
-          isBiometricsEnabled: true,
-        ),
+        const LoginButtonPressed(email: 'teste@terafy.app.br', password: '123456', isBiometricsEnabled: true),
       ),
-      expect: () => [
-        isA<LoginLoading>(),
-        isA<LoginSuccess>().having((s) => s.client, 'client', equals(client)),
-      ],
+      expect: () => [isA<LoginLoading>(), isA<LoginSuccess>().having((s) => s.client, 'client', equals(client))],
       verify: (_) {
-        verify(() => loginUseCase('teste@terafy.com', '123456')).called(1);
+        verify(() => loginUseCase('teste@terafy.app.br', '123456')).called(1);
         verify(() => secureStorageService.saveToken('access-token')).called(1);
-        verify(
-          () => secureStorageService.saveRefreshToken('refresh-token'),
-        ).called(1);
-        verify(
-          () => secureStorageService.saveUserIdentifier('teste@terafy.com'),
-        ).called(1);
+        verify(() => secureStorageService.saveRefreshToken('refresh-token')).called(1);
+        verify(() => secureStorageService.saveUserIdentifier('teste@terafy.app.br')).called(1);
         // canCheckBiometrics pode ser chamado mais de uma vez (no CheckBiometricLogin inicial e no login)
-        verify(
-          () => authService.canCheckBiometrics(),
-        ).called(greaterThanOrEqualTo(1));
+        verify(() => authService.canCheckBiometrics()).called(greaterThanOrEqualTo(1));
         verify(() => authService.authenticate()).called(1);
       },
     );
@@ -210,9 +156,7 @@ void main() {
       setUp: () {
         when(
           () => loginUseCase('invalid@test.com', 'wrongpassword'),
-        ).thenAnswer(
-          (_) async => const AuthResult(error: 'Credenciais inválidas'),
-        );
+        ).thenAnswer((_) async => const AuthResult(error: 'Credenciais inválidas'));
       },
       build: () {
         final bloc = buildBloc();
@@ -220,24 +164,14 @@ void main() {
       },
       wait: const Duration(milliseconds: 50),
       act: (bloc) => bloc.add(
-        const LoginButtonPressed(
-          email: 'invalid@test.com',
-          password: 'wrongpassword',
-          isBiometricsEnabled: false,
-        ),
+        const LoginButtonPressed(email: 'invalid@test.com', password: 'wrongpassword', isBiometricsEnabled: false),
       ),
       expect: () => [
         isA<LoginLoading>(),
-        isA<LoginFailure>().having(
-          (s) => s.error,
-          'error',
-          equals('Credenciais inválidas'),
-        ),
+        isA<LoginFailure>().having((s) => s.error, 'error', equals('Credenciais inválidas')),
       ],
       verify: (_) {
-        verify(
-          () => loginUseCase('invalid@test.com', 'wrongpassword'),
-        ).called(1);
+        verify(() => loginUseCase('invalid@test.com', 'wrongpassword')).called(1);
         verifyNever(() => secureStorageService.saveToken(any()));
       },
     );
@@ -245,9 +179,7 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       '1.1.2 - Login com erro de exceção - emite LoginFailure',
       setUp: () {
-        when(
-          () => loginUseCase('teste@terafy.com', '123456'),
-        ).thenThrow(Exception('Erro de conexão'));
+        when(() => loginUseCase('teste@terafy.app.br', '123456')).thenThrow(Exception('Erro de conexão'));
       },
       build: () {
         final bloc = buildBloc();
@@ -255,19 +187,11 @@ void main() {
       },
       wait: const Duration(milliseconds: 50),
       act: (bloc) => bloc.add(
-        const LoginButtonPressed(
-          email: 'teste@terafy.com',
-          password: '123456',
-          isBiometricsEnabled: false,
-        ),
+        const LoginButtonPressed(email: 'teste@terafy.app.br', password: '123456', isBiometricsEnabled: false),
       ),
       expect: () => [
         isA<LoginLoading>(),
-        isA<LoginFailure>().having(
-          (s) => s.error,
-          'error',
-          contains('Erro de conexão'),
-        ),
+        isA<LoginFailure>().having((s) => s.error, 'error', contains('Erro de conexão')),
       ],
     );
 
@@ -275,11 +199,8 @@ void main() {
       '1.1.1 - Login com perfil incompleto (accountId null) - requiresProfileCompletion true',
       setUp: () {
         when(() => loginUseCase('incompleto@terafy.com', '123456')).thenAnswer(
-          (_) async => AuthResult(
-            authToken: 'access-token',
-            refreshAuthToken: 'refresh-token',
-            client: clientWithoutAccount,
-          ),
+          (_) async =>
+              AuthResult(authToken: 'access-token', refreshAuthToken: 'refresh-token', client: clientWithoutAccount),
         );
       },
       build: () {
@@ -288,30 +209,22 @@ void main() {
       },
       wait: const Duration(milliseconds: 50),
       act: (bloc) => bloc.add(
-        const LoginButtonPressed(
-          email: 'incompleto@terafy.com',
-          password: '123456',
-          isBiometricsEnabled: false,
-        ),
+        const LoginButtonPressed(email: 'incompleto@terafy.com', password: '123456', isBiometricsEnabled: false),
       ),
       expect: () => [
         isA<LoginLoading>(),
         isA<LoginSuccess>()
             .having((s) => s.client, 'client', equals(clientWithoutAccount))
-            .having(
-              (s) => s.requiresProfileCompletion,
-              'requiresProfileCompletion',
-              isTrue,
-            ),
+            .having((s) => s.requiresProfileCompletion, 'requiresProfileCompletion', isTrue),
       ],
     );
 
     blocTest<LoginBloc, LoginState>(
       '1.1.1 - Login sem refresh token - salva apenas access token',
       setUp: () {
-        when(() => loginUseCase('teste@terafy.com', '123456')).thenAnswer(
-          (_) async => AuthResult(authToken: 'access-token', client: client),
-        );
+        when(
+          () => loginUseCase('teste@terafy.app.br', '123456'),
+        ).thenAnswer((_) async => AuthResult(authToken: 'access-token', client: client));
       },
       build: () {
         final bloc = buildBloc();
@@ -319,11 +232,7 @@ void main() {
       },
       wait: const Duration(milliseconds: 50),
       act: (bloc) => bloc.add(
-        const LoginButtonPressed(
-          email: 'teste@terafy.com',
-          password: '123456',
-          isBiometricsEnabled: false,
-        ),
+        const LoginButtonPressed(email: 'teste@terafy.app.br', password: '123456', isBiometricsEnabled: false),
       ),
       expect: () => [isA<LoginLoading>(), isA<LoginSuccess>()],
       verify: (_) {
@@ -337,15 +246,9 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       '1.1.5 - Persistência de sessão - token válido ao reiniciar app',
       setUp: () {
-        when(
-          () => secureStorageService.getToken(),
-        ).thenAnswer((_) async => 'valid-token');
-        when(
-          () => secureStorageService.getRefreshToken(),
-        ).thenAnswer((_) async => 'refresh-token');
-        when(
-          () => getCurrentUserUseCase(),
-        ).thenAnswer((_) async => AuthResult(client: client));
+        when(() => secureStorageService.getToken()).thenAnswer((_) async => 'valid-token');
+        when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => 'refresh-token');
+        when(() => getCurrentUserUseCase()).thenAnswer((_) async => AuthResult(client: client));
       },
       build: () {
         final bloc = buildBloc();
@@ -359,9 +262,7 @@ void main() {
       ],
       verify: (_) {
         // getToken pode ser chamado mais de uma vez (CheckBiometricLogin e CheckTokenValidity)
-        verify(
-          () => secureStorageService.getToken(),
-        ).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.getToken()).called(greaterThanOrEqualTo(1));
         verify(() => getCurrentUserUseCase()).called(1);
         verifyNever(() => refreshTokenUseCase.call(any()));
       },
@@ -370,12 +271,8 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       '1.1.5 - Persistência de sessão - token expirado, renova com refresh token',
       setUp: () {
-        when(
-          () => secureStorageService.getToken(),
-        ).thenAnswer((_) async => 'expired-token');
-        when(
-          () => secureStorageService.getRefreshToken(),
-        ).thenAnswer((_) async => 'refresh-token');
+        when(() => secureStorageService.getToken()).thenAnswer((_) async => 'expired-token');
+        when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => 'refresh-token');
         // Primeira chamada retorna erro (token expirado), segunda retorna sucesso após refresh
         var callCount = 0;
         when(() => getCurrentUserUseCase()).thenAnswer((_) async {
@@ -386,10 +283,7 @@ void main() {
           return AuthResult(client: client);
         });
         when(() => refreshTokenUseCase.call('refresh-token')).thenAnswer(
-          (_) async => const AuthResult(
-            authToken: 'new-access-token',
-            refreshAuthToken: 'new-refresh-token',
-          ),
+          (_) async => const AuthResult(authToken: 'new-access-token', refreshAuthToken: 'new-refresh-token'),
         );
       },
       build: () {
@@ -397,29 +291,19 @@ void main() {
         return bloc;
       },
       wait: const Duration(milliseconds: 100),
-      expect: () => [
-        isA<LoginSuccess>().having((s) => s.client, 'client', equals(client)),
-      ],
+      expect: () => [isA<LoginSuccess>().having((s) => s.client, 'client', equals(client))],
       verify: (_) {
         verify(() => refreshTokenUseCase.call('refresh-token')).called(1);
-        verify(
-          () => secureStorageService.saveToken('new-access-token'),
-        ).called(1);
-        verify(
-          () => secureStorageService.saveRefreshToken('new-refresh-token'),
-        ).called(1);
+        verify(() => secureStorageService.saveToken('new-access-token')).called(1);
+        verify(() => secureStorageService.saveRefreshToken('new-refresh-token')).called(1);
       },
     );
 
     blocTest<LoginBloc, LoginState>(
       '1.1.5 - Persistência de sessão - sem token, mantém LoginInitial',
       setUp: () {
-        when(
-          () => secureStorageService.getToken(),
-        ).thenAnswer((_) async => null);
-        when(
-          () => secureStorageService.getRefreshToken(),
-        ).thenAnswer((_) async => null);
+        when(() => secureStorageService.getToken()).thenAnswer((_) async => null);
+        when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => null);
       },
       build: () {
         final bloc = buildBloc();
@@ -431,9 +315,7 @@ void main() {
       ],
       verify: (_) {
         // getToken pode ser chamado mais de uma vez (CheckBiometricLogin)
-        verify(
-          () => secureStorageService.getToken(),
-        ).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.getToken()).called(greaterThanOrEqualTo(1));
         verifyNever(() => getCurrentUserUseCase());
       },
     );
@@ -443,17 +325,10 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       '1.3.1 - Logout funcional - limpa tokens e emite LogoutSuccess',
       setUp: () {
+        when(() => secureStorageService.getToken()).thenAnswer((_) async => 'access-token');
+        when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => 'refresh-token');
         when(
-          () => secureStorageService.getToken(),
-        ).thenAnswer((_) async => 'access-token');
-        when(
-          () => secureStorageService.getRefreshToken(),
-        ).thenAnswer((_) async => 'refresh-token');
-        when(
-          () => logoutUseCase.call(
-            refreshToken: 'refresh-token',
-            accessToken: 'access-token',
-          ),
+          () => logoutUseCase.call(refreshToken: 'refresh-token', accessToken: 'access-token'),
         ).thenAnswer((_) async => {});
       },
       build: () {
@@ -464,39 +339,21 @@ void main() {
       act: (bloc) => bloc.add(LogoutPressed()),
       expect: () => [isA<LogoutSuccess>()],
       verify: (_) {
-        verify(
-          () => logoutUseCase.call(
-            refreshToken: 'refresh-token',
-            accessToken: 'access-token',
-          ),
-        ).called(1);
+        verify(() => logoutUseCase.call(refreshToken: 'refresh-token', accessToken: 'access-token')).called(1);
         // deleteToken pode ser chamado mais de uma vez (no CheckBiometricLogin inicial e no logout)
-        verify(
-          () => secureStorageService.deleteToken(),
-        ).called(greaterThanOrEqualTo(1));
-        verify(
-          () => secureStorageService.deleteRefreshToken(),
-        ).called(greaterThanOrEqualTo(1));
-        verify(
-          () => secureStorageService.deleteUserIdentifier(),
-        ).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.deleteToken()).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.deleteRefreshToken()).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.deleteUserIdentifier()).called(greaterThanOrEqualTo(1));
       },
     );
 
     blocTest<LoginBloc, LoginState>(
       '1.3.1 - Logout mesmo com erro no servidor - limpa tokens localmente',
       setUp: () {
+        when(() => secureStorageService.getToken()).thenAnswer((_) async => 'access-token');
+        when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => 'refresh-token');
         when(
-          () => secureStorageService.getToken(),
-        ).thenAnswer((_) async => 'access-token');
-        when(
-          () => secureStorageService.getRefreshToken(),
-        ).thenAnswer((_) async => 'refresh-token');
-        when(
-          () => logoutUseCase.call(
-            refreshToken: 'refresh-token',
-            accessToken: 'access-token',
-          ),
+          () => logoutUseCase.call(refreshToken: 'refresh-token', accessToken: 'access-token'),
         ).thenThrow(Exception('Erro de conexão'));
       },
       build: () {
@@ -509,15 +366,9 @@ void main() {
       verify: (_) {
         // Mesmo com erro, deve limpar tokens localmente
         // deleteToken pode ser chamado mais de uma vez (no CheckBiometricLogin inicial e no logout)
-        verify(
-          () => secureStorageService.deleteToken(),
-        ).called(greaterThanOrEqualTo(1));
-        verify(
-          () => secureStorageService.deleteRefreshToken(),
-        ).called(greaterThanOrEqualTo(1));
-        verify(
-          () => secureStorageService.deleteUserIdentifier(),
-        ).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.deleteToken()).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.deleteRefreshToken()).called(greaterThanOrEqualTo(1));
+        verify(() => secureStorageService.deleteUserIdentifier()).called(greaterThanOrEqualTo(1));
       },
     );
   });

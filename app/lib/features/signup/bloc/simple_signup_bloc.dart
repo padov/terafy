@@ -8,17 +8,12 @@ class SimpleSignupBloc extends Bloc<SimpleSignupEvent, SimpleSignupState> {
   final RegisterUserUseCase registerUserUseCase;
   final SecureStorageService secureStorageService;
 
-  SimpleSignupBloc({
-    required this.registerUserUseCase,
-    required this.secureStorageService,
-  }) : super(SimpleSignupInitial()) {
+  SimpleSignupBloc({required this.registerUserUseCase, required this.secureStorageService})
+    : super(SimpleSignupInitial()) {
     on<SimpleSignupSubmitted>(_onSignupSubmitted);
   }
 
-  Future<void> _onSignupSubmitted(
-    SimpleSignupSubmitted event,
-    Emitter<SimpleSignupState> emit,
-  ) async {
+  Future<void> _onSignupSubmitted(SimpleSignupSubmitted event, Emitter<SimpleSignupState> emit) async {
     emit(SimpleSignupLoading());
     try {
       AppLogger.info('📝 Registrando novo usuário: ${event.email}');
@@ -41,15 +36,11 @@ class SimpleSignupBloc extends Bloc<SimpleSignupEvent, SimpleSignupState> {
       // O token será salvo no storage apenas após completar o perfil
       secureStorageService.saveTemporaryToken(authToken);
       if (authResult.refreshAuthToken != null) {
-        secureStorageService.saveTemporaryRefreshToken(
-          authResult.refreshAuthToken!,
-        );
+        secureStorageService.saveTemporaryRefreshToken(authResult.refreshAuthToken!);
       }
 
-      AppLogger.info(
-        '✅ Usuário registrado com sucesso! Token salvo temporariamente em memória (não persiste).',
-      );
-      emit(SimpleSignupSuccess(authToken: authToken));
+      AppLogger.info('✅ Usuário registrado com sucesso! Token salvo temporariamente em memória (não persiste).');
+      emit(SimpleSignupSuccess(authToken: authToken, email: event.email));
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       emit(SimpleSignupFailure(error: _mapErrorMessage(e)));

@@ -32,11 +32,12 @@ class SimpleSignupLoading extends SimpleSignupState {}
 
 class SimpleSignupSuccess extends SimpleSignupState {
   final String authToken;
+  final String email;
 
-  const SimpleSignupSuccess({required this.authToken});
+  const SimpleSignupSuccess({required this.authToken, required this.email});
 
   @override
-  List<Object?> get props => [authToken];
+  List<Object?> get props => [authToken, email];
 }
 
 class SimpleSignupFailure extends SimpleSignupState {

@@ -3,4 +3,4 @@ coverage/
 coverage-reports/
 *.lcov.info
 *.lcov
-
+.DS_Store

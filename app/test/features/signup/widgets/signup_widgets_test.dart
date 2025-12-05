@@ -7,11 +7,7 @@ void main() {
     testWidgets('renderiza campos de email, senha e confirmação de senha', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: SimpleSignupForm(
-              onSignup: ({required String email, required String password}) {},
-            ),
-          ),
+          home: Scaffold(body: SimpleSignupForm(onSignup: ({required String email, required String password}) {})),
         ),
       );
       await tester.pumpAndSettle();
@@ -28,11 +24,7 @@ void main() {
     testWidgets('valida email obrigatório', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: SimpleSignupForm(
-              onSignup: ({required String email, required String password}) {},
-            ),
-          ),
+          home: Scaffold(body: SimpleSignupForm(onSignup: ({required String email, required String password}) {})),
         ),
       );
       await tester.pumpAndSettle();
@@ -50,11 +42,7 @@ void main() {
     testWidgets('valida formato de email', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: SimpleSignupForm(
-              onSignup: ({required String email, required String password}) {},
-            ),
-          ),
+          home: Scaffold(body: SimpleSignupForm(onSignup: ({required String email, required String password}) {})),
         ),
       );
       await tester.pumpAndSettle();
@@ -74,11 +62,7 @@ void main() {
     testWidgets('valida confirmação de senha', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: SimpleSignupForm(
-              onSignup: ({required String email, required String password}) {},
-            ),
-          ),
+          home: Scaffold(body: SimpleSignupForm(onSignup: ({required String email, required String password}) {})),
         ),
       );
       await tester.pumpAndSettle();
@@ -87,7 +71,7 @@ void main() {
       final signupButton = find.textContaining('Criar conta');
 
       // Preenche email válido
-      await tester.enterText(textFields.first, 'teste@terafy.com');
+      await tester.enterText(textFields.first, 'teste@terafy.app.br');
       // Preenche senha
       await tester.enterText(textFields.at(1), 'senha123');
       // Preenche confirmação diferente
@@ -123,7 +107,7 @@ void main() {
       final signupButton = find.textContaining('Criar conta');
 
       // Preenche todos os campos corretamente
-      await tester.enterText(textFields.first, 'teste@terafy.com');
+      await tester.enterText(textFields.first, 'teste@terafy.app.br');
       await tester.enterText(textFields.at(1), 'senha123');
       await tester.enterText(textFields.at(2), 'senha123');
       await tester.tap(signupButton);
@@ -131,9 +115,8 @@ void main() {
 
       // Verifica se onSignup foi chamado
       expect(signupCalled, isTrue);
-      expect(signupEmail, 'teste@terafy.com');
+      expect(signupEmail, 'teste@terafy.app.br');
       expect(signupPassword, 'senha123');
     });
   });
 }
-

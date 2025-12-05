@@ -9,7 +9,9 @@ import 'package:terafy/routes/app_routes.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
 
 class CompleteProfilePage extends StatelessWidget {
-  const CompleteProfilePage({super.key});
+  final String? email;
+
+  const CompleteProfilePage({super.key, this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,7 @@ class CompleteProfilePage extends StatelessWidget {
         getCurrentUserUseCase: DependencyContainer().getCurrentUserUseCase,
         refreshTokenUseCase: DependencyContainer().refreshTokenUseCase,
         secureStorageService: DependencyContainer().secureStorageService,
+        initialEmail: email,
       ),
       child: const _CompleteProfilePageContent(),
     );
@@ -29,12 +32,10 @@ class _CompleteProfilePageContent extends StatefulWidget {
   const _CompleteProfilePageContent();
 
   @override
-  State<_CompleteProfilePageContent> createState() =>
-      _CompleteProfilePageContentState();
+  State<_CompleteProfilePageContent> createState() => _CompleteProfilePageContentState();
 }
 
-class _CompleteProfilePageContentState
-    extends State<_CompleteProfilePageContent> {
+class _CompleteProfilePageContentState extends State<_CompleteProfilePageContent> {
   final _personalFormKey = GlobalKey<FormState>();
   final _professionalFormKey = GlobalKey<FormState>();
 
@@ -44,22 +45,16 @@ class _CompleteProfilePageContentState
       listener: (context, state) {
         if (state is CompleteProfileSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Perfil completado com sucesso!'),
-              backgroundColor: AppColors.success,
-            ),
+            const SnackBar(content: Text('Perfil completado com sucesso!'), backgroundColor: AppColors.success),
           );
           // Após completar o perfil, vai para home
           // Na próxima vez que fizer login, o accountId já estará atualizado
           // e o LoginBloc verificará automaticamente e redirecionará para home
           Navigator.of(context).pushReplacementNamed(AppRouter.homeRoute);
         } else if (state is CompleteProfileFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error), backgroundColor: AppColors.error));
         }
       },
       builder: (context, state) {
@@ -70,21 +65,13 @@ class _CompleteProfilePageContentState
             elevation: 0,
             leading: state.currentStep > 0
                 ? IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.offBlack,
-                    ),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.offBlack),
                     onPressed: () {
-                      context.read<CompleteProfileBloc>().add(
-                        const PreviousStepPressed(),
-                      );
+                      context.read<CompleteProfileBloc>().add(const PreviousStepPressed());
                     },
                   )
                 : null, // Não permite voltar na primeira tela
-            title: const Text(
-              'Complete seu Perfil',
-              style: TextStyle(color: AppColors.offBlack),
-            ),
+            title: const Text('Complete seu Perfil', style: TextStyle(color: AppColors.offBlack)),
             centerTitle: true,
           ),
           body: Column(
@@ -124,9 +111,7 @@ class _CompleteProfilePageContentState
                   child: Container(
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isCompleted || isCurrent
-                          ? AppColors.primary
-                          : Colors.grey[300],
+                      color: isCompleted || isCurrent ? AppColors.primary : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -152,8 +137,7 @@ class _CompleteProfilePageContentState
           initialPhone: state.data.phone,
           initialPassword: '',
           initialBirthday: state.data.birthday,
-          showPasswordFields:
-              false, // Não mostra campos de senha no complete profile
+          showPasswordFields: false, // Não mostra campos de senha no complete profile
           readOnlyEmail: true, // Email já foi definido no cadastro inicial
           onDataChanged:
               ({
@@ -181,8 +165,7 @@ class _CompleteProfilePageContentState
         return SignupStep2Professional(
           formKey: _professionalFormKey,
           initialSpecialties: state.data.specialties,
-          initialProfessionalRegistrations:
-              state.data.professionalRegistrations,
+          initialProfessionalRegistrations: state.data.professionalRegistrations,
           initialPresentation: state.data.presentation,
           initialAddress: state.data.address,
           onDataChanged:
@@ -216,11 +199,7 @@ class _CompleteProfilePageContentState
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: AppColors.offBlack.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
+          BoxShadow(color: AppColors.offBlack.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
       ),
       child: SafeArea(
@@ -235,33 +214,25 @@ class _CompleteProfilePageContentState
                     final messenger = ScaffoldMessenger.of(context);
 
                     if (state.currentStep == 0) {
-                      final isValid =
-                          _personalFormKey.currentState?.validate() ?? false;
+                      final isValid = _personalFormKey.currentState?.validate() ?? false;
                       if (!isValid) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Verifique os dados pessoais informados.',
-                            ),
+                            content: Text('Verifique os dados pessoais informados.'),
                             backgroundColor: AppColors.error,
                           ),
                         );
                         return;
                       }
-                      context.read<CompleteProfileBloc>().add(
-                        const NextStepPressed(),
-                      );
+                      context.read<CompleteProfileBloc>().add(const NextStepPressed());
                     } else if (state.currentStep == 1) {
                       // Último step - valida e finaliza o cadastro
-                      final isValid =
-                          _professionalFormKey.currentState?.validate() ?? true;
+                      final isValid = _professionalFormKey.currentState?.validate() ?? true;
 
                       if (!isValid) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Verifique os dados profissionais informados.',
-                            ),
+                            content: Text('Verifique os dados profissionais informados.'),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -271,22 +242,17 @@ class _CompleteProfilePageContentState
                       if ((state.data.specialties ?? []).isEmpty) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Adicione pelo menos uma especialidade.',
-                            ),
+                            content: Text('Adicione pelo menos uma especialidade.'),
                             backgroundColor: AppColors.error,
                           ),
                         );
                         return;
                       }
 
-                      if ((state.data.professionalRegistrations ?? [])
-                          .isEmpty) {
+                      if ((state.data.professionalRegistrations ?? []).isEmpty) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Informe pelo menos um registro profissional.',
-                            ),
+                            content: Text('Informe pelo menos um registro profissional.'),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -294,34 +260,24 @@ class _CompleteProfilePageContentState
                       }
 
                       // Finaliza o cadastro
-                      context.read<CompleteProfileBloc>().add(
-                        const SubmitCompleteProfile(),
-                      );
+                      context.read<CompleteProfileBloc>().add(const SubmitCompleteProfile());
                     }
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
             ),
             child: isLoading
                 ? const SizedBox(
                     height: 24,
                     width: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                   )
                 : Text(
                     isLastStep ? 'Finalizar' : 'Próximo',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         ),

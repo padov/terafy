@@ -2,16 +2,16 @@
 -- Execute este script após executar as migrations
 -- 
 -- Credenciais de teste:
--- Email: teste@terafy.com
+-- Email: teste@terafy.app.br
 -- Senha: senha123
 --
 -- O hash SHA-256 de 'senha123' é: ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f
 
 -- Criar usuário de teste
-DELETE FROM users WHERE email = 'teste@terafy.com';
+DELETE FROM users WHERE email = 'teste@terafy.app.br';
 INSERT INTO users (email, password_hash, role, status, email_verified)
 VALUES (
-  'teste@terafy.com',
+  'teste@terafy.app.br',
   '55a5e9e78207b4df8699d60886fa070079463547b095d1a05bc719bb4e6cd251', -- hash SHA-256 de 'senha123'
   'therapist',
   'active',
@@ -24,5 +24,5 @@ ON CONFLICT (email) DO UPDATE SET
 -- Verificar usuário criado
 SELECT id, email, role, account_type, account_id, status, email_verified, created_at
 FROM users 
-WHERE email = 'teste@terafy.com';
+WHERE email = 'teste@terafy.app.br';
 

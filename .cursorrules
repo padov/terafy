@@ -1,0 +1,25 @@
+# Flutter & Testing Rules
+
+## Testing Standards
+
+### Widget Tests
+1. **Structure**
+   - Use `MaterialApp` directly in `pumpWidget`.
+   - DO NOT use `EasyLocalization` wrapper in tests to avoid initialization errors.
+   - Use `mocktail` for mocking dependencies.
+   - Follow the directory structure: `lib/path/to/file.dart` -> `test/path/to/file_test.dart`.
+
+2. **Naming Conventions**
+   - Test descriptions should use present tense verbs (e.g., "renders", "displays", "validates", "triggers").
+   - Be specific about the scenario (e.g., "displays error message when loading fails").
+   - Avoid "tests if..." or "verifies that...".
+
+3. **Best Practices**
+   - Test all states (loading, error, loaded, empty).
+   - Verify specific widget properties (text, colors, icons) when relevant.
+   - Test user interactions (taps, inputs).
+   - Ensure tests are independent and isolated.
+
+## General Flutter
+- Use `const` constructors whenever possible.
+- Follow linting rules.

@@ -5,11 +5,13 @@
 ### 1. Migrations Criadas
 
 #### `20251105000000_create_refresh_tokens_table.sql`
+
 - Tabela `refresh_tokens` para armazenar refresh tokens
 - Campos: `id` (UUID), `user_id`, `token_hash`, `expires_at`, `revoked`, `device_info`, `ip_address`
 - Índices para performance
 
 #### `20251105000001_create_token_blacklist_table.sql`
+
 - Tabela `token_blacklist` para tokens revogados
 - Campos: `token_id` (JTI), `user_id`, `expires_at`, `revoked_at`, `reason`
 - Índices para limpeza automática
@@ -17,6 +19,7 @@
 ### 2. Repositories Criados
 
 #### `RefreshTokenRepository`
+
 - `createRefreshToken()` - Cria novo refresh token
 - `findTokenByHash()` - Busca token pelo hash
 - `updateLastUsed()` - Atualiza último uso
@@ -26,6 +29,7 @@
 - `getUserTokens()` - Lista tokens de um usuário
 
 #### `TokenBlacklistRepository`
+
 - `addToBlacklist()` - Adiciona token à blacklist
 - `isBlacklisted()` - Verifica se token está na blacklist
 - `deleteExpiredTokens()` - Limpeza de tokens expirados
@@ -34,33 +38,39 @@
 ### 3. JwtService Modificado
 
 #### Novos Métodos:
+
 - `generateAccessToken()` - Gera access token (15 minutos)
 - `generateRefreshToken()` - Gera refresh token (7 dias)
 - `generateToken()` - Mantido para compatibilidade (deprecated)
 
 #### Configurações:
+
 - `JWT_ACCESS_TOKEN_EXPIRATION_MINUTES` (padrão: 15)
 - `JWT_REFRESH_TOKEN_EXPIRATION_DAYS` (padrão: 7)
 
 ### 4. AuthController Modificado
 
 #### Novos Métodos:
+
 - `refreshAccessToken()` - Renova access token usando refresh token
 - `revokeRefreshToken()` - Revoga refresh token e adiciona à blacklist
 
 #### Modificações:
+
 - `login()` - Agora gera access token + refresh token separados
 - `register()` - Agora gera access token + refresh token separados
 
 ### 5. AuthHandler Modificado
 
 #### Novos Endpoints:
+
 - `POST /auth/refresh` - Renova access token
 - `POST /auth/logout` - Revoga tokens
 
 ### 6. AuthMiddleware Modificado
 
 #### Novas Funcionalidades:
+
 - Verifica se token é `access` (não `refresh`)
 - Verifica blacklist antes de permitir acesso
 - `/auth/refresh` adicionado às rotas públicas
@@ -68,6 +78,7 @@
 ## 🔄 Fluxo Completo
 
 ### 1. Login
+
 ```
 POST /auth/login
 {
@@ -84,6 +95,7 @@ Resposta:
 ```
 
 ### 2. Usar Access Token
+
 ```
 GET /therapists/me
 Authorization: Bearer <access_token>
@@ -92,6 +104,7 @@ Authorization: Bearer <access_token>
 ```
 
 ### 3. Access Token Expira
+
 ```
 GET /therapists/me
 Authorization: Bearer <access_token_expirado>
@@ -100,6 +113,7 @@ Authorization: Bearer <access_token_expirado>
 ```
 
 ### 4. Renovar Access Token
+
 ```
 POST /auth/refresh
 {
@@ -114,6 +128,7 @@ Resposta:
 ```
 
 ### 5. Logout
+
 ```
 POST /auth/logout
 Authorization: Bearer <access_token>
@@ -128,12 +143,14 @@ Authorization: Bearer <access_token>
 ## 🛡️ Segurança
 
 ### Access Token
+
 - **Duração**: 15 minutos
 - **Uso**: Todas as requisições autenticadas
 - **Revogação**: Via blacklist (logout)
 - **Conteúdo**: userId, email, role, accountType, accountId, jti
 
 ### Refresh Token
+
 - **Duração**: 7 dias
 - **Uso**: Apenas para renovar access token
 - **Armazenamento**: Hash no banco de dados
@@ -141,6 +158,7 @@ Authorization: Bearer <access_token>
 - **Conteúdo**: userId, tokenId (jti)
 
 ### Blacklist
+
 - **Uso**: Tokens revogados antes de expirar
 - **Limpeza**: Tokens expirados são removidos automaticamente
 - **Performance**: Índice para consultas rápidas
@@ -189,7 +207,7 @@ cp .env.example .env
 # Login
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "teste@terafy.com", "password": "senha123"}'
+  -d '{"email": "teste@terafy.app.br", "password": "senha123"}'
 
 # Usar access token
 curl -X GET http://localhost:8080/therapists/me \
@@ -241,4 +259,3 @@ await blacklistRepository.deleteExpiredTokens();
 2. **Instalar uuid**: `dart pub get` (já adicionado ao pubspec.yaml)
 3. **Testar fluxo completo**: Login → Usar token → Renovar → Logout
 4. **Implementar no frontend**: Interceptor para renovar token automaticamente
-

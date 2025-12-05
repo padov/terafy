@@ -36,7 +36,7 @@ void main() {
       final therapistRequest = HttpTestHelpers.createRequest(
         method: 'POST',
         path: '/therapists/me',
-        body: {'name': 'Dr. Teste', 'email': 'teste@terafy.com', 'status': 'active'},
+        body: {'name': 'Dr. Teste', 'email': 'teste@terafy.app.br', 'status': 'active'},
         token: therapistToken,
       );
       final therapistResponse = await handler(therapistRequest);

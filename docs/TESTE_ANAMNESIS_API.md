@@ -16,19 +16,20 @@ Primeiro, faça login para obter o token:
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "teste@terafy.com",
+    "email": "teste@terafy.app.br",
     "password": "senha123"
   }'
 ```
 
 **Resposta esperada:**
+
 ```json
 {
   "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": 1,
-    "email": "teste@terafy.com",
+    "email": "teste@terafy.app.br",
     "role": "therapist",
     ...
   }
@@ -73,6 +74,7 @@ curl -X GET "http://localhost:8080/anamnesis/templates" \
 ```
 
 **Com filtros:**
+
 ```bash
 # Filtrar por categoria
 curl -X GET "http://localhost:8080/anamnesis/templates?category=adult" \
@@ -139,6 +141,7 @@ curl -X POST http://localhost:8080/anamnesis/templates \
 ```
 
 **Resposta esperada:**
+
 ```json
 {
   "id": 1,
@@ -238,6 +241,7 @@ curl -X POST http://localhost:8080/anamnesis \
 ```
 
 **Resposta esperada:**
+
 ```json
 {
   "id": 1,
@@ -366,6 +370,7 @@ curl -X POST http://localhost:8080/anamnesis \
 ```
 
 **Resposta esperada (erro):**
+
 ```json
 {
   "error": "Já existe uma anamnese para este paciente. Use a atualização."
@@ -383,6 +388,7 @@ curl -X DELETE "http://localhost:8080/anamnesis/templates/$SYSTEM_TEMPLATE_ID" \
 ```
 
 **Resposta esperada (erro):**
+
 ```json
 {
   "error": "Não é possível deletar templates do sistema"
@@ -412,7 +418,7 @@ Crie um arquivo `test_anamnesis.sh`:
 
 # Configurações
 BASE_URL="http://localhost:8080"
-EMAIL="teste@terafy.com"
+EMAIL="teste@terafy.app.br"
 PASSWORD="senha123"
 
 echo "🔐 Fazendo login..."
@@ -502,6 +508,7 @@ echo "✅ Todos os testes passaram!"
 ```
 
 **Para executar:**
+
 ```bash
 chmod +x test_anamnesis.sh
 ./test_anamnesis.sh
@@ -512,21 +519,24 @@ chmod +x test_anamnesis.sh
 ## 7. Verificações no Banco de Dados
 
 ### Ver templates criados:
+
 ```sql
-SELECT id, name, category, is_default, is_system, therapist_id 
+SELECT id, name, category, is_default, is_system, therapist_id
 FROM anamnesis_templates;
 ```
 
 ### Ver anamneses criadas:
+
 ```sql
-SELECT id, patient_id, therapist_id, template_id, completed_at, created_at 
+SELECT id, patient_id, therapist_id, template_id, completed_at, created_at
 FROM anamnesis;
 ```
 
 ### Ver dados de uma anamnese:
+
 ```sql
-SELECT id, patient_id, data 
-FROM anamnesis 
+SELECT id, patient_id, data
+FROM anamnesis
 WHERE id = 1;
 ```
 
@@ -535,18 +545,22 @@ WHERE id = 1;
 ## 8. Troubleshooting
 
 ### Erro 401 Unauthorized
+
 - Verifique se o token está sendo enviado no header `Authorization: Bearer <token>`
 - Verifique se o token não expirou (faça login novamente)
 
 ### Erro 404 Not Found
+
 - Verifique se o ID existe no banco de dados
 - Verifique se você tem permissão para acessar o recurso (RLS)
 
 ### Erro 409 Conflict
+
 - Anamnese duplicada para o mesmo paciente
 - Template padrão duplicado para o mesmo terapeuta
 
 ### Erro 500 Internal Server Error
+
 - Verifique os logs do servidor
 - Verifique se as migrations foram executadas
 - Verifique se o JSON está bem formatado
@@ -556,8 +570,8 @@ WHERE id = 1;
 ## 9. Próximos Passos
 
 Após testar os endpoints:
+
 1. ✅ Criar template padrão do sistema
 2. ✅ Implementar validação de campos obrigatórios
 3. ✅ Implementar campos condicionais no frontend
 4. ✅ Criar interface de preenchimento de anamnese
-

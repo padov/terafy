@@ -50,7 +50,9 @@ class AppRouter {
       case signupRoute:
         return MaterialPageRoute(builder: (_) => const SimpleSignupPage());
       case completeProfileRoute:
-        return MaterialPageRoute(builder: (_) => const CompleteProfilePage());
+        final args = settings.arguments as Map<String, dynamic>?;
+        final email = args?['email'] as String?;
+        return MaterialPageRoute(builder: (_) => CompleteProfilePage(email: email));
       case homeRoute:
         return MaterialPageRoute(builder: (_) => const HomePage());
       case scheduleRoute:

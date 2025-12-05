@@ -10,7 +10,7 @@ Future<void> main() async {
   final userRepository = UserRepository(dbConnection);
 
   try {
-    final email = 'teste@terafy.com';
+    final email = 'teste@terafy.app.br';
     final password = 'senha123';
 
     // Verifica se o usuário já existe

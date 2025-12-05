@@ -8,9 +8,7 @@ void main() {
     testWidgets('exibe estado vazio quando não há sessões pendentes', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PendingSessions(sessions: const []),
-          ),
+          home: Scaffold(body: PendingSessions(sessions: const [])),
         ),
       );
       await tester.pumpAndSettle();
@@ -41,9 +39,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PendingSessions(sessions: sessions),
-          ),
+          home: Scaffold(body: PendingSessions(sessions: sessions)),
         ),
       );
       await tester.pumpAndSettle();
@@ -69,15 +65,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SingleChildScrollView(
-              child: PendingSessions(sessions: sessions),
-            ),
+            body: SingleChildScrollView(child: PendingSessions(sessions: sessions)),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.edit_note), findsOneWidget);
+      // O ícone edit_note aparece 2 vezes: no cabeçalho e no card da sessão
+      expect(find.byIcon(Icons.edit_note), findsNWidgets(2));
       expect(find.text('Rascunho'), findsOneWidget);
     });
 
@@ -96,9 +91,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SingleChildScrollView(
-              child: PendingSessions(sessions: sessions),
-            ),
+            body: SingleChildScrollView(child: PendingSessions(sessions: sessions)),
           ),
         ),
       );
@@ -122,9 +115,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PendingSessions(sessions: sessions),
-          ),
+          home: Scaffold(body: PendingSessions(sessions: sessions)),
         ),
       );
       await tester.pumpAndSettle();
@@ -147,9 +138,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PendingSessions(sessions: sessions),
-          ),
+          home: Scaffold(body: PendingSessions(sessions: sessions)),
         ),
       );
       await tester.pumpAndSettle();
@@ -174,9 +163,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SingleChildScrollView(
-              child: PendingSessions(sessions: sessions),
-            ),
+            body: SingleChildScrollView(child: PendingSessions(sessions: sessions)),
           ),
         ),
       );
@@ -204,10 +191,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PendingSessions(
-              sessions: sessions,
-              onSeeAll: () {},
-            ),
+            body: PendingSessions(sessions: sessions, onSeeAll: () {}),
           ),
         ),
       );
@@ -220,10 +204,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PendingSessions(
-              sessions: const [],
-              onSeeAll: () {},
-            ),
+            body: PendingSessions(sessions: const [], onSeeAll: () {}),
           ),
         ),
       );
@@ -268,9 +249,7 @@ void main() {
     testWidgets('exibe título Sessões Pendentes', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PendingSessions(sessions: const []),
-          ),
+          home: Scaffold(body: PendingSessions(sessions: const [])),
         ),
       );
       await tester.pumpAndSettle();
@@ -281,9 +260,7 @@ void main() {
     testWidgets('exibe ícone de nota no título', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PendingSessions(sessions: const []),
-          ),
+          home: Scaffold(body: PendingSessions(sessions: const [])),
         ),
       );
       await tester.pumpAndSettle();

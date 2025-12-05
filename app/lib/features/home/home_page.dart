@@ -11,11 +11,15 @@ import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/routes/app_routes.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final HomeBloc? bloc;
+
+  const HomePage({super.key, this.bloc});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(create: (context) => HomeBloc()..add(const LoadHomeData()), child: const _HomePageContent());
+    return bloc != null
+        ? BlocProvider.value(value: bloc!, child: const _HomePageContent())
+        : BlocProvider(create: (context) => HomeBloc()..add(const LoadHomeData()), child: const _HomePageContent());
   }
 }
 

@@ -58,6 +58,7 @@ import 'package:terafy/core/interceptors/auth_interceptor.dart';
 import 'package:terafy/core/services/auth_service.dart';
 import 'package:terafy/core/services/secure_storage_service.dart';
 import 'package:terafy/core/services/patients_cache_service.dart';
+import 'package:terafy/core/services/session_manager.dart';
 import 'package:terafy/package/http.dart';
 
 // Este é um container de dependências simples. Em projetos maiores,
@@ -112,8 +113,9 @@ class DependencyContainer {
   late final UpdateTransactionUseCase updateTransactionUseCase;
   late final DeleteTransactionUseCase deleteTransactionUseCase;
   late final GetFinancialSummaryUseCase getFinancialSummaryUseCase;
-  late final SecureStorageService secureStorageService;
+  late SecureStorageService secureStorageService;
   late AuthService authService; // Não é final para permitir substituição em testes
+  late final SessionManager sessionManager;
   late final HttpClient httpClient;
   late final PatientsCacheService patientsCacheService;
 
@@ -205,6 +207,16 @@ class DependencyContainer {
     getCurrentUserUseCase = GetCurrentUserUseCase(authRepository);
     refreshTokenUseCase = RefreshTokenUseCase(authRepository);
     logoutUseCase = LogoutUseCase(authRepository);
+
+    sessionManager = SessionManager(
+      loginUseCase: loginUseCase,
+      signInWithGoogleUseCase: signInWithGoogleUseCase,
+      getCurrentUserUseCase: getCurrentUserUseCase,
+      refreshTokenUseCase: refreshTokenUseCase,
+      logoutUseCase: logoutUseCase,
+      secureStorageService: secureStorageService,
+      authService: authService,
+    );
     createTherapistUseCase = CreateTherapistUseCase(therapistRepository);
     getCurrentTherapistUseCase = GetCurrentTherapistUseCase(therapistRepository);
     updateTherapistUseCase = UpdateTherapistUseCase(therapistRepository);

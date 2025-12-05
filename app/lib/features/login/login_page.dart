@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -61,15 +60,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LoginBloc(
-        loginUseCase: DependencyContainer().loginUseCase,
-        signInWithGoogleUseCase: DependencyContainer().signInWithGoogleUseCase,
-        getCurrentUserUseCase: DependencyContainer().getCurrentUserUseCase,
-        refreshTokenUseCase: DependencyContainer().refreshTokenUseCase,
-        logoutUseCase: DependencyContainer().logoutUseCase,
-        secureStorageService: DependencyContainer().secureStorageService,
-        authService: DependencyContainer().authService,
-      ),
+      create: (context) => LoginBloc(sessionManager: DependencyContainer().sessionManager),
       child: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) async {
           if (state is LoginSuccess) {
@@ -77,7 +68,9 @@ class _LoginPageState extends State<LoginPage> {
             if (context.mounted) {
               // Verifica se precisa completar o perfil
               if (state.requiresProfileCompletion) {
-                Navigator.of(context).pushReplacementNamed(AppRouter.completeProfileRoute);
+                Navigator.of(
+                  context,
+                ).pushReplacementNamed(AppRouter.completeProfileRoute, arguments: {'email': state.client.email});
               } else {
                 Navigator.of(context).pushReplacementNamed(AppRouter.homeRoute);
               }
