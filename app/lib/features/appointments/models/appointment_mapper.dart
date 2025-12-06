@@ -1,5 +1,5 @@
 import 'package:common/common.dart' as common;
-import 'package:terafy/features/agenda/models/appointment.dart' as ui;
+import 'package:terafy/features/appointments/models/appointment.dart' as ui;
 
 ui.Appointment mapToUiAppointment(common.Appointment appointment) {
   final duration = appointment.endTime.difference(appointment.startTime);

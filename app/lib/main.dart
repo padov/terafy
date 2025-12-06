@@ -75,6 +75,7 @@ class MyApp extends StatelessWidget {
       initialRoute: AppRouter.splashRoute,
       onGenerateRoute: AppRouter.generateRoute,
       navigatorKey: navigatorKey, // Adiciona global navigator key
+      navigatorObservers: [AppRouter.routeObserver],
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,

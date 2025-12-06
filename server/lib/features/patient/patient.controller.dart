@@ -24,6 +24,7 @@ class PatientController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.getPatients(
         therapistId: therapistId,
@@ -32,7 +33,8 @@ class PatientController {
         accountId: accountId ?? therapistId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       throw PatientException('Erro ao listar pacientes: ${e.toString()}', 500);
     }
   }
@@ -44,6 +46,7 @@ class PatientController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       final patient = await _repository.getPatientById(
         id,
@@ -58,8 +61,9 @@ class PatientController {
       }
 
       return patient;
-    } catch (e) {
+    } catch (e, stack) {
       if (e is PatientException) rethrow;
+      AppLogger.error(e, stack);
       throw PatientException('Erro ao buscar paciente: ${e.toString()}', 500);
     }
   }
@@ -101,6 +105,7 @@ class PatientController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       final updated = await _repository.updatePatient(
         id,
@@ -121,8 +126,9 @@ class PatientController {
         throw PatientException('CPF já cadastrado para outro paciente.', 409);
       }
       throw PatientException('Erro ao atualizar paciente: ${e.message}', 500);
-    } catch (e) {
+    } catch (e, stack) {
       if (e is PatientException) rethrow;
+      AppLogger.error(e, stack);
       throw PatientException('Erro ao atualizar paciente: ${e.toString()}', 500);
     }
   }
@@ -134,6 +140,7 @@ class PatientController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       final deleted = await _repository.deletePatient(
         id,
@@ -146,8 +153,9 @@ class PatientController {
       if (!deleted) {
         throw PatientException('Paciente não encontrado', 404);
       }
-    } catch (e) {
+    } catch (e, stack) {
       if (e is PatientException) rethrow;
+      AppLogger.error(e, stack);
       throw PatientException('Erro ao remover paciente: ${e.toString()}', 500);
     }
   }

@@ -77,9 +77,9 @@ class PendingSessions extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        // Navegar diretamente para a edição da sessão
+        // Navegar para detalhes da sessão
         Navigator.of(context).pushNamed(
-          AppRouter.sessionEvolutionRoute,
+          AppRouter.sessionDetailsRoute,
           arguments: {'sessionId': session.id.toString(), 'patientName': session.patientName},
         );
       },
@@ -119,14 +119,14 @@ class PendingSessions extends StatelessWidget {
                       Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
                       const SizedBox(width: 4),
                       Text(
-                        dateFormat.format(session.scheduledStartTime),
+                        dateFormat.format(session.scheduledStartTime.toLocal()),
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(width: 12),
                       Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
                       const SizedBox(width: 4),
                       Text(
-                        timeFormat.format(session.scheduledStartTime),
+                        timeFormat.format(session.scheduledStartTime.toLocal()),
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],

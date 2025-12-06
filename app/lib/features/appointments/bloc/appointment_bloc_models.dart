@@ -1,28 +1,28 @@
 import 'package:equatable/equatable.dart';
-import 'package:terafy/features/agenda/models/appointment.dart';
+import 'package:terafy/features/appointments/models/appointment.dart';
 
 // ==================== EVENTS ====================
 
-abstract class AgendaEvent extends Equatable {
-  const AgendaEvent();
+abstract class AppointmentEvent extends Equatable {
+  const AppointmentEvent();
 
   @override
   List<Object?> get props => [];
 }
 
 /// Carregar agenda para um período
-class LoadAgenda extends AgendaEvent {
+class LoadAppointments extends AppointmentEvent {
   final DateTime startDate;
   final DateTime endDate;
 
-  const LoadAgenda({required this.startDate, required this.endDate});
+  const LoadAppointments({required this.startDate, required this.endDate});
 
   @override
   List<Object> get props => [startDate, endDate];
 }
 
 /// Criar novo agendamento
-class CreateAppointment extends AgendaEvent {
+class CreateAppointment extends AppointmentEvent {
   final Appointment appointment;
 
   const CreateAppointment(this.appointment);
@@ -32,7 +32,7 @@ class CreateAppointment extends AgendaEvent {
 }
 
 /// Atualizar agendamento
-class UpdateAppointment extends AgendaEvent {
+class UpdateAppointment extends AppointmentEvent {
   final Appointment appointment;
 
   const UpdateAppointment(this.appointment);
@@ -42,7 +42,7 @@ class UpdateAppointment extends AgendaEvent {
 }
 
 /// Cancelar agendamento
-class CancelAppointment extends AgendaEvent {
+class CancelAppointment extends AppointmentEvent {
   final String appointmentId;
   final String? reason;
 
@@ -53,7 +53,7 @@ class CancelAppointment extends AgendaEvent {
 }
 
 /// Confirmar agendamento
-class ConfirmAppointment extends AgendaEvent {
+class ConfirmAppointment extends AppointmentEvent {
   final String appointmentId;
 
   const ConfirmAppointment(this.appointmentId);
@@ -63,7 +63,7 @@ class ConfirmAppointment extends AgendaEvent {
 }
 
 /// Registrar falta (no-show)
-class MarkNoShow extends AgendaEvent {
+class MarkNoShow extends AppointmentEvent {
   final String appointmentId;
 
   const MarkNoShow(this.appointmentId);
@@ -73,7 +73,7 @@ class MarkNoShow extends AgendaEvent {
 }
 
 /// Carregar detalhes de um agendamento
-class LoadAppointmentDetails extends AgendaEvent {
+class LoadAppointmentDetails extends AppointmentEvent {
   final String appointmentId;
 
   const LoadAppointmentDetails(this.appointmentId);
@@ -83,40 +83,36 @@ class LoadAppointmentDetails extends AgendaEvent {
 }
 
 /// Reemite a agenda atual armazenada em cache
-class ResetAgendaView extends AgendaEvent {
-  const ResetAgendaView();
+class ResetAppointmentsView extends AppointmentEvent {
+  const ResetAppointmentsView();
 }
 
 // ==================== STATES ====================
 
-abstract class AgendaState extends Equatable {
-  const AgendaState();
+abstract class AppointmentState extends Equatable {
+  const AppointmentState();
 
   @override
   List<Object?> get props => [];
 }
 
 /// Estado inicial
-class AgendaInitial extends AgendaState {
-  const AgendaInitial();
+class AppointmentInitial extends AppointmentState {
+  const AppointmentInitial();
 }
 
 /// Carregando agenda
-class AgendaLoading extends AgendaState {
-  const AgendaLoading();
+class AppointmentLoading extends AppointmentState {
+  const AppointmentLoading();
 }
 
 /// Agenda carregada com sucesso
-class AgendaLoaded extends AgendaState {
+class AppointmentLoaded extends AppointmentState {
   final List<Appointment> appointments;
   final DateTime startDate;
   final DateTime endDate;
 
-  const AgendaLoaded({
-    required this.appointments,
-    required this.startDate,
-    required this.endDate,
-  });
+  const AppointmentLoaded({required this.appointments, required this.startDate, required this.endDate});
 
   @override
   List<Object> get props => [appointments, startDate, endDate];
@@ -142,11 +138,7 @@ class AgendaLoaded extends AgendaState {
     final Map<DateTime, int> countMap = {};
 
     for (final appointment in appointments) {
-      final date = DateTime(
-        appointment.dateTime.year,
-        appointment.dateTime.month,
-        appointment.dateTime.day,
-      );
+      final date = DateTime(appointment.dateTime.year, appointment.dateTime.month, appointment.dateTime.day);
       countMap[date] = (countMap[date] ?? 0) + 1;
     }
 
@@ -155,7 +147,7 @@ class AgendaLoaded extends AgendaState {
 }
 
 /// Detalhes do agendamento carregado
-class AppointmentDetailsLoaded extends AgendaState {
+class AppointmentDetailsLoaded extends AppointmentState {
   final Appointment appointment;
 
   const AppointmentDetailsLoaded(this.appointment);
@@ -165,7 +157,7 @@ class AppointmentDetailsLoaded extends AgendaState {
 }
 
 /// Agendamento criado com sucesso
-class AppointmentCreated extends AgendaState {
+class AppointmentCreated extends AppointmentState {
   final Appointment appointment;
 
   const AppointmentCreated(this.appointment);
@@ -175,7 +167,7 @@ class AppointmentCreated extends AgendaState {
 }
 
 /// Agendamento atualizado com sucesso
-class AppointmentUpdated extends AgendaState {
+class AppointmentUpdated extends AppointmentState {
   final Appointment appointment;
 
   const AppointmentUpdated(this.appointment);
@@ -185,7 +177,7 @@ class AppointmentUpdated extends AgendaState {
 }
 
 /// Agendamento cancelado com sucesso
-class AppointmentCancelled extends AgendaState {
+class AppointmentCancelled extends AppointmentState {
   final String appointmentId;
 
   const AppointmentCancelled(this.appointmentId);
@@ -195,10 +187,10 @@ class AppointmentCancelled extends AgendaState {
 }
 
 /// Erro na agenda
-class AgendaError extends AgendaState {
+class AppointmentError extends AppointmentState {
   final String message;
 
-  const AgendaError(this.message);
+  const AppointmentError(this.message);
 
   @override
   List<Object> get props => [message];

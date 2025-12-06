@@ -15,6 +15,7 @@ class PatientRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -101,6 +102,7 @@ class PatientRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -307,6 +309,7 @@ class PatientRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -431,6 +434,7 @@ class PatientRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);

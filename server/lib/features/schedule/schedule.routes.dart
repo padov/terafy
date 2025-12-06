@@ -18,6 +18,8 @@ Router configureScheduleRoutes(ScheduleHandler handler) {
     return therapistOrAdmin.call((Request req) => handler.handleGetAppointment(req, id))(request);
   });
 
+  router.post('/appointments/validate', therapistOrAdmin.call(handler.handleValidateAvailability));
+
   router.post('/appointments', therapistOrAdmin.call(handler.handleCreateAppointment));
 
   router.put('/appointments/<id|[0-9]+>', (Request request, String id) async {

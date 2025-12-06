@@ -14,6 +14,7 @@ class ScheduleRepository {
     String? userRole,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -57,6 +58,7 @@ class ScheduleRepository {
     String? userRole,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -144,6 +146,7 @@ class ScheduleRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -265,6 +268,7 @@ class ScheduleRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -377,6 +381,7 @@ class ScheduleRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -466,6 +471,7 @@ class ScheduleRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -479,6 +485,77 @@ class ScheduleRepository {
       );
 
       return result.isNotEmpty;
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> checkAvailability({
+    required int therapistId,
+    required List<Map<String, DateTime>> slots, // [{start: ..., end: ...}]
+    required int userId,
+    String? userRole,
+    int? accountId,
+    bool bypassRLS = false,
+  }) async {
+    AppLogger.func();
+    if (slots.isEmpty) return [];
+
+    // Encontrar o range total para minimizar a busca
+    DateTime minStart = slots.first['start']!;
+    DateTime maxEnd = slots.first['end']!;
+
+    for (final slot in slots) {
+      if (slot['start']!.isBefore(minStart)) minStart = slot['start']!;
+      if (slot['end']!.isAfter(maxEnd)) maxEnd = slot['end']!;
+    }
+
+    return await _dbConnection.withConnection((conn) async {
+      if (bypassRLS) {
+        await RLSContext.clearContext(conn);
+      } else {
+        await RLSContext.setContext(
+          conn: conn,
+          userId: userId,
+          userRole: userRole,
+          accountId: accountId ?? therapistId,
+        );
+      }
+
+      // Buscar todos os agendamentos no período total
+      final result = await conn.execute(
+        Sql.named('''
+        SELECT start_time, end_time
+        FROM appointments
+        WHERE therapist_id = @therapist_id
+          AND start_time < @max_end
+          AND end_time > @min_start
+          AND status != 'cancelled'
+      '''),
+        parameters: {'therapist_id': therapistId, 'min_start': minStart, 'max_end': maxEnd},
+      );
+
+      final existingAppointments = result.map((row) {
+        return {'start': row[0] as DateTime, 'end': row[1] as DateTime};
+      }).toList();
+
+      final conflicts = <Map<String, dynamic>>[];
+
+      for (final slot in slots) {
+        final slotStart = slot['start']!;
+        final slotEnd = slot['end']!;
+
+        // Verificar interseção
+        final hasConflict = existingAppointments.any((existing) {
+          final existingStart = existing['start'] as DateTime;
+          final existingEnd = existing['end'] as DateTime;
+          return slotStart.isBefore(existingEnd) && slotEnd.isAfter(existingStart);
+        });
+
+        if (hasConflict) {
+          conflicts.add({'start': slotStart, 'end': slotEnd});
+        }
+      }
+
+      return conflicts;
     });
   }
 }

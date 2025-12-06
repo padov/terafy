@@ -5,8 +5,8 @@ import 'package:terafy/features/signup/simple_signup_page.dart';
 import 'package:terafy/features/signup/complete_profile_page.dart';
 import 'package:terafy/features/home/home_page.dart';
 import 'package:terafy/features/schedule/schedule_page.dart';
-import 'package:terafy/features/agenda/new_appointment_page.dart';
-import 'package:terafy/features/agenda/appointment_details_page.dart';
+import 'package:terafy/features/appointments/new_appointment_page.dart';
+import 'package:terafy/features/appointments/appointment_details_page.dart';
 import 'package:terafy/features/financial/financial_page.dart';
 import 'package:terafy/features/financial/payment_details_page.dart';
 import 'package:terafy/features/financial/reports/financial_reports_page.dart';
@@ -21,6 +21,10 @@ import 'package:terafy/features/profile/edit_profile_page.dart';
 
 class AppRouter {
   static const String splashRoute = '/';
+
+  // Global RouteObserver for auto-refresh logic
+  static final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
+
   static const String loginRoute = '/login';
   static const String signupRoute = '/signup';
   static const String completeProfileRoute = '/complete-profile';
@@ -62,16 +66,12 @@ class AppRouter {
       case appointmentDetailsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final appointmentId = args['appointmentId'] as String;
-        return MaterialPageRoute(
-          builder: (_) => AppointmentDetailsPage(appointmentId: appointmentId),
-        );
+        return MaterialPageRoute(builder: (_) => AppointmentDetailsPage(appointmentId: appointmentId));
       case financialRoute:
         return MaterialPageRoute(builder: (_) => const FinancialPage());
       case paymentDetailsRoute:
         final paymentId = settings.arguments as String;
-        return MaterialPageRoute(
-          builder: (_) => PaymentDetailsPage(paymentId: paymentId),
-        );
+        return MaterialPageRoute(builder: (_) => PaymentDetailsPage(paymentId: paymentId));
       case financialReportsRoute:
         return MaterialPageRoute(builder: (_) => const FinancialReportsPage());
       case patientsRoute:
@@ -79,50 +79,36 @@ class AppRouter {
       case patientDashboardRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final patientId = args['patientId'] as String;
-        return MaterialPageRoute(
-          builder: (_) => PatientDashboardPage(patientId: patientId),
-        );
+        return MaterialPageRoute(builder: (_) => PatientDashboardPage(patientId: patientId));
       case patientRegistrationRoute:
-        return MaterialPageRoute(
-          builder: (_) => const PatientRegistrationPage(),
-        );
+        return MaterialPageRoute(builder: (_) => const PatientRegistrationPage());
       case sessionsHistoryRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final patientId = args['patientId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) => SessionsHistoryPage(
-            patientId: patientId,
-            patientName: patientName,
-          ),
+          builder: (_) => SessionsHistoryPage(patientId: patientId, patientName: patientName),
         );
       case sessionDetailsRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final sessionId = args['sessionId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) => SessionDetailsPage(
-            sessionId: sessionId,
-            patientName: patientName,
-          ),
+          builder: (_) => SessionDetailsPage(sessionId: sessionId, patientName: patientName),
         );
       case newSessionRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final patientId = args['patientId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) =>
-              NewSessionPage(patientId: patientId, patientName: patientName),
+          builder: (_) => NewSessionPage(patientId: patientId, patientName: patientName),
         );
       case sessionEvolutionRoute:
         final args = settings.arguments as Map<String, dynamic>;
         final sessionId = args['sessionId'] as String;
         final patientName = args['patientName'] as String;
         return MaterialPageRoute(
-          builder: (_) => SessionEvolutionPage(
-            sessionId: sessionId,
-            patientName: patientName,
-          ),
+          builder: (_) => SessionEvolutionPage(sessionId: sessionId, patientName: patientName),
         );
       case editProfileRoute:
         return MaterialPageRoute(builder: (_) => const EditProfilePage());
@@ -130,11 +116,7 @@ class AppRouter {
       //   return MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
       default:
         return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('Nenhuma rota definida para ${settings.name}'),
-            ),
-          ),
+          builder: (_) => Scaffold(body: Center(child: Text('Nenhuma rota definida para ${settings.name}'))),
         );
     }
   }

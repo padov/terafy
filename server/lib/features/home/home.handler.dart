@@ -15,6 +15,7 @@ class HomeHandler extends BaseHandler {
   Router get router => configureHomeRoutes(this);
 
   Future<Response> handleGetSummary(Request request) async {
+    AppLogger.func();
     try {
       final userId = getUserId(request);
       final userRole = getUserRole(request);
@@ -38,17 +39,13 @@ class HomeHandler extends BaseHandler {
 
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
         final therapistParam = request.url.queryParameters['therapistId'];
         if (therapistParam == null) {
-          return badRequestResponse(
-            'Informe o therapistId para consultar os dados.',
-          );
+          return badRequestResponse('Informe o therapistId para consultar os dados.');
         }
 
         final parsed = int.tryParse(therapistParam);
@@ -59,9 +56,7 @@ class HomeHandler extends BaseHandler {
         therapistId = parsed;
         accountContext = therapistId;
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem acessar este recurso.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem acessar este recurso.');
       }
 
       final summary = await _controller.getSummary(
@@ -78,9 +73,7 @@ class HomeHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao carregar resumo da home: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao carregar resumo da home: ${e.toString()}');
     }
   }
 }

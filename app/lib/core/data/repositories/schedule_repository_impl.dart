@@ -128,6 +128,39 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     }
   }
 
+  @override
+  Future<List<Map<String, DateTime>>> validateAppointments({
+    required List<Map<String, DateTime>> slots,
+    int? therapistId,
+  }) async {
+    AppLogger.func();
+    try {
+      if (slots.isEmpty) return [];
+
+      final data = {
+        'slots': slots
+            .map((s) => {'start': s['start']!.toUtc().toIso8601String(), 'end': s['end']!.toUtc().toIso8601String()})
+            .toList(),
+        if (therapistId != null) 'therapistId': therapistId,
+      };
+
+      final response = await httpClient.post('/schedule/appointments/validate', data: data);
+
+      if (response.data is! List) {
+        throw Exception('Resposta inválida ao validar agendamentos');
+      }
+
+      final conflicts = (response.data as List).map((c) {
+        final conflict = Map<String, dynamic>.from(c as Map);
+        return {'start': DateTime.parse(conflict['start']), 'end': DateTime.parse(conflict['end'])};
+      }).toList();
+
+      return conflicts;
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e) ?? 'Erro ao validar agendamentos');
+    }
+  }
+
   String? _extractErrorMessage(DioException exception) {
     final data = exception.response?.data;
     if (data is Map<String, dynamic>) {

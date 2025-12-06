@@ -4,19 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/common/app_colors.dart';
-import 'package:terafy/features/agenda/appointment_details_page.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc.dart';
-import 'package:terafy/features/agenda/models/appointment.dart';
+import 'package:terafy/features/appointments/appointment_details_page.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
+import 'package:terafy/features/appointments/models/appointment.dart';
+import 'package:terafy/features/appointments/new_appointment_page.dart';
+import 'package:terafy/features/schedule/bloc/schedule_settings_bloc.dart';
 import 'appointment_card.dart';
 
 class WeekView extends StatefulWidget {
   final DateTime weekStart;
   final List<Appointment> appointments;
 
+  final int startHour;
+  final int endHour;
+  final Map<String, dynamic> workingHours;
+
   const WeekView({
     super.key,
     required this.weekStart,
     required this.appointments,
+    this.startHour = 6,
+    this.endHour = 23,
+    this.workingHours = const {},
   });
 
   @override
@@ -24,13 +33,14 @@ class WeekView extends StatefulWidget {
 }
 
 class _WeekViewState extends State<WeekView> {
-  static const int _startHour = 6;
-  static const int _endHour = 23;
   static const int _minutesPerSlot = 60;
   double _slotHeight = 60;
   final double sizeHourHeader = 20;
   bool _showSaturday = false;
   bool _showSunday = false;
+
+  int get _startHour => widget.startHour;
+  int get _endHour => widget.endHour;
 
   int get _totalMinutes => (_endHour - _startHour) * 60;
   int get _totalSlots => _totalMinutes ~/ _minutesPerSlot;
@@ -53,9 +63,7 @@ class _WeekViewState extends State<WeekView> {
     final allWeekDays = _getWeekDays(widget.weekStart);
     final visibleDays = _applyWeekendVisibility(allWeekDays);
     final today = DateTime.now();
-    _slotHeight = _calculateSlotHeight(
-      visibleDays.isEmpty ? 1 : visibleDays.length,
-    );
+    _slotHeight = _calculateSlotHeight(visibleDays.isEmpty ? 1 : visibleDays.length);
 
     return Column(
       children: [
@@ -67,10 +75,7 @@ class _WeekViewState extends State<WeekView> {
 
         // Grade de horários
         Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: _buildTimeGrid(visibleDays, today),
-          ),
+          child: SingleChildScrollView(scrollDirection: Axis.vertical, child: _buildTimeGrid(visibleDays, today)),
         ),
       ],
     );
@@ -108,10 +113,21 @@ class _WeekViewState extends State<WeekView> {
   }
 
   Widget _buildWeekendToggleRow(List<DateTime> allWeekDays) {
-    final hasSaturday = allWeekDays.any(
-      (day) => day.weekday == DateTime.saturday,
-    );
-    final hasSunday = allWeekDays.any((day) => day.weekday == DateTime.sunday);
+    // Verificar se deve mostrar os controles de sábado e domingo
+    final hasSatConfig = widget.workingHours['saturday']?['enabled'] == true;
+    final hasSunConfig = widget.workingHours['sunday']?['enabled'] == true;
+
+    final hasSatApp = widget.appointments.any((a) => a.dateTime.weekday == DateTime.saturday);
+    final hasSunApp = widget.appointments.any((a) => a.dateTime.weekday == DateTime.sunday);
+
+    final showSatControl = hasSatConfig || hasSatApp;
+    final showSunControl = hasSunConfig || hasSunApp;
+
+    // Se tiver agendamento mas o toggle estiver desligado, forçar ligar (opcional, ou deixar o usuário ligar)
+    // O requisito diz "se não tiver configuração... não precisa mostrar os botões".
+    // Então se TIVER agendamento, mostra o botão.
+    // Se não tiver config E não tiver agendamento, esconde o botão.
+
     final label = _formatRangeLabel(_applyWeekendVisibility(allWeekDays));
 
     return Padding(
@@ -122,14 +138,10 @@ class _WeekViewState extends State<WeekView> {
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.offBlack,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.offBlack),
             ),
           ),
-          if (hasSaturday) ...[
+          if (showSatControl) ...[
             const SizedBox(width: 8),
             _WeekendToggleChip(
               label: 'Sábado',
@@ -137,7 +149,7 @@ class _WeekViewState extends State<WeekView> {
               onTap: () => setState(() => _showSaturday = !_showSaturday),
             ),
           ],
-          if (hasSunday) ...[
+          if (showSunControl) ...[
             const SizedBox(width: 8),
             _WeekendToggleChip(
               label: 'Domingo',
@@ -152,10 +164,7 @@ class _WeekViewState extends State<WeekView> {
 
   Widget _buildWeekdaysHeader(List<DateTime> weekDays, DateTime today) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
       child: Row(
         children: [
           // Coluna de horários (vazia no header)
@@ -163,10 +172,7 @@ class _WeekViewState extends State<WeekView> {
 
           // Dias da semana (largura proporcional)
           ...weekDays.map((date) {
-            final isToday =
-                date.day == today.day &&
-                date.month == today.month &&
-                date.year == today.year;
+            final isToday = date.day == today.day && date.month == today.month && date.year == today.year;
 
             return Expanded(
               child: AnimatedContainer(
@@ -220,19 +226,11 @@ class _WeekViewState extends State<WeekView> {
         children: [
           _buildTimeLabels(),
           ...weekDays.map((date) {
-            final isToday =
-                date.day == today.day &&
-                date.month == today.month &&
-                date.year == today.year;
+            final isToday = date.day == today.day && date.month == today.month && date.year == today.year;
             final dayAppointments = _getAppointmentsForDay(date);
 
             return Expanded(
-              child: _buildDayColumn(
-                context: context,
-                date: date,
-                isToday: isToday,
-                appointments: dayAppointments,
-              ),
+              child: _buildDayColumn(context: context, date: date, isToday: isToday, appointments: dayAppointments),
             );
           }),
         ],
@@ -241,10 +239,7 @@ class _WeekViewState extends State<WeekView> {
   }
 
   Widget _buildTimeLabels() {
-    final hours = List.generate(
-      _endHour - _startHour + 1,
-      (index) => _startHour + index,
-    );
+    final hours = List.generate(_endHour - _startHour + 1, (index) => _startHour + index);
 
     return SizedBox(
       width: sizeHourHeader,
@@ -258,11 +253,7 @@ class _WeekViewState extends State<WeekView> {
               alignment: Alignment.center,
               child: Text(
                 '${hour.toString().padLeft(2, '0')}',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600], fontWeight: FontWeight.w500),
               ),
             ),
           );
@@ -277,13 +268,41 @@ class _WeekViewState extends State<WeekView> {
     required bool isToday,
     required List<Appointment> appointments,
   }) {
-    final stackChildren = <Widget>[_buildBackgroundGrid(isToday)];
+    final stackChildren = <Widget>[
+      Positioned.fill(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapUp: (details) {
+            final dy = details.localPosition.dy;
+            final minutes = (dy / _totalHeight) * _totalMinutes;
+            final roundedMinutes = (minutes / 30).round() * 30;
+            final time = TimeOfDay(
+              hour: _startHour,
+              minute: 0,
+            ).replacing(hour: _startHour + (roundedMinutes ~/ 60), minute: roundedMinutes % 60);
+
+            final tapDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(value: context.read<AppointmentBloc>()),
+                    BlocProvider.value(value: context.read<ScheduleSettingsBloc>()),
+                  ],
+                  child: NewAppointmentPage(initialDateTime: tapDate),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      _buildBackgroundGrid(isToday),
+      _buildUnavailableRegions(date),
+    ];
 
     for (final appointment in appointments) {
-      final positioned = _buildAppointmentPositioned(
-        context: context,
-        appointment: appointment,
-      );
+      final positioned = _buildAppointmentPositioned(context: context, appointment: appointment);
       if (positioned != null) {
         stackChildren.add(positioned);
       }
@@ -296,9 +315,7 @@ class _WeekViewState extends State<WeekView> {
         // borderRadius: BorderRadius.circular(isToday ? 12 : 8),
         border: Border.all(
           width: 1,
-          color: isToday
-              ? AppColors.primary.withOpacity(0.35)
-              : Colors.grey[300]!.withOpacity(0.5),
+          color: isToday ? AppColors.primary.withOpacity(0.35) : Colors.grey[300]!.withOpacity(0.5),
         ),
         color: isToday ? AppColors.primary.withOpacity(0.05) : Colors.white,
       ),
@@ -320,15 +337,11 @@ class _WeekViewState extends State<WeekView> {
             border: Border(
               top: BorderSide(
                 color: isHourBoundary
-                    ? (isToday
-                          ? AppColors.primary.withOpacity(0.35)
-                          : Colors.grey[300]!)
+                    ? (isToday ? AppColors.primary.withOpacity(0.35) : Colors.grey[300]!)
                     : Colors.grey[200]!,
                 width: isHourBoundary ? 1.1 : 0.6,
               ),
-              bottom: isLast
-                  ? BorderSide(color: Colors.grey[300]!, width: 1)
-                  : BorderSide.none,
+              bottom: isLast ? BorderSide(color: Colors.grey[300]!, width: 1) : BorderSide.none,
             ),
           ),
         );
@@ -336,13 +349,8 @@ class _WeekViewState extends State<WeekView> {
     );
   }
 
-  Positioned? _buildAppointmentPositioned({
-    required BuildContext context,
-    required Appointment appointment,
-  }) {
-    final startMinutes =
-        (appointment.dateTime.hour * 60 + appointment.dateTime.minute) -
-        _startHour * 60;
+  Positioned? _buildAppointmentPositioned({required BuildContext context, required Appointment appointment}) {
+    final startMinutes = (appointment.dateTime.hour * 60 + appointment.dateTime.minute) - _startHour * 60;
     final endMinutes = startMinutes + appointment.duration.inMinutes;
 
     if (endMinutes <= 0 || startMinutes >= _totalMinutes) {
@@ -353,10 +361,7 @@ class _WeekViewState extends State<WeekView> {
     final clampedEnd = endMinutes.clamp(0, _totalMinutes).toDouble();
 
     final top = _minuteToPixels(clampedStart);
-    final height = math.max(
-      _minuteToPixels(clampedEnd - clampedStart),
-      _slotHeight * 0.75,
-    );
+    final height = math.max(_minuteToPixels(clampedEnd - clampedStart), _slotHeight * 0.75);
 
     return Positioned(
       top: top,
@@ -369,7 +374,7 @@ class _WeekViewState extends State<WeekView> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => BlocProvider.value(
-                value: context.read<AgendaBloc>(),
+                value: context.read<AppointmentBloc>(),
                 child: AppointmentDetailsPage(appointmentId: appointment.id),
               ),
             ),
@@ -393,11 +398,108 @@ class _WeekViewState extends State<WeekView> {
   }
 
   List<Appointment> _getAppointmentsForDay(DateTime date) {
-    return widget.appointments.where((apt) {
-      return apt.dateTime.year == date.year &&
-          apt.dateTime.month == date.month &&
-          apt.dateTime.day == date.day;
-    }).toList()..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    final dayAppointments = widget.appointments.where((apt) {
+      return apt.dateTime.year == date.year && apt.dateTime.month == date.month && apt.dateTime.day == date.day;
+    }).toList();
+
+    // Separar agendamentos ativos e cancelados
+    final activeAppointments = dayAppointments.where((a) => a.status != AppointmentStatus.cancelled).toList();
+    final cancelledAppointments = dayAppointments.where((a) => a.status == AppointmentStatus.cancelled).toList();
+
+    // Filtrar cancelados que colidem com ativos
+    final visibleCancelled = cancelledAppointments.where((cancelled) {
+      // Verifica se existe algum ativo que colide
+      final hasOverlap = activeAppointments.any((active) {
+        // Colisão: (StartA < EndB) && (EndA > StartB)
+        return cancelled.dateTime.isBefore(active.endTime) && cancelled.endTime.isAfter(active.dateTime);
+      });
+      // Se TEM sobreposição com ativo, ESCONDE (retorna false). Se NÃO tem, MOSTRA (retorna true).
+      return !hasOverlap;
+    }).toList();
+
+    // Retorna lista combinada e ordenada
+    return [...activeAppointments, ...visibleCancelled]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+  }
+
+  Widget _buildUnavailableRegions(DateTime date) {
+    if (widget.workingHours.isEmpty) return const SizedBox.shrink();
+
+    final weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+    // date.weekday: 1=Segunda ... 7=Domingo
+    final dayKey = weekDays[date.weekday - 1];
+    final dayConfig = widget.workingHours[dayKey] as Map<String, dynamic>?;
+
+    final unavailableColor = Colors.grey.withOpacity(0.15); // Cor mais escura para indisponível
+
+    // Se o dia não está configurado ou não está habilitado, bloqueia tudo
+    if (dayConfig == null || dayConfig['enabled'] != true) {
+      return Container(height: _totalHeight, color: unavailableColor);
+    }
+
+    final regions = <Widget>[];
+
+    // Converter hora string "HH:MM" em minutos desde _startHour
+    int timeToMinutes(String? time) {
+      if (time == null) return 0;
+      final parts = time.split(':');
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      return (h * 60 + m) - (_startHour * 60);
+    }
+
+    final morning = dayConfig['morning'] as Map<String, dynamic>? ?? {};
+    final afternoon = dayConfig['afternoon'] as Map<String, dynamic>? ?? {};
+
+    // Início do dia até início da manhã
+    final morningStart = timeToMinutes(morning['start'] ?? '08:00');
+    if (morningStart > 0) {
+      regions.add(
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: _minuteToPixels(morningStart.toDouble()),
+          child: Container(color: unavailableColor),
+        ),
+      );
+    }
+
+    // Fim da manhã até início da tarde
+    final morningEnd = timeToMinutes(morning['end'] ?? '12:00');
+    final afternoonStart = timeToMinutes(afternoon['start'] ?? '13:00');
+
+    if (afternoonStart > morningEnd) {
+      final top = _minuteToPixels(morningEnd.toDouble());
+      final height = _minuteToPixels((afternoonStart - morningEnd).toDouble());
+      regions.add(
+        Positioned(
+          top: top,
+          left: 0,
+          right: 0,
+          height: height,
+          child: Container(color: unavailableColor),
+        ),
+      );
+    }
+
+    // Fim da tarde até fim do dia
+    final afternoonEnd = timeToMinutes(afternoon['end'] ?? '18:00');
+    if (afternoonEnd < _totalMinutes) {
+      final top = _minuteToPixels(afternoonEnd.toDouble());
+      final height = _minuteToPixels((_totalMinutes - afternoonEnd).toDouble());
+      regions.add(
+        Positioned(
+          top: top,
+          left: 0,
+          right: 0,
+          height: height,
+          child: Container(color: unavailableColor),
+        ),
+      );
+    }
+
+    return Stack(children: regions);
   }
 }
 
@@ -406,11 +508,7 @@ class _WeekendToggleChip extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
-  const _WeekendToggleChip({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
+  const _WeekendToggleChip({required this.label, required this.isActive, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -422,9 +520,7 @@ class _WeekendToggleChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive ? AppColors.primary.withOpacity(0.12) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isActive ? AppColors.primary : Colors.grey.shade400,
-          ),
+          border: Border.all(color: isActive ? AppColors.primary : Colors.grey.shade400),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

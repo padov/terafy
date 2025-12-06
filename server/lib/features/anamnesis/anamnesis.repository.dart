@@ -17,16 +17,12 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
       } else if (userId != null) {
-        await RLSContext.setContext(
-          conn: conn,
-          userId: userId,
-          userRole: userRole,
-          accountId: accountId,
-        );
+        await RLSContext.setContext(conn: conn, userId: userId, userRole: userRole, accountId: accountId);
       }
 
       final results = await conn.execute(
@@ -61,16 +57,12 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
       } else if (userId != null) {
-        await RLSContext.setContext(
-          conn: conn,
-          userId: userId,
-          userRole: userRole,
-          accountId: accountId,
-        );
+        await RLSContext.setContext(conn: conn, userId: userId, userRole: userRole, accountId: accountId);
       }
 
       final results = await conn.execute(
@@ -105,6 +97,7 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -145,10 +138,7 @@ class AnamnesisRepository {
             created_at,
             updated_at;
         '''),
-        parameters: {
-          ...data,
-          'data': data['data'],
-        },
+        parameters: {...data, 'data': data['data']},
       );
 
       return Anamnesis.fromMap(result.first.toColumnMap());
@@ -163,6 +153,7 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -219,16 +210,12 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
       } else {
-        await RLSContext.setContext(
-          conn: conn,
-          userId: userId,
-          userRole: userRole,
-          accountId: accountId,
-        );
+        await RLSContext.setContext(conn: conn, userId: userId, userRole: userRole, accountId: accountId);
       }
 
       final result = await conn.execute(
@@ -250,6 +237,7 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -312,16 +300,12 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
       } else if (userId != null) {
-        await RLSContext.setContext(
-          conn: conn,
-          userId: userId,
-          userRole: userRole,
-          accountId: accountId,
-        );
+        await RLSContext.setContext(conn: conn, userId: userId, userRole: userRole, accountId: accountId);
       }
 
       final results = await conn.execute(
@@ -358,6 +342,7 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -416,10 +401,7 @@ class AnamnesisRepository {
             created_at,
             updated_at;
         '''),
-        parameters: {
-          ...data,
-          'structure': data['structure'],
-        },
+        parameters: {...data, 'structure': data['structure']},
       );
 
       return AnamnesisTemplate.fromMap(result.first.toColumnMap());
@@ -434,6 +416,7 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
@@ -462,10 +445,7 @@ class AnamnesisRepository {
               AND is_default = TRUE 
               AND id != @current_id;
           '''),
-          parameters: {
-            'therapist_id': template.therapistId,
-            'current_id': id,
-          },
+          parameters: {'therapist_id': template.therapistId, 'current_id': id},
         );
       }
 
@@ -519,16 +499,12 @@ class AnamnesisRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       if (bypassRLS) {
         await RLSContext.clearContext(conn);
       } else {
-        await RLSContext.setContext(
-          conn: conn,
-          userId: userId,
-          userRole: userRole,
-          accountId: accountId,
-        );
+        await RLSContext.setContext(conn: conn, userId: userId, userRole: userRole, accountId: accountId);
       }
 
       // Não permite deletar templates do sistema
@@ -546,4 +522,3 @@ class AnamnesisRepository {
     });
   }
 }
-

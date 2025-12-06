@@ -17,11 +17,7 @@ class AuthHandler extends BaseHandler {
   final TokenBlacklistRepository _blacklistRepository;
   late final AuthController _controller;
 
-  AuthHandler(
-    this._userRepository,
-    this._refreshTokenRepository,
-    this._blacklistRepository,
-  ) {
+  AuthHandler(this._userRepository, this._refreshTokenRepository, this._blacklistRepository) {
     _controller = AuthController(_userRepository, _refreshTokenRepository);
   }
 
@@ -54,11 +50,9 @@ class AuthHandler extends BaseHandler {
       });
     } on AuthException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao realizar login: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao realizar login: ${e.toString()}');
     }
   }
 
@@ -89,11 +83,9 @@ class AuthHandler extends BaseHandler {
       });
     } on AuthException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao registrar usuário: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao registrar usuário: ${e.toString()}');
     }
   }
 
@@ -112,11 +104,9 @@ class AuthHandler extends BaseHandler {
       return successResponse({'user': user.toJson()});
     } on AuthException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao buscar usuário: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao buscar usuário: ${e.toString()}');
     }
   }
 
@@ -139,17 +129,12 @@ class AuthHandler extends BaseHandler {
 
       final tokens = await _controller.refreshAccessToken(refreshToken);
 
-      return successResponse({
-        'access_token': tokens['access_token'],
-        'refresh_token': tokens['refresh_token'],
-      });
+      return successResponse({'access_token': tokens['access_token'], 'refresh_token': tokens['refresh_token']});
     } on AuthException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao renovar token: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao renovar token: ${e.toString()}');
     }
   }
 
@@ -159,15 +144,10 @@ class AuthHandler extends BaseHandler {
     AppLogger.func();
     try {
       final body = await request.readAsString();
-      final refreshData = body.isNotEmpty
-          ? jsonDecode(body) as Map<String, dynamic>?
-          : null;
+      final refreshData = body.isNotEmpty ? jsonDecode(body) as Map<String, dynamic>? : null;
 
       final refreshToken = refreshData?['refresh_token'] as String?;
-      final accessToken = request.headers['authorization']?.replaceFirst(
-        'Bearer ',
-        '',
-      );
+      final accessToken = request.headers['authorization']?.replaceFirst('Bearer ', '');
 
       if (refreshToken != null) {
         await _controller.revokeRefreshToken(
@@ -196,11 +176,9 @@ class AuthHandler extends BaseHandler {
       }
 
       return successResponse({'message': 'Logout realizado com sucesso'});
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao realizar logout: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao realizar logout: ${e.toString()}');
     }
   }
 }

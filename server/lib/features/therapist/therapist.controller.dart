@@ -42,22 +42,13 @@ class TherapistController {
   ///
   /// Retorna [List<Therapist>] em caso de sucesso
   /// Lança [TherapistException] em caso de erro
-  Future<List<Therapist>> getAllTherapists({
-    int? userId,
-    String? userRole,
-    bool bypassRLS = false,
-  }) async {
+  Future<List<Therapist>> getAllTherapists({int? userId, String? userRole, bool bypassRLS = false}) async {
+    AppLogger.func();
     try {
-      return await _repository.getAllTherapists(
-        userId: userId,
-        userRole: userRole,
-        bypassRLS: bypassRLS,
-      );
-    } catch (e) {
-      throw TherapistException(
-        'Erro ao buscar terapeutas: ${e.toString()}',
-        500,
-      );
+      return await _repository.getAllTherapists(userId: userId, userRole: userRole, bypassRLS: bypassRLS);
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw TherapistException('Erro ao buscar terapeutas: ${e.toString()}', 500);
     }
   }
 
@@ -78,6 +69,7 @@ class TherapistController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     final therapist = await _repository.getTherapistById(
       id,
       userId: userId,
@@ -96,9 +88,8 @@ class TherapistController {
   /// Retorna [TherapistWithPlanResult] em caso de sucesso
   /// Lança [TherapistException] em caso de erro
   Future<TherapistWithPlanResult> getTherapistByUserId(int userId) async {
-    final therapistData = await _repository.getTherapistByUserIdWithPlan(
-      userId,
-    );
+    AppLogger.func();
+    final therapistData = await _repository.getTherapistByUserIdWithPlan(userId);
     if (therapistData == null) {
       throw TherapistException('Terapeuta não encontrado', 404);
     }
@@ -122,35 +113,22 @@ class TherapistController {
   }) async {
     AppLogger.func();
     // Verifica se o usuário já tem um therapist vinculado
-    final existingTherapistData = await _repository
-        .getTherapistByUserIdWithPlan(userId);
+    final existingTherapistData = await _repository.getTherapistByUserIdWithPlan(userId);
     if (existingTherapistData != null) {
-      throw TherapistException(
-        'Usuário já possui um perfil de terapeuta vinculado',
-        400,
-      );
+      throw TherapistException('Usuário já possui um perfil de terapeuta vinculado', 400);
     }
 
     // Cria o therapist (com contexto RLS para policy de criação)
-    final createdTherapist = await _repository.createTherapist(
-      therapist,
-      userId: userId,
-      userRole: userRole,
-    );
+    final createdTherapist = await _repository.createTherapist(therapist, userId: userId, userRole: userRole);
 
     // Cria a subscription do plano se planId foi fornecido
     if (planId != null) {
       try {
-        await _repository.createPlanSubscription(
-          therapistId: createdTherapist.id!,
-          planId: planId,
-        );
+        await _repository.createPlanSubscription(therapistId: createdTherapist.id!, planId: planId);
         AppLogger.debug('Subscription do plano $planId criada com sucesso');
       } catch (e) {
         // Log do erro mas não falha a criação do terapeuta
-        AppLogger.warning(
-          'Aviso: Erro ao criar subscription do plano $planId: $e',
-        );
+        AppLogger.warning('Aviso: Erro ao criar subscription do plano $planId: $e');
       }
     }
 
@@ -161,32 +139,21 @@ class TherapistController {
         accountType: 'therapist',
         accountId: createdTherapist.id!,
       );
-      AppLogger.debug(
-        'Usuário atualizado com accountId: ${createdTherapist.id}',
-      );
-    } catch (e) {
-      AppLogger.error(e);
-      throw TherapistException(
-        'Erro ao atualizar usuário: ${e.toString()}',
-        500,
-      );
+      AppLogger.debug('Usuário atualizado com accountId: ${createdTherapist.id}');
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw TherapistException('Erro ao atualizar usuário: ${e.toString()}', 500);
     }
 
     // Atualiza o therapist com user_id
     try {
-      final updatedTherapist = await _repository.updateTherapistUserId(
-        createdTherapist.id!,
-        userId,
-      );
+      final updatedTherapist = await _repository.updateTherapistUserId(createdTherapist.id!, userId);
       AppLogger.debug('Therapist atualizado com userId: $userId');
 
       return CreateTherapistResult(therapist: updatedTherapist);
-    } catch (e) {
-      AppLogger.error(e);
-      throw TherapistException(
-        'Erro ao atualizar therapist: ${e.toString()}',
-        500,
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw TherapistException('Erro ao atualizar therapist: ${e.toString()}', 500);
     }
   }
 
@@ -209,6 +176,7 @@ class TherapistController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     final updatedTherapist = await _repository.updateTherapist(
       id,
       therapist,
@@ -233,13 +201,8 @@ class TherapistController {
   ///
   /// Retorna `true` em caso de sucesso
   /// Lança [TherapistException] em caso de erro
-  Future<bool> deleteTherapist(
-    int id, {
-    int? userId,
-    String? userRole,
-    int? accountId,
-    bool bypassRLS = false,
-  }) async {
+  Future<bool> deleteTherapist(int id, {int? userId, String? userRole, int? accountId, bool bypassRLS = false}) async {
+    AppLogger.func();
     final deleted = await _repository.deleteTherapist(
       id,
       userId: userId,

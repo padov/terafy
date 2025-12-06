@@ -8,12 +8,12 @@ import 'package:terafy/core/domain/usecases/session/create_session_usecase.dart'
 import 'package:terafy/core/domain/usecases/session/get_next_session_number_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/get_session_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/update_session_usecase.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc_models.dart';
-import 'package:terafy/features/agenda/models/appointment.dart';
-import 'package:terafy/features/agenda/models/appointment_mapper.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc_models.dart';
+import 'package:terafy/features/appointments/models/appointment.dart';
+import 'package:terafy/features/appointments/models/appointment_mapper.dart';
 
-class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
-  AgendaBloc({
+class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
+  AppointmentBloc({
     required GetAppointmentsUseCase getAppointmentsUseCase,
     required GetAppointmentUseCase getAppointmentUseCase,
     required CreateAppointmentUseCase createAppointmentUseCase,
@@ -30,15 +30,15 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
        _getNextSessionNumberUseCase = getNextSessionNumberUseCase,
        _getSessionUseCase = getSessionUseCase,
        _updateSessionUseCase = updateSessionUseCase,
-       super(const AgendaInitial()) {
-    on<LoadAgenda>(_onLoadAgenda);
+       super(const AppointmentInitial()) {
+    on<LoadAppointments>(_onLoadAppointments);
     on<CreateAppointment>(_onCreateAppointment);
     on<UpdateAppointment>(_onUpdateAppointment);
     on<CancelAppointment>(_onCancelAppointment);
     on<ConfirmAppointment>(_onConfirmAppointment);
     on<MarkNoShow>(_onMarkNoShow);
     on<LoadAppointmentDetails>(_onLoadAppointmentDetails);
-    on<ResetAgendaView>(_onResetAgendaView);
+    on<ResetAppointmentsView>(_onResetAppointmentsView);
   }
 
   final GetAppointmentsUseCase _getAppointmentsUseCase;
@@ -54,60 +54,41 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
   DateTime? _currentStart;
   DateTime? _currentEnd;
 
-  Future<void> _onLoadAgenda(
-    LoadAgenda event,
-    Emitter<AgendaState> emit,
-  ) async {
-    emit(const AgendaLoading());
+  Future<void> _onLoadAppointments(LoadAppointments event, Emitter<AppointmentState> emit) async {
+    emit(const AppointmentLoading());
 
     try {
       _currentStart = event.startDate;
       _currentEnd = event.endDate;
 
-      final appointments = await _getAppointmentsUseCase(
-        start: event.startDate,
-        end: event.endDate,
-      );
+      final appointments = await _getAppointmentsUseCase(start: event.startDate, end: event.endDate);
 
       _currentAppointments = appointments.map(mapToUiAppointment).toList()
         ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
-      emit(
-        AgendaLoaded(
-          appointments: _currentAppointments,
-          startDate: event.startDate,
-          endDate: event.endDate,
-        ),
-      );
+      emit(AppointmentLoaded(appointments: _currentAppointments, startDate: event.startDate, endDate: event.endDate));
     } catch (e) {
-      emit(AgendaError(_buildErrorMessage('carregar agenda', e)));
+      emit(AppointmentError(_buildErrorMessage('carregar agenda', e)));
     }
   }
 
-  Future<void> _onCreateAppointment(
-    CreateAppointment event,
-    Emitter<AgendaState> emit,
-  ) async {
+  Future<void> _onCreateAppointment(CreateAppointment event, Emitter<AppointmentState> emit) async {
     try {
       final commonAppointment = mapToDomainAppointment(event.appointment);
 
       final created = await _createAppointmentUseCase(commonAppointment);
       final createdUi = mapToUiAppointment(created);
 
-      _currentAppointments = [..._currentAppointments, createdUi]
-        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      _currentAppointments = [..._currentAppointments, createdUi]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
       emit(AppointmentCreated(createdUi));
       _reloadCurrentPeriod();
     } catch (e) {
-      emit(AgendaError(_buildErrorMessage('criar agendamento', e)));
+      emit(AppointmentError(_buildErrorMessage('criar agendamento', e)));
     }
   }
 
-  Future<void> _onUpdateAppointment(
-    UpdateAppointment event,
-    Emitter<AgendaState> emit,
-  ) async {
+  Future<void> _onUpdateAppointment(UpdateAppointment event, Emitter<AppointmentState> emit) async {
     await _persistUpdate(
       emit,
       updatedAppointment: event.appointment,
@@ -116,13 +97,10 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
     );
   }
 
-  Future<void> _onCancelAppointment(
-    CancelAppointment event,
-    Emitter<AgendaState> emit,
-  ) async {
+  Future<void> _onCancelAppointment(CancelAppointment event, Emitter<AppointmentState> emit) async {
     final appointment = _findAppointment(event.appointmentId);
     if (appointment == null) {
-      emit(const AgendaError('Agendamento não encontrado'));
+      emit(const AppointmentError('Agendamento não encontrado'));
       return;
     }
 
@@ -142,7 +120,7 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
         }
       } catch (e) {
         // Log erro mas continua cancelando o agendamento
-        // emit(AgendaError('Erro ao cancelar sessão: ${e.toString()}'));
+        // emit(AppointmentError('Erro ao cancelar sessão: ${e.toString()}'));
       }
     }
 
@@ -162,25 +140,21 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
     );
   }
 
-  Future<void> _onConfirmAppointment(
-    ConfirmAppointment event,
-    Emitter<AgendaState> emit,
-  ) async {
+  Future<void> _onConfirmAppointment(ConfirmAppointment event, Emitter<AppointmentState> emit) async {
     final appointment = _findAppointment(event.appointmentId);
     if (appointment == null) {
-      emit(const AgendaError('Agendamento não encontrado'));
+      emit(const AppointmentError('Agendamento não encontrado'));
       return;
     }
 
     String? sessionId;
 
     // Se é agendamento de sessão e tem paciente, criar sessão automaticamente
-    if (appointment.type == AppointmentType.session &&
-        appointment.patientId != null) {
+    if (appointment.type == AppointmentType.session && appointment.patientId != null) {
       try {
         final patientId = int.tryParse(appointment.patientId!);
         if (patientId == null) {
-          emit(const AgendaError('ID do paciente inválido'));
+          emit(const AppointmentError('ID do paciente inválido'));
           return;
         }
 
@@ -207,7 +181,7 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
         final createdSession = await _createSessionUseCase(session);
         sessionId = createdSession.id?.toString();
       } catch (e) {
-        emit(AgendaError('Erro ao criar sessão: ${e.toString()}'));
+        emit(AppointmentError('Erro ao criar sessão: ${e.toString()}'));
         return;
       }
     }
@@ -219,39 +193,22 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
       updatedAt: DateTime.now(),
     );
 
-    await _persistUpdate(
-      emit,
-      updatedAppointment: updated,
-      errorAction: 'confirmar agendamento',
-    );
+    await _persistUpdate(emit, updatedAppointment: updated, errorAction: 'confirmar agendamento');
   }
 
-  Future<void> _onMarkNoShow(
-    MarkNoShow event,
-    Emitter<AgendaState> emit,
-  ) async {
+  Future<void> _onMarkNoShow(MarkNoShow event, Emitter<AppointmentState> emit) async {
     final appointment = _findAppointment(event.appointmentId);
     if (appointment == null) {
-      emit(const AgendaError('Agendamento não encontrado'));
+      emit(const AppointmentError('Agendamento não encontrado'));
       return;
     }
 
-    final updated = appointment.copyWith(
-      status: AppointmentStatus.noShow,
-      updatedAt: DateTime.now(),
-    );
+    final updated = appointment.copyWith(status: AppointmentStatus.noShow, updatedAt: DateTime.now());
 
-    await _persistUpdate(
-      emit,
-      updatedAppointment: updated,
-      errorAction: 'registrar falta',
-    );
+    await _persistUpdate(emit, updatedAppointment: updated, errorAction: 'registrar falta');
   }
 
-  Future<void> _onLoadAppointmentDetails(
-    LoadAppointmentDetails event,
-    Emitter<AgendaState> emit,
-  ) async {
+  Future<void> _onLoadAppointmentDetails(LoadAppointmentDetails event, Emitter<AppointmentState> emit) async {
     // Primeiro tenta encontrar na lista local
     var appointment = _findAppointment(event.appointmentId);
 
@@ -260,7 +217,7 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
       try {
         final appointmentId = int.tryParse(event.appointmentId);
         if (appointmentId == null) {
-          emit(const AgendaError('ID de agendamento inválido'));
+          emit(const AppointmentError('ID de agendamento inválido'));
           return;
         }
 
@@ -268,14 +225,9 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
         appointment = mapToUiAppointment(commonAppointment);
 
         // Adiciona à lista local para futuras referências
-        _currentAppointments = [..._currentAppointments, appointment]
-          ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+        _currentAppointments = [..._currentAppointments, appointment]..sort((a, b) => a.dateTime.compareTo(b.dateTime));
       } catch (e) {
-        emit(
-          AgendaError(
-            _buildErrorMessage('carregar detalhes do agendamento', e),
-          ),
-        );
+        emit(AppointmentError(_buildErrorMessage('carregar detalhes do agendamento', e)));
         return;
       }
     }
@@ -283,27 +235,15 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
     emit(AppointmentDetailsLoaded(appointment));
   }
 
-  void _onResetAgendaView(ResetAgendaView event, Emitter<AgendaState> emit) {
+  void _onResetAppointmentsView(ResetAppointmentsView event, Emitter<AppointmentState> emit) {
     if (_currentStart != null && _currentEnd != null) {
-      emit(
-        AgendaLoaded(
-          appointments: _currentAppointments,
-          startDate: _currentStart!,
-          endDate: _currentEnd!,
-        ),
-      );
+      emit(AppointmentLoaded(appointments: _currentAppointments, startDate: _currentStart!, endDate: _currentEnd!));
     } else if (_currentAppointments.isNotEmpty) {
       final start = _currentAppointments.first.dateTime;
       final end = _currentAppointments.last.endTime;
-      emit(
-        AgendaLoaded(
-          appointments: _currentAppointments,
-          startDate: start,
-          endDate: end,
-        ),
-      );
+      emit(AppointmentLoaded(appointments: _currentAppointments, startDate: start, endDate: end));
     } else {
-      emit(const AgendaInitial());
+      emit(const AppointmentInitial());
     }
   }
 
@@ -316,7 +256,7 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
   }
 
   Future<void> _persistUpdate(
-    Emitter<AgendaState> emit, {
+    Emitter<AppointmentState> emit, {
     required Appointment updatedAppointment,
     required String errorAction,
     void Function(Appointment updated)? onSuccess,
@@ -326,22 +266,16 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
       final appointmentId = commonAppointment.id;
 
       if (appointmentId == null) {
-        emit(const AgendaError('Agendamento inválido'));
+        emit(const AppointmentError('Agendamento inválido'));
         return;
       }
 
-      final saved = await _updateAppointmentUseCase(
-        appointmentId,
-        commonAppointment,
-      );
+      final saved = await _updateAppointmentUseCase(appointmentId, commonAppointment);
 
       final savedUi = mapToUiAppointment(saved);
 
-      _currentAppointments =
-          _currentAppointments
-              .map((apt) => apt.id == savedUi.id ? savedUi : apt)
-              .toList()
-            ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      _currentAppointments = _currentAppointments.map((apt) => apt.id == savedUi.id ? savedUi : apt).toList()
+        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
       if (onSuccess != null) {
         onSuccess(savedUi);
@@ -351,13 +285,13 @@ class AgendaBloc extends Bloc<AgendaEvent, AgendaState> {
 
       _reloadCurrentPeriod();
     } catch (e) {
-      emit(AgendaError(_buildErrorMessage(errorAction, e)));
+      emit(AppointmentError(_buildErrorMessage(errorAction, e)));
     }
   }
 
   void _reloadCurrentPeriod() {
     if (_currentStart != null && _currentEnd != null) {
-      add(LoadAgenda(startDate: _currentStart!, endDate: _currentEnd!));
+      add(LoadAppointments(startDate: _currentStart!, endDate: _currentEnd!));
     }
   }
 

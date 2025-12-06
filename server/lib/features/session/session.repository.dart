@@ -257,7 +257,7 @@ class SessionRepository {
     int? patientId,
     int? therapistId,
     int? appointmentId,
-    String? status,
+    List<String>? statuses,
     DateTime? startDate,
     DateTime? endDate,
     required int userId,
@@ -339,9 +339,14 @@ class SessionRepository {
         parameters['appointment_id'] = appointmentId;
       }
 
-      if (status != null) {
-        buffer.write(' AND status = @status::session_status');
-        parameters['status'] = status;
+      if (statuses != null && statuses.isNotEmpty) {
+        buffer.write(' AND status::text IN (');
+        for (var i = 0; i < statuses.length; i++) {
+          if (i > 0) buffer.write(', ');
+          buffer.write('@status_$i');
+          parameters['status_$i'] = statuses[i];
+        }
+        buffer.write(')');
       }
 
       if (startDate != null) {

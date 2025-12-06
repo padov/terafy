@@ -2,10 +2,13 @@ import 'package:common/common.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:server/features/session/session.controller.dart';
 import 'package:server/features/session/session.repository.dart';
+import 'package:server/features/schedule/schedule.repository.dart';
 import 'package:server/features/financial/financial.repository.dart';
 import 'package:test/test.dart';
 
 class _MockSessionRepository extends Mock implements SessionRepository {}
+
+class _MockScheduleRepository extends Mock implements ScheduleRepository {}
 
 class _MockFinancialRepository extends Mock implements FinancialRepository {}
 
@@ -39,6 +42,7 @@ void main() {
   });
 
   late _MockSessionRepository sessionRepository;
+  late _MockScheduleRepository scheduleRepository;
   late _MockFinancialRepository financialRepository;
   late SessionController controller;
 
@@ -59,8 +63,9 @@ void main() {
 
   setUp(() {
     sessionRepository = _MockSessionRepository();
+    scheduleRepository = _MockScheduleRepository();
     financialRepository = _MockFinancialRepository();
-    controller = SessionController(sessionRepository, financialRepository);
+    controller = SessionController(sessionRepository, scheduleRepository, financialRepository);
   });
 
   group('SessionController - createSession', () {
@@ -163,6 +168,16 @@ void main() {
         ),
       ).thenAnswer((_) async => updated);
 
+      when(
+        () => scheduleRepository.getAppointmentById(
+          appointmentId: any(named: 'appointmentId'),
+          userId: any(named: 'userId'),
+          userRole: any(named: 'userRole'),
+          accountId: any(named: 'accountId'),
+          bypassRLS: any(named: 'bypassRLS'),
+        ),
+      ).thenAnswer((_) async => null);
+
       final result = await controller.updateSession(
         sessionId: 1,
         session: updated,
@@ -244,17 +259,13 @@ void main() {
           patientId: null,
           therapistId: null,
           appointmentId: null,
-          status: null,
+          statuses: null,
           startDate: null,
           endDate: null,
         ),
       ).thenAnswer((_) async => [sampleSession]);
 
-      final result = await controller.listSessions(
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
+      final result = await controller.listSessions(userId: 1, userRole: 'therapist', accountId: 1);
 
       expect(result.length, equals(1));
       expect(result.first.id, equals(1));
@@ -270,18 +281,13 @@ void main() {
           patientId: 1,
           therapistId: null,
           appointmentId: null,
-          status: null,
+          statuses: null,
           startDate: null,
           endDate: null,
         ),
       ).thenAnswer((_) async => [sampleSession]);
 
-      final result = await controller.listSessions(
-        patientId: 1,
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
+      final result = await controller.listSessions(patientId: 1, userId: 1, userRole: 'therapist', accountId: 1);
 
       expect(result.length, equals(1));
       verify(
@@ -293,7 +299,7 @@ void main() {
           patientId: 1,
           therapistId: null,
           appointmentId: null,
-          status: null,
+          statuses: null,
           startDate: null,
           endDate: null,
         ),
@@ -310,18 +316,13 @@ void main() {
           patientId: null,
           therapistId: null,
           appointmentId: null,
-          status: 'completed',
+          statuses: ['completed'],
           startDate: null,
           endDate: null,
         ),
       ).thenAnswer((_) async => []);
 
-      final result = await controller.listSessions(
-        status: 'completed',
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
+      final result = await controller.listSessions(status: 'completed', userId: 1, userRole: 'therapist', accountId: 1);
 
       expect(result.isEmpty, isTrue);
     });
@@ -362,10 +363,7 @@ void main() {
     });
 
     test('deve criar transação financeira quando sessão é marcada como completed com chargedAmount', () async {
-      final completedSession = sampleSession.copyWith(
-        status: 'completed',
-        chargedAmount: 150.0,
-      );
+      final completedSession = sampleSession.copyWith(status: 'completed', chargedAmount: 150.0);
 
       when(
         () => sessionRepository.getSessionById(
@@ -406,20 +404,22 @@ void main() {
           accountId: 1,
           bypassRLS: false,
         ),
-      ).thenAnswer((_) async => FinancialTransaction(
-            id: 1,
-            therapistId: 1,
-            patientId: 1,
-            sessionId: 1,
-            transactionDate: DateTime.now(),
-            type: 'recebimento',
-            amount: 150.0,
-            paymentMethod: 'pix',
-            status: 'pendente',
-            category: 'sessao',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ));
+      ).thenAnswer(
+        (_) async => FinancialTransaction(
+          id: 1,
+          therapistId: 1,
+          patientId: 1,
+          sessionId: 1,
+          transactionDate: DateTime.now(),
+          type: 'recebimento',
+          amount: 150.0,
+          paymentMethod: 'pix',
+          status: 'pendente',
+          category: 'sessao',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
 
       final result = await controller.updateSession(
         sessionId: 1,
@@ -442,10 +442,7 @@ void main() {
     });
 
     test('não deve criar transação quando já existe transação vinculada', () async {
-      final completedSession = sampleSession.copyWith(
-        status: 'completed',
-        chargedAmount: 150.0,
-      );
+      final completedSession = sampleSession.copyWith(status: 'completed', chargedAmount: 150.0);
 
       when(
         () => sessionRepository.getSessionById(
@@ -476,22 +473,24 @@ void main() {
           bypassRLS: false,
           sessionId: 1,
         ),
-      ).thenAnswer((_) async => [
-            FinancialTransaction(
-              id: 1,
-              therapistId: 1,
-              patientId: 1,
-              sessionId: 1,
-              transactionDate: DateTime.now(),
-              type: 'recebimento',
-              amount: 150.0,
-              paymentMethod: 'pix',
-              status: 'pendente',
-              category: 'sessao',
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-          ]);
+      ).thenAnswer(
+        (_) async => [
+          FinancialTransaction(
+            id: 1,
+            therapistId: 1,
+            patientId: 1,
+            sessionId: 1,
+            transactionDate: DateTime.now(),
+            type: 'recebimento',
+            amount: 150.0,
+            paymentMethod: 'pix',
+            status: 'pendente',
+            category: 'sessao',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        ],
+      );
 
       final result = await controller.updateSession(
         sessionId: 1,
@@ -538,13 +537,7 @@ void main() {
         ),
       ).thenAnswer((_) async => updated);
 
-      await controller.updateSession(
-        sessionId: 1,
-        session: updated,
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
+      await controller.updateSession(sessionId: 1, session: updated, userId: 1, userRole: 'therapist', accountId: 1);
 
       verifyNever(
         () => financialRepository.listTransactions(
@@ -570,12 +563,7 @@ void main() {
         ),
       ).thenAnswer((_) async => true);
 
-      await controller.deleteSession(
-        sessionId: 1,
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
+      await controller.deleteSession(sessionId: 1, userId: 1, userRole: 'therapist', accountId: 1);
 
       verify(
         () => sessionRepository.deleteSession(
@@ -600,12 +588,7 @@ void main() {
       ).thenAnswer((_) async => false);
 
       expect(
-        () => controller.deleteSession(
-          sessionId: 999,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-        ),
+        () => controller.deleteSession(sessionId: 999, userId: 1, userRole: 'therapist', accountId: 1),
         throwsA(isA<SessionException>().having((e) => e.statusCode, 'statusCode', 404)),
       );
     });
@@ -645,12 +628,7 @@ void main() {
       ).thenThrow(Exception('Erro no banco'));
 
       expect(
-        () => controller.getNextSessionNumber(
-          patientId: 1,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-        ),
+        () => controller.getNextSessionNumber(patientId: 1, userId: 1, userRole: 'therapist', accountId: 1),
         throwsA(isA<SessionException>()),
       );
     });

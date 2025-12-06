@@ -95,7 +95,7 @@ void main() {
       when(
         () => sessionRepository.listSessions(
           therapistId: 1,
-          status: null,
+          statuses: any(named: 'statuses'),
           startDate: null,
           endDate: null,
           userId: 1,
@@ -153,7 +153,7 @@ void main() {
       when(
         () => sessionRepository.listSessions(
           therapistId: 1,
-          status: null,
+          statuses: any(named: 'statuses'),
           startDate: null,
           endDate: null,
           userId: 1,
@@ -188,7 +188,7 @@ void main() {
       when(
         () => sessionRepository.listSessions(
           therapistId: 1,
-          status: null,
+          statuses: any(named: 'statuses'),
           startDate: null,
           endDate: null,
           userId: 1,
@@ -227,7 +227,7 @@ void main() {
       when(
         () => sessionRepository.listSessions(
           therapistId: 1,
-          status: null,
+          statuses: any(named: 'statuses'),
           startDate: null,
           endDate: null,
           userId: 1,

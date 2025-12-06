@@ -119,7 +119,7 @@ class TestSessionRepository extends SessionRepository {
     int? patientId,
     DateTime? startDate,
     DateTime? endDate,
-    String? status,
+    List<String>? statuses,
     bool bypassRLS = false,
   }) async {
     _setRLSContext(userId: userId, userRole: userRole, accountId: accountId, bypassRLS: bypassRLS);
@@ -135,8 +135,8 @@ class TestSessionRepository extends SessionRepository {
     if (patientId != null) {
       filtered = filtered.where((s) => s.patientId == patientId).toList();
     }
-    if (status != null) {
-      filtered = filtered.where((s) => s.status == status).toList();
+    if (statuses != null && statuses.isNotEmpty) {
+      filtered = filtered.where((s) => statuses.contains(s.status)).toList();
     }
     if (startDate != null) {
       filtered = filtered
