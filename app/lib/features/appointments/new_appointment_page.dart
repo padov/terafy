@@ -3,26 +3,32 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc_models.dart';
-import 'package:terafy/features/agenda/models/appointment.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc_models.dart';
+import 'package:terafy/features/appointments/models/appointment.dart';
 import 'package:terafy/features/patients/models/patient.dart' as patient_model;
+import 'package:terafy/features/schedule/bloc/schedule_settings_bloc.dart';
+import 'package:terafy/features/schedule/bloc/schedule_settings_bloc_models.dart';
 
 class NewAppointmentPage extends StatelessWidget {
   final Appointment? appointment; // Para edição
+  final DateTime? initialDateTime;
 
-  const NewAppointmentPage({super.key, this.appointment});
+  const NewAppointmentPage({super.key, this.appointment, this.initialDateTime});
 
   @override
   Widget build(BuildContext context) {
-    return _NewAppointmentContent(appointment: appointment);
+    // Garantir que as configurações estejam carregadas
+    context.read<ScheduleSettingsBloc>().add(const LoadScheduleSettings());
+    return _NewAppointmentContent(appointment: appointment, initialDateTime: initialDateTime);
   }
 }
 
 class _NewAppointmentContent extends StatefulWidget {
   final Appointment? appointment;
+  final DateTime? initialDateTime;
 
-  const _NewAppointmentContent({this.appointment});
+  const _NewAppointmentContent({this.appointment, this.initialDateTime});
 
   @override
   State<_NewAppointmentContent> createState() => _NewAppointmentContentState();
@@ -53,6 +59,12 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
   String? _lastCreatedAppointmentId;
   int _pendingCreations = 0;
   int _lastCreationCount = 0;
+
+  // Filtros de horário
+  bool _showAllTimes = false;
+  static const int _standardDuration = 50;
+  static const int _doubleDuration = 100;
+  static const int _breakDuration = 10;
 
   String? _selectedPatientId;
   bool _isLoading = false;
@@ -106,20 +118,24 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
       }
     } else {
       // Modo criação
-      _selectedDate = DateTime.now();
-      _selectedTime = _normalizeTime(TimeOfDay.now());
-      _duration = const Duration(minutes: 50);
+      if (widget.initialDateTime != null) {
+        _selectedDate = DateTime(
+          widget.initialDateTime!.year,
+          widget.initialDateTime!.month,
+          widget.initialDateTime!.day,
+        );
+        _selectedTime = _normalizeTime(TimeOfDay.fromDateTime(widget.initialDateTime!));
+      } else {
+        _selectedDate = DateTime.now();
+        _selectedTime = _normalizeTime(TimeOfDay.now());
+      }
+      _duration = const Duration(minutes: _standardDuration);
       _type = AppointmentType.session;
       _recurrence = RecurrenceType.none;
     }
 
     if (_type == AppointmentType.session) {
-      const sessionDurations = [
-        Duration(minutes: 30),
-        Duration(minutes: 60),
-        Duration(minutes: 90),
-        Duration(minutes: 120),
-      ];
+      const sessionDurations = [Duration(minutes: _standardDuration), Duration(minutes: _doubleDuration)];
       if (!sessionDurations.contains(_duration)) {
         _duration = sessionDurations.first;
       }
@@ -153,7 +169,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: BlocConsumer<AgendaBloc, AgendaState>(
+      body: BlocConsumer<AppointmentBloc, AppointmentState>(
         listener: (context, state) {
           if (state is AppointmentCreated) {
             if (_pendingCreations > 0) {
@@ -168,7 +184,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
                   createdAt: DateTime.now(),
                   updatedAt: DateTime.now(),
                 );
-                context.read<AgendaBloc>().add(CreateAppointment(nextAppointment));
+                context.read<AppointmentBloc>().add(CreateAppointment(nextAppointment));
                 return;
               }
               if (_pendingCreations == 0) {
@@ -207,7 +223,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
               const SnackBar(content: Text('Agendamento atualizado com sucesso!'), backgroundColor: Colors.green),
             );
             Navigator.of(context).pop();
-          } else if (state is AgendaError) {
+          } else if (state is AppointmentError) {
             // Limpa todo o estado de criação imediatamente
             _pendingCreations = 0;
             _lastCreationCount = 0;
@@ -230,7 +246,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         builder: (context, state) {
           // Garante que o loading seja resetado se o estado mudar para erro
           // mesmo que o listener não seja chamado
-          if (state is AgendaError && _isLoading) {
+          if (state is AppointmentError && _isLoading) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 setState(() {
@@ -247,7 +263,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
 
           // Se o estado não é mais de erro e o loading está ativo sem motivo,
           // reseta o loading (pode acontecer se o estado mudou sem o listener ser chamado)
-          if (!(state is AgendaError) &&
+          if (!(state is AppointmentError) &&
               !(state is AppointmentCreated) &&
               !(state is AppointmentUpdated) &&
               _isLoading &&
@@ -261,105 +277,125 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
             });
           }
 
-          return Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Tipo de agendamento
-                _buildSectionTitle('Tipo de Agendamento'),
-                const SizedBox(height: 8),
-                _buildTypeSelector(),
+          return BlocBuilder<ScheduleSettingsBloc, ScheduleSettingsState>(
+            builder: (context, settingsState) {
+              Map<String, dynamic> workingHours = {};
+              if (settingsState is ScheduleSettingsLoaded) {
+                workingHours = settingsState.workingHours;
+              }
 
-                const SizedBox(height: 24),
-
-                // Paciente (apenas para sessões)
-                if (_type == AppointmentType.session) ...[
-                  _buildSectionTitle('Paciente'),
-                  const SizedBox(height: 8),
-                  _buildPatientSelector(),
-                  const SizedBox(height: 24),
-                ],
-
-                // Data e Hora
-                _buildSectionTitle('Data e Horário'),
-                const SizedBox(height: 8),
-                Row(
+              return Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    Expanded(child: _buildDateField()),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTimeField()),
+                    // Tipo de agendamento
+                    _buildSectionTitle('Tipo de Agendamento'),
+                    const SizedBox(height: 8),
+                    _buildTypeSelector(),
+
+                    const SizedBox(height: 24),
+
+                    // Paciente (apenas para sessões)
+                    if (_type == AppointmentType.session) ...[
+                      _buildSectionTitle('Paciente'),
+                      const SizedBox(height: 8),
+                      _buildPatientSelector(),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Data e Hora
+                    _buildSectionTitle('Data e Horário'),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(child: _buildDateField()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildTimeField(workingHours)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Duração
+                    _buildSectionTitle('Duração'),
+                    const SizedBox(height: 8),
+                    _buildDurationSelector(),
+
+                    const SizedBox(height: 24),
+
+                    // Recorrência
+                    _buildSectionTitle('Recorrência'),
+                    const SizedBox(height: 8),
+                    _buildRecurrenceSelector(),
+
+                    if (_recurrence == RecurrenceType.daily) ...[
+                      const SizedBox(height: 4),
+                      _buildWeekdaySelector(),
+                      const SizedBox(height: 8),
+                      _buildWeeksCountSelector('Repetir por (semanas)'),
+                    ] else if (_recurrence == RecurrenceType.weekly) ...[
+                      const SizedBox(height: 8),
+                      _buildWeeksCountSelector('Repetir por (semanas)'),
+                    ] else if (_recurrence != RecurrenceType.none) ...[
+                      const SizedBox(height: 8),
+                      _buildRecurrenceEndDateField(),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // Local
+                    _buildSectionTitle('Local'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _roomController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ex: Sala 1, Consultório',
+                        prefixIcon: Icon(Icons.room),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Link Online (se aplicável)
+                    _buildSectionTitle('Link Online (opcional)'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _onlineLinkController,
+                      decoration: const InputDecoration(
+                        hintText: 'https://meet.google.com/...',
+                        prefixIcon: Icon(Icons.videocam),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Notas
+                    _buildSectionTitle('Notas'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(hintText: 'Observações sobre o agendamento'),
+                      maxLines: 3,
+                    ),
+
+                    const SizedBox(height: 32),
                   ],
                 ),
-
-                const SizedBox(height: 24),
-
-                // Duração
-                _buildSectionTitle('Duração'),
-                const SizedBox(height: 8),
-                _buildDurationSelector(),
-
-                const SizedBox(height: 24),
-
-                // Recorrência
-                _buildSectionTitle('Recorrência'),
-                const SizedBox(height: 8),
-                _buildRecurrenceSelector(),
-
-                if (_recurrence == RecurrenceType.daily) ...[
-                  const SizedBox(height: 4),
-                  _buildWeekdaySelector(),
-                  const SizedBox(height: 8),
-                  _buildWeeksCountSelector('Repetir por (semanas)'),
-                ] else if (_recurrence == RecurrenceType.weekly) ...[
-                  const SizedBox(height: 8),
-                  _buildWeeksCountSelector('Repetir por (semanas)'),
-                ] else if (_recurrence != RecurrenceType.none) ...[
-                  const SizedBox(height: 8),
-                  _buildRecurrenceEndDateField(),
-                ],
-
-                const SizedBox(height: 24),
-
-                // Local
-                _buildSectionTitle('Local'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _roomController,
-                  decoration: const InputDecoration(hintText: 'Ex: Sala 1, Consultório', prefixIcon: Icon(Icons.room)),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Link Online (se aplicável)
-                _buildSectionTitle('Link Online (opcional)'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _onlineLinkController,
-                  decoration: const InputDecoration(
-                    hintText: 'https://meet.google.com/...',
-                    prefixIcon: Icon(Icons.videocam),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Notas
-                _buildSectionTitle('Notas'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(hintText: 'Observações sobre o agendamento'),
-                  maxLines: 3,
-                ),
-
-                const SizedBox(height: 32),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
-      bottomNavigationBar: _buildBottomBar(isEditing),
+      bottomNavigationBar: BlocBuilder<ScheduleSettingsBloc, ScheduleSettingsState>(
+        builder: (context, settingsState) {
+          Map<String, dynamic> workingHours = {};
+          if (settingsState is ScheduleSettingsLoaded) {
+            workingHours = settingsState.workingHours;
+          }
+          return _buildBottomBar(isEditing, workingHours);
+        },
+      ),
     );
   }
 
@@ -387,12 +423,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
                   _selectedPatientId = null;
                 } else {
                   _selectedTime = _normalizeTime(_selectedTime);
-                  const sessionDurations = [
-                    Duration(minutes: 30),
-                    Duration(minutes: 60),
-                    Duration(minutes: 90),
-                    Duration(minutes: 120),
-                  ];
+                  const sessionDurations = [Duration(minutes: _standardDuration), Duration(minutes: _doubleDuration)];
                   if (!sessionDurations.contains(_duration)) {
                     _duration = sessionDurations.first;
                   }
@@ -520,21 +551,40 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
     );
   }
 
-  Widget _buildTimeField() {
-    final options = _allTimeSlots;
+  Widget _buildTimeField(Map<String, dynamic> workingHours) {
+    // Filtrar horários disponíveis
+    final availableSlots = _allTimeSlots
+        .where((slot) => _isTimeInSchedule(slot, _selectedDate, workingHours, _duration))
+        .toList();
 
-    final hasCurrent = options.any((slot) => slot.hour == _selectedTime.hour && slot.minute == _selectedTime.minute);
+    // Se não estiver mostrando todos, mostrar apenas disponíveis (ou o selecionado se não estiver na lista)
+    var visibleOptions = _showAllTimes ? _allTimeSlots : availableSlots;
 
-    if (!hasCurrent) {
+    // Se a lista filtrada estiver vazia (dia não trabalhado?), ou o horário selecionado não estiver nela,
+    // garantir que o selecionado apareça ou expandir
+    final hasCurrent = visibleOptions.any(
+      (slot) => slot.hour == _selectedTime.hour && slot.minute == _selectedTime.minute,
+    );
+    if (!hasCurrent && !_showAllTimes && availableSlots.isNotEmpty) {
+      // ajusta para o primeiro disponível
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        setState(() => _selectedTime = options.first);
+        setState(() => _selectedTime = availableSlots.first);
       });
     }
 
-    final selected = options.firstWhere(
+    // Se filtrado e não contem o atual, adiciona o atual para não quebrar UI
+    if (!hasCurrent && !_showAllTimes) {
+      visibleOptions = [...visibleOptions, _selectedTime];
+      visibleOptions.sort((a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute));
+    }
+
+    // Se a lista de disponíveis for vazia, mostra todos automaticamente
+    if (availableSlots.isEmpty) visibleOptions = _allTimeSlots;
+
+    final selected = visibleOptions.firstWhere(
       (slot) => slot.hour == _selectedTime.hour && slot.minute == _selectedTime.minute,
-      orElse: () => options.first,
+      orElse: () => visibleOptions.isNotEmpty ? visibleOptions.first : const TimeOfDay(hour: 8, minute: 0),
     );
 
     return Container(
@@ -543,26 +593,58 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.lightBorderColor),
       ),
-      child: PopupMenuButton<TimeOfDay>(
+      child: PopupMenuButton<dynamic>(
+        // dynamic para suportar TimeOfDay e a ação 'expand'
         initialValue: selected,
         offset: const Offset(0, 48),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onSelected: (value) => setState(() => _selectedTime = value),
-        itemBuilder: (context) => options
-            .map(
-              (slot) => PopupMenuItem<TimeOfDay>(
+        onSelected: (value) {
+          if (value == 'expand') {
+            setState(() => _showAllTimes = true);
+          } else if (value is TimeOfDay) {
+            setState(() => _selectedTime = value);
+          }
+        },
+        itemBuilder: (context) {
+          final items = <PopupMenuEntry<dynamic>>[];
+
+          for (final slot in visibleOptions) {
+            final isAvailable = _isTimeInSchedule(slot, _selectedDate, workingHours, _duration);
+            items.add(
+              PopupMenuItem<dynamic>(
                 value: slot,
                 child: Text(
                   _formatTimeOfDay(slot),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: slot == selected ? FontWeight.w600 : FontWeight.w400,
-                    color: slot == selected ? AppColors.primary : AppColors.offBlack,
+                    color: slot == selected ? AppColors.primary : (isAvailable ? AppColors.offBlack : Colors.grey),
                   ),
                 ),
               ),
-            )
-            .toList(),
+            );
+          }
+
+          if (!_showAllTimes && availableSlots.isNotEmpty && availableSlots.length < _allTimeSlots.length) {
+            items.add(const PopupMenuDivider());
+            items.add(
+              const PopupMenuItem<dynamic>(
+                value: 'expand',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Mostrar todos os horários',
+                      style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return items;
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
@@ -588,8 +670,8 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
 
   Widget _buildDurationSelector() {
     final List<Duration> durations = _type == AppointmentType.session
-        ? const [Duration(minutes: 30), Duration(minutes: 60), Duration(minutes: 90), Duration(minutes: 120)]
-        : const [Duration(minutes: 30), Duration(minutes: 60), Duration(minutes: 90), Duration(minutes: 120)];
+        ? const [Duration(minutes: _standardDuration), Duration(minutes: _doubleDuration)]
+        : const [Duration(minutes: 60), Duration(minutes: 120), Duration(minutes: 180)];
 
     final options = durations.contains(_duration) ? durations : [...durations, _duration];
 
@@ -598,8 +680,18 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
       runSpacing: 8,
       children: options.map((duration) {
         final isSelected = _duration == duration;
+        String label;
+
+        if (_type == AppointmentType.session) {
+          label = duration.inMinutes == _doubleDuration
+              ? '${duration.inMinutes + _breakDuration * 2} min'
+              : '${duration.inMinutes + _breakDuration} min';
+        } else {
+          label = '${duration.inMinutes} min';
+        }
+
         return ChoiceChip(
-          label: Text('${duration.inMinutes} min'),
+          label: Text(label),
           selected: isSelected,
           onSelected: (selected) {
             if (selected) {
@@ -780,7 +872,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
     );
   }
 
-  Widget _buildBottomBar(bool isEditing) {
+  Widget _buildBottomBar(bool isEditing, Map<String, dynamic> workingHours) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -801,23 +893,47 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
             Expanded(
               flex: 2,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _saveAppointment,
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        final isAvailable = _isTimeInSchedule(_selectedTime, _selectedDate, workingHours, _duration);
+                        if (!isAvailable) {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Horário fora do padrão'),
+                              content: const Text(
+                                'O horário selecionado está fora da agenda padrão configurada. Deseja continuar?',
+                              ),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(ctx).pop();
+                                    _saveAppointment();
+                                  },
+                                  child: const Text('Confirmar'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          _saveAppointment();
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                        height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : Text(
-                        isEditing ? 'Atualizar' : 'Criar Agendamento',
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                        isEditing ? 'Salvar Alterações' : 'Criar Agendamento',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
               ),
             ),
@@ -827,7 +943,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
     );
   }
 
-  void _saveAppointment() {
+  Future<void> _saveAppointment() async {
     // Previne múltiplas submissões simultâneas
     if (_isLoading) {
       return;
@@ -864,7 +980,75 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         _selectedTime.minute,
       );
 
-      // Se estiver editando, não precisa gerar ocorrências
+      // Calcular duração final (com intervalo se for sessão)
+      final Duration finalDuration;
+      if (_type == AppointmentType.session) {
+        if (_duration.inMinutes == _standardDuration) {
+          // 50 -> 60
+          finalDuration = Duration(minutes: _standardDuration + _breakDuration);
+        } else if (_duration.inMinutes == _doubleDuration) {
+          // 100 -> 120 (assume 20 min break for double session or 10? The logic in Selector says 120 (100+20))
+          // UI Selector: 100 + 20 = 120. (Actually previous logic was 120 display).
+          // Let's verify _buildDurationSelector logic:
+          // label = duration.inMinutes == _doubleDuration ? '${duration.inMinutes + _breakDuration * 2} min' : ...
+          // So double has 2x break.
+          finalDuration = Duration(minutes: _duration.inMinutes + (_breakDuration * 2));
+        } else {
+          finalDuration = _duration;
+        }
+      } else {
+        finalDuration = _duration;
+      }
+
+      // Gerar ocorrências para validação
+      final occurrences = _generateOccurrences(dateTime);
+      if (occurrences.isEmpty) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Preparar slots para validação
+      final slotsToValidate = occurrences.map((start) {
+        return {'start': start, 'end': start.add(finalDuration)};
+      }).toList();
+
+      // Validar disponibilidade
+      try {
+        final conflicts = await DependencyContainer().validateAppointmentsUseCase(
+          slots: slotsToValidate,
+          therapistId: null, // Backend infere do usuário ou settings
+        );
+
+        if (conflicts.isNotEmpty) {
+          setState(() => _isLoading = false);
+          if (!mounted) return;
+
+          final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+          final conflictDates = conflicts
+              .take(3)
+              .map((c) => dateFormat.format((c['start']! as DateTime).toLocal()))
+              .join('\n');
+          final more = conflicts.length > 3 ? '\n...e mais ${conflicts.length - 3}' : '';
+
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Conflito de Horário'),
+              content: Text(
+                'Os seguintes horários já estão ocupados:\n\n$conflictDates$more\n\nPor favor, escolha outro horário ou ajuste a recorrência.',
+              ),
+              actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK'))],
+            ),
+          );
+          return;
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao validar horários: $e')));
+        return;
+      }
+
+      // Se estiver editando, não precisa gerar ocorrências (Lógica anterior mantida, mas ajustada para usar finalDuration)
       if (widget.appointment != null) {
         // Modo edição - atualiza apenas o agendamento existente
         final appointment = Appointment(
@@ -872,7 +1056,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
           therapistId: widget.appointment!.therapistId,
           patientId: _type == AppointmentType.session ? _selectedPatientId : null,
           dateTime: dateTime,
-          duration: _duration,
+          duration: finalDuration, // Usando a duração ajustada
           type: _type,
           status: widget.appointment!.status, // Mantém o status atual
           recurrence: _recurrence,
@@ -897,11 +1081,11 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
 
         _pendingCreations = 0;
         _lastCreationCount = 0;
-        context.read<AgendaBloc>().add(UpdateAppointment(appointment));
+        context.read<AppointmentBloc>().add(UpdateAppointment(appointment));
         return;
       }
 
-      // Modo criação - gera ocorrências para recorrência
+      // Modo criação
       Map<String, dynamic>? recurrenceRule;
       if (_recurrence == RecurrenceType.daily) {
         recurrenceRule = {
@@ -913,15 +1097,6 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         recurrenceRule = {'type': 'weekly', 'weeksCount': _recurrenceWeeksCount};
       }
 
-      final occurrences = _generateOccurrences(dateTime);
-      if (occurrences.isEmpty) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Nenhuma ocorrência válida encontrada.')));
-        return;
-      }
-
       final recurrenceEndDate = _recurrence == RecurrenceType.none ? null : occurrences.last;
 
       final appointment = Appointment(
@@ -929,7 +1104,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         therapistId: 'therapist-1', // TODO: Pegar do usuário logado
         patientId: _type == AppointmentType.session ? _selectedPatientId : null,
         dateTime: dateTime,
-        duration: _duration,
+        duration: finalDuration, // Usando duração ajustada
         type: _type,
         status: AppointmentStatus.reserved,
         recurrence: _recurrence,
@@ -960,7 +1135,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
         updatedAt: DateTime.now(),
       );
 
-      context.read<AgendaBloc>().add(CreateAppointment(firstAppointment));
+      context.read<AppointmentBloc>().add(CreateAppointment(firstAppointment));
     }
   }
 
@@ -1133,5 +1308,50 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
 
     occurrences.sort();
     return occurrences;
+  }
+
+  bool _isTimeInSchedule(
+    TimeOfDay time,
+    DateTime date,
+    Map<String, dynamic> workingHours,
+    Duration appointmentDuration,
+  ) {
+    if (workingHours.isEmpty) return true; // Se não tem config, assume disponível
+
+    final weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+    final dayKey = weekDays[date.weekday - 1];
+    final dayConfig = workingHours[dayKey] as Map<String, dynamic>?;
+
+    if (dayConfig == null || dayConfig['enabled'] != true) {
+      return false; // Dia desabilitado
+    }
+
+    final morning = dayConfig['morning'] as Map<String, dynamic>?;
+    final afternoon = dayConfig['afternoon'] as Map<String, dynamic>?;
+
+    bool isInRange(Map<String, dynamic>? range) {
+      if (range == null) return false;
+      final start = _parseTime(range['start']);
+      final end = _parseTime(range['end']);
+      final check = time.hour * 60 + time.minute;
+
+      int effectiveDuration = appointmentDuration.inMinutes + _breakDuration;
+      if (appointmentDuration.inMinutes >= _doubleDuration) {
+        effectiveDuration = (_standardDuration + _breakDuration) * 2;
+      }
+
+      return check >= start && (check + effectiveDuration) <= end;
+    }
+
+    return isInRange(morning) || isInRange(afternoon);
+  }
+
+  int _parseTime(String? timeStr) {
+    if (timeStr == null) return 0;
+    final parts = timeStr.split(':');
+    final h = int.tryParse(parts[0]) ?? 0;
+    final m = int.tryParse(parts[1]) ?? 0;
+    return h * 60 + m;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:common/common.dart';
 import 'package:server/features/session/session.repository.dart';
+import 'package:server/features/schedule/schedule.repository.dart';
 import 'package:server/features/financial/financial.repository.dart';
 
 class SessionException implements Exception {
@@ -13,9 +14,10 @@ class SessionException implements Exception {
 }
 
 class SessionController {
-  SessionController(this._repository, [this._financialRepository]);
+  SessionController(this._repository, this._scheduleRepository, [this._financialRepository]);
 
   final SessionRepository _repository;
+  final ScheduleRepository _scheduleRepository;
   final FinancialRepository? _financialRepository;
 
   Future<Session> createSession({
@@ -39,12 +41,8 @@ class SessionController {
         throw SessionException('Duração deve ser maior que zero', 400);
       }
 
-      if (session.scheduledEndTime != null &&
-          session.scheduledStartTime.isAfter(session.scheduledEndTime!)) {
-        throw SessionException(
-          'Data de término deve ser posterior à data de início',
-          400,
-        );
+      if (session.scheduledEndTime != null && session.scheduledStartTime.isAfter(session.scheduledEndTime!)) {
+        throw SessionException('Data de término deve ser posterior à data de início', 400);
       }
 
       // Se session_number não foi fornecido, calcular automaticamente
@@ -67,6 +65,36 @@ class SessionController {
         bypassRLS: userRole == 'admin',
       );
 
+      // Trigger: Se a sessão tem um agendamento vinculado, marcar como completed
+      if (created.appointmentId != null) {
+        try {
+          final appointment = await _scheduleRepository.getAppointmentById(
+            appointmentId: created.appointmentId!,
+            userId: userId,
+            userRole: userRole,
+            accountId: accountId,
+            bypassRLS: userRole == 'admin',
+          );
+
+          if (appointment != null && appointment.status != 'completed') {
+            final updatedAppointment = appointment.copyWith(status: 'completed');
+            await _scheduleRepository.updateAppointment(
+              appointmentId: appointment.id,
+              appointment: updatedAppointment,
+              userId: userId,
+              userRole: userRole,
+              accountId: accountId,
+              bypassRLS: userRole == 'admin',
+            );
+            AppLogger.info(
+              'Agendamento ${appointment.id} marcado como completed automaticamente via criação de sessão.',
+            );
+          }
+        } catch (e) {
+          AppLogger.warning('Falha ao atualizar status do agendamento vinculado: $e');
+        }
+      }
+
       return created;
     } catch (e, stack) {
       AppLogger.error(e, stack);
@@ -75,12 +103,7 @@ class SessionController {
     }
   }
 
-  Future<Session> getSession({
-    required int sessionId,
-    required int userId,
-    String? userRole,
-    int? accountId,
-  }) async {
+  Future<Session> getSession({required int sessionId, required int userId, String? userRole, int? accountId}) async {
     AppLogger.func();
     try {
       final session = await _repository.getSessionById(
@@ -120,7 +143,7 @@ class SessionController {
         patientId: patientId,
         therapistId: therapistId,
         appointmentId: appointmentId,
-        status: status,
+        statuses: status != null ? [status] : null,
         startDate: startDate,
         endDate: endDate,
         userId: userId,
@@ -151,12 +174,8 @@ class SessionController {
         throw SessionException('Duração deve ser maior que zero', 400);
       }
 
-      if (session.scheduledEndTime != null &&
-          session.scheduledStartTime.isAfter(session.scheduledEndTime!)) {
-        throw SessionException(
-          'Data de término deve ser posterior à data de início',
-          400,
-        );
+      if (session.scheduledEndTime != null && session.scheduledStartTime.isAfter(session.scheduledEndTime!)) {
+        throw SessionException('Data de término deve ser posterior à data de início', 400);
       }
 
       // Buscar sessão atual para verificar mudança de status
@@ -188,11 +207,39 @@ class SessionController {
         throw SessionException('Sessão não encontrada', 404);
       }
 
+      // Trigger: Se a sessão tem um agendamento vinculado, marcar como completed
+      // Isso garante que se o appointmentId for adicionado ou se o status mudar, o agendamento reflete
+      if (updated.appointmentId != null && updated.status == 'completed') {
+        try {
+          final appointment = await _scheduleRepository.getAppointmentById(
+            appointmentId: updated.appointmentId!,
+            userId: userId,
+            userRole: userRole,
+            accountId: accountId,
+            bypassRLS: userRole == 'admin',
+          );
+
+          if (appointment != null && appointment.status != 'completed' && appointment.id != null) {
+            final updatedAppointment = appointment.copyWith(status: 'completed');
+            await _scheduleRepository.updateAppointment(
+              appointmentId: appointment.id!,
+              appointment: updatedAppointment,
+              userId: userId,
+              userRole: userRole,
+              accountId: accountId,
+              bypassRLS: userRole == 'admin',
+            );
+            AppLogger.info(
+              'Agendamento ${appointment.id} marcado como completed automaticamente via atualização de sessão.',
+            );
+          }
+        } catch (e) {
+          AppLogger.warning('Falha ao atualizar status do agendamento vinculado: $e');
+        }
+      }
+
       // Se sessão foi marcada como completed e tem charged_amount, criar transação automaticamente
-      if (!wasCompleted &&
-          isCompleted &&
-          updated.chargedAmount != null &&
-          updated.chargedAmount! > 0) {
+      if (!wasCompleted && isCompleted && updated.chargedAmount != null && updated.chargedAmount! > 0) {
         // Verificar se já existe transação vinculada a esta sessão
         if (_financialRepository != null) {
           try {
@@ -230,16 +277,11 @@ class SessionController {
                 bypassRLS: userRole == 'admin',
               );
 
-              AppLogger.info(
-                'Transação financeira criada automaticamente para sessão ${updated.id}',
-              );
+              AppLogger.info('Transação financeira criada automaticamente para sessão ${updated.id}');
             }
           } catch (e, stack) {
             // Log erro mas não falha a atualização da sessão
-            AppLogger.error(
-              'Erro ao criar transação financeira automaticamente: $e',
-              stack,
-            );
+            AppLogger.error('Erro ao criar transação financeira automaticamente: $e', stack);
           }
         }
       }
@@ -252,12 +294,7 @@ class SessionController {
     }
   }
 
-  Future<void> deleteSession({
-    required int sessionId,
-    required int userId,
-    String? userRole,
-    int? accountId,
-  }) async {
+  Future<void> deleteSession({required int sessionId, required int userId, String? userRole, int? accountId}) async {
     AppLogger.func();
     try {
       final deleted = await _repository.deleteSession(
@@ -298,10 +335,7 @@ class SessionController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is SessionException) rethrow;
-      throw SessionException(
-        'Erro ao calcular próximo número de sessão: ${e.toString()}',
-        500,
-      );
+      throw SessionException('Erro ao calcular próximo número de sessão: ${e.toString()}', 500);
     }
   }
 }

@@ -16,6 +16,7 @@ class TherapistRepository {
   /// [userRole] - Role do usuário para contexto RLS (opcional)
   /// [bypassRLS] - Se true, limpa contexto RLS (para admin ver todos)
   Future<List<Therapist>> getAllTherapists({int? userId, String? userRole, bool bypassRLS = false}) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       // Configura contexto RLS
       if (bypassRLS) {
@@ -62,6 +63,7 @@ class TherapistRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       // Configura contexto RLS
       if (bypassRLS) {
@@ -179,6 +181,7 @@ class TherapistRepository {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       // Configura contexto RLS
       if (bypassRLS) {
@@ -260,6 +263,7 @@ class TherapistRepository {
   /// [accountId] - ID da conta vinculada para contexto RLS (opcional)
   /// [bypassRLS] - Se true, limpa contexto RLS (para admin)
   Future<bool> deleteTherapist(int id, {int? userId, String? userRole, int? accountId, bool bypassRLS = false}) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       // Configura contexto RLS
       if (bypassRLS) {
@@ -277,6 +281,7 @@ class TherapistRepository {
   }
 
   Future<Therapist> updateTherapistUserId(int therapistId, int userId) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       final result = await conn.execute(
         Sql.named('''
@@ -305,6 +310,7 @@ class TherapistRepository {
 
   // Retorna o terapeuta pelo user_id com informações do plano ativo
   Future<Map<String, dynamic>?> getTherapistByUserIdWithPlan(int userId) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       final results = await conn.execute(
         Sql.named('''
@@ -360,6 +366,7 @@ class TherapistRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    AppLogger.func();
     await _dbConnection.withConnection((conn) async {
       // Verifica se o plano existe e está ativo
       final planCheck = await conn.execute(

@@ -51,6 +51,7 @@ class ScheduleController {
     required int userId,
     String? userRole,
   }) async {
+    AppLogger.func();
     try {
       final existing = await _repository.getTherapistSettings(
         therapistId: therapistId,
@@ -86,7 +87,8 @@ class ScheduleController {
         userRole: userRole,
         bypassRLS: userRole == 'admin',
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       throw ScheduleException('Erro ao carregar configurações de agenda: ${e.toString()}', 500);
     }
   }
@@ -96,6 +98,7 @@ class ScheduleController {
     required int userId,
     String? userRole,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.upsertTherapistSettings(
         settings: settings,
@@ -103,7 +106,8 @@ class ScheduleController {
         userRole: userRole,
         bypassRLS: userRole == 'admin',
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       throw ScheduleException('Erro ao atualizar configurações de agenda: ${e.toString()}', 500);
     }
   }
@@ -116,6 +120,7 @@ class ScheduleController {
     String? userRole,
     int? accountId,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.listAppointments(
         therapistId: therapistId,
@@ -126,7 +131,8 @@ class ScheduleController {
         accountId: accountId,
         bypassRLS: userRole == 'admin',
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       throw ScheduleException('Erro ao listar agendamentos: ${e.toString()}', 500);
     }
   }
@@ -202,9 +208,51 @@ class ScheduleController {
       }
 
       return appointment;
-    } catch (e) {
+    } catch (e, stack) {
       if (e is ScheduleException) rethrow;
+      AppLogger.error(e, stack);
       throw ScheduleException('Erro ao buscar agendamento: ${e.toString()}', 500);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> validateAppointments({
+    required List<Map<String, DateTime>> slots,
+    required int userId,
+    String? userRole,
+    int? accountId,
+  }) async {
+    AppLogger.func();
+    try {
+      int therapistId;
+      if (userRole == 'therapist') {
+        if (accountId == null) {
+          throw ScheduleException('Conta de terapeuta não vinculada', 400);
+        }
+        therapistId = accountId;
+      } else if (userRole == 'admin') {
+        // Se for admin, precisamos saber qual terapeuta estamos validando.
+        // mas aqui assumimos que se o admin chama, ele passa o accountId ou recuperamos via params.
+        // Porém, a validação é contextual ao accountId passado.
+        if (accountId == null) {
+          throw ScheduleException('Therapist ID necessário para validação', 400);
+        }
+        therapistId = accountId;
+      } else {
+        throw ScheduleException('Acesso não autorizado', 403);
+      }
+
+      return await _repository.checkAvailability(
+        therapistId: therapistId,
+        slots: slots,
+        userId: userId,
+        userRole: userRole,
+        accountId: accountId,
+        bypassRLS: userRole == 'admin',
+      );
+    } catch (e, stack) {
+      if (e is ScheduleException) rethrow;
+      AppLogger.error(e, stack);
+      throw ScheduleException('Erro ao validar agendamentos: ${e.toString()}', 500);
     }
   }
 
@@ -214,6 +262,7 @@ class ScheduleController {
     String? userRole,
     int? accountId,
   }) async {
+    AppLogger.func();
     try {
       final deleted = await _repository.deleteAppointment(
         appointmentId: appointmentId,
@@ -226,8 +275,9 @@ class ScheduleController {
       if (!deleted) {
         throw ScheduleException('Agendamento não encontrado', 404);
       }
-    } catch (e) {
+    } catch (e, stack) {
       if (e is ScheduleException) rethrow;
+      AppLogger.error(e, stack);
       throw ScheduleException('Erro ao remover agendamento: ${e.toString()}', 500);
     }
   }

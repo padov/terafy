@@ -25,6 +25,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.getAnamnesisByPatientId(
         patientId,
@@ -33,11 +34,9 @@ class AnamnesisController {
         accountId: accountId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
-      throw AnamnesisException(
-        'Erro ao buscar anamnese: ${e.toString()}',
-        500,
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw AnamnesisException('Erro ao buscar anamnese: ${e.toString()}', 500);
     }
   }
 
@@ -48,6 +47,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.getAnamnesisById(
         id,
@@ -56,11 +56,9 @@ class AnamnesisController {
         accountId: accountId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
-      throw AnamnesisException(
-        'Erro ao buscar anamnese: ${e.toString()}',
-        500,
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw AnamnesisException('Erro ao buscar anamnese: ${e.toString()}', 500);
     }
   }
 
@@ -83,10 +81,7 @@ class AnamnesisController {
       );
 
       if (existing != null) {
-        throw AnamnesisException(
-          'Já existe uma anamnese para este paciente. Use a atualização.',
-          409,
-        );
+        throw AnamnesisException('Já existe uma anamnese para este paciente. Use a atualização.', 409);
       }
 
       return await _repository.createAnamnesis(
@@ -96,20 +91,14 @@ class AnamnesisController {
         accountId: accountId ?? anamnesis.therapistId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
-      AppLogger.error(e);
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is AnamnesisException) rethrow;
       final errorStr = e.toString();
       if (errorStr.contains('23505') || errorStr.contains('unique')) {
-        throw AnamnesisException(
-          'Já existe uma anamnese para este paciente.',
-          409,
-        );
+        throw AnamnesisException('Já existe uma anamnese para este paciente.', 409);
       }
-      throw AnamnesisException(
-        'Erro ao criar anamnese: ${e.toString()}',
-        500,
-      );
+      throw AnamnesisException('Erro ao criar anamnese: ${e.toString()}', 500);
     }
   }
 
@@ -121,6 +110,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.updateAnamnesis(
         id,
@@ -130,12 +120,10 @@ class AnamnesisController {
         accountId: accountId ?? anamnesis.therapistId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is AnamnesisException) rethrow;
-      throw AnamnesisException(
-        'Erro ao atualizar anamnese: ${e.toString()}',
-        500,
-      );
+      throw AnamnesisException('Erro ao atualizar anamnese: ${e.toString()}', 500);
     }
   }
 
@@ -146,6 +134,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       final deleted = await _repository.deleteAnamnesis(
         id,
@@ -158,12 +147,10 @@ class AnamnesisController {
       if (!deleted) {
         throw AnamnesisException('Anamnese não encontrada', 404);
       }
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is AnamnesisException) rethrow;
-      throw AnamnesisException(
-        'Erro ao remover anamnese: ${e.toString()}',
-        500,
-      );
+      throw AnamnesisException('Erro ao remover anamnese: ${e.toString()}', 500);
     }
   }
 
@@ -177,6 +164,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.getTemplates(
         therapistId: therapistId,
@@ -186,11 +174,9 @@ class AnamnesisController {
         accountId: accountId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
-      throw AnamnesisException(
-        'Erro ao listar templates: ${e.toString()}',
-        500,
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw AnamnesisException('Erro ao listar templates: ${e.toString()}', 500);
     }
   }
 
@@ -201,6 +187,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.getTemplateById(
         id,
@@ -209,11 +196,9 @@ class AnamnesisController {
         accountId: accountId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
-      throw AnamnesisException(
-        'Erro ao buscar template: ${e.toString()}',
-        500,
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw AnamnesisException('Erro ao buscar template: ${e.toString()}', 500);
     }
   }
 
@@ -233,13 +218,10 @@ class AnamnesisController {
         accountId: accountId ?? template.therapistId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
-      AppLogger.error(e);
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is AnamnesisException) rethrow;
-      throw AnamnesisException(
-        'Erro ao criar template: ${e.toString()}',
-        500,
-      );
+      throw AnamnesisException('Erro ao criar template: ${e.toString()}', 500);
     }
   }
 
@@ -251,6 +233,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       return await _repository.updateTemplate(
         id,
@@ -260,12 +243,10 @@ class AnamnesisController {
         accountId: accountId ?? template.therapistId,
         bypassRLS: bypassRLS,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is AnamnesisException) rethrow;
-      throw AnamnesisException(
-        'Erro ao atualizar template: ${e.toString()}',
-        500,
-      );
+      throw AnamnesisException('Erro ao atualizar template: ${e.toString()}', 500);
     }
   }
 
@@ -276,6 +257,7 @@ class AnamnesisController {
     int? accountId,
     bool bypassRLS = false,
   }) async {
+    AppLogger.func();
     try {
       final deleted = await _repository.deleteTemplate(
         id,
@@ -288,13 +270,10 @@ class AnamnesisController {
       if (!deleted) {
         throw AnamnesisException('Template não encontrado', 404);
       }
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is AnamnesisException) rethrow;
-      throw AnamnesisException(
-        'Erro ao remover template: ${e.toString()}',
-        500,
-      );
+      throw AnamnesisException('Erro ao remover template: ${e.toString()}', 500);
     }
   }
 }
-

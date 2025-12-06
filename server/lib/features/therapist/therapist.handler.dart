@@ -26,6 +26,7 @@ class TherapistHandler extends BaseHandler {
   /// Handler para rota GET /therapists
   /// Apenas admin pode acessar (verificado pelo middleware requireRole('admin'))
   Future<Response> handleGetAll(Request request) async {
+    AppLogger.func();
     try {
       // Extrai informações do token para contexto RLS
       final userId = getUserId(request);
@@ -41,16 +42,15 @@ class TherapistHandler extends BaseHandler {
       return successResponse(therapistsJson);
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao buscar terapeutas: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao buscar terapeutas: ${e.toString()}');
     }
   }
 
   /// Handler para rota GET /therapists/me
   Future<Response> handleGetMe(Request request) async {
+    AppLogger.func();
     try {
       final userId = getUserId(request);
       if (userId == null) {
@@ -61,17 +61,16 @@ class TherapistHandler extends BaseHandler {
       return successResponse(result.therapistData);
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao buscar terapeuta: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao buscar terapeuta: ${e.toString()}');
     }
   }
 
   /// Handler para rota PUT /therapists/me
   /// Permite que o terapeuta atualize seus próprios dados
   Future<Response> handleUpdateMe(Request request) async {
+    AppLogger.func();
     try {
       final userId = getUserId(request);
       if (userId == null) {
@@ -81,9 +80,7 @@ class TherapistHandler extends BaseHandler {
       // Obtém o accountId que é o therapistId do usuário autenticado
       final accountId = getAccountId(request);
       if (accountId == null) {
-        return badRequestResponse(
-          'Usuário não possui perfil de terapeuta vinculado',
-        );
+        return badRequestResponse('Usuário não possui perfil de terapeuta vinculado');
       }
 
       // Extrai informações do token para contexto RLS
@@ -107,17 +104,16 @@ class TherapistHandler extends BaseHandler {
       return successResponse(updatedTherapist.toJson());
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao atualizar terapeuta: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao atualizar terapeuta: ${e.toString()}');
     }
   }
 
   /// Handler para rota GET /therapists/:id
   /// Apenas admin pode acessar (verificado pelo middleware requireRole('admin'))
   Future<Response> handleGetById(Request request, String id) async {
+    AppLogger.func();
     try {
       final therapistId = int.tryParse(id);
       if (therapistId == null) {
@@ -140,16 +136,15 @@ class TherapistHandler extends BaseHandler {
       return successResponse(therapist.toJson());
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao buscar terapeuta: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao buscar terapeuta: ${e.toString()}');
     }
   }
 
   /// Handler para rota POST /therapists
   Future<Response> handleCreate(Request request) async {
+    AppLogger.func();
     try {
       // Obtém o userId do token JWT
       final userId = getUserId(request);
@@ -171,8 +166,7 @@ class TherapistHandler extends BaseHandler {
       // Extrai o planId do calendar_settings se presente
       int? planId;
       if (therapistMap['calendar_settings'] != null) {
-        final calendarSettings =
-            therapistMap['calendar_settings'] as Map<String, dynamic>;
+        final calendarSettings = therapistMap['calendar_settings'] as Map<String, dynamic>;
         planId = calendarSettings['selected_plan_id'] as int?;
       }
 
@@ -186,17 +180,16 @@ class TherapistHandler extends BaseHandler {
       return createdResponse(result.therapist.toJson());
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao criar terapeuta: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao criar terapeuta: ${e.toString()}');
     }
   }
 
   /// Handler para rota PUT /therapists/:id
   /// Admin pode atualizar qualquer um, therapist só pode atualizar o próprio
   Future<Response> handleUpdate(Request request, String id) async {
+    AppLogger.func();
     try {
       final therapistId = int.tryParse(id);
       if (therapistId == null) {
@@ -235,17 +228,16 @@ class TherapistHandler extends BaseHandler {
       return successResponse(updatedTherapist.toJson());
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao atualizar terapeuta: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao atualizar terapeuta: ${e.toString()}');
     }
   }
 
   /// Handler para rota DELETE /therapists/:id
   /// Admin pode deletar qualquer um, therapist só pode deletar o próprio
   Future<Response> handleDelete(Request request, String id) async {
+    AppLogger.func();
     try {
       final therapistId = int.tryParse(id);
       if (therapistId == null) {
@@ -275,11 +267,9 @@ class TherapistHandler extends BaseHandler {
       return successResponse({'message': 'Terapeuta deletado com sucesso'});
     } on TherapistException catch (e) {
       return errorResponse(e.message, statusCode: e.statusCode);
-    } catch (e) {
-      AppLogger.error(e);
-      return internalServerErrorResponse(
-        'Erro ao deletar terapeuta: ${e.toString()}',
-      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao deletar terapeuta: ${e.toString()}');
     }
   }
 }

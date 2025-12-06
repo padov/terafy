@@ -8,19 +8,21 @@ import 'package:common/common.dart';
 
 import 'complete_profile_bloc_models.dart';
 
-class CompleteProfileBloc
-    extends Bloc<CompleteProfileEvent, CompleteProfileState> {
+class CompleteProfileBloc extends Bloc<CompleteProfileEvent, CompleteProfileState> {
   final CreateTherapistUseCase createTherapistUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final RefreshTokenUseCase refreshTokenUseCase;
   final SecureStorageService secureStorageService;
+
+  final String? initialEmail;
 
   CompleteProfileBloc({
     required this.createTherapistUseCase,
     required this.getCurrentUserUseCase,
     required this.refreshTokenUseCase,
     required this.secureStorageService,
-  }) : super(const CompleteProfileInitial()) {
+    this.initialEmail,
+  }) : super(CompleteProfileInitial(initialEmail: initialEmail)) {
     on<NextStepPressed>(_onNextStepPressed);
     on<PreviousStepPressed>(_onPreviousStepPressed);
     on<UpdatePersonalData>(_onUpdatePersonalData);
@@ -28,26 +30,20 @@ class CompleteProfileBloc
     on<SubmitCompleteProfile>(_onSubmitCompleteProfile);
     on<LoadCurrentUserEmail>(_onLoadCurrentUserEmail);
 
-    // Carrega email do usuário atual ao iniciar
-    add(const LoadCurrentUserEmail());
+    // Carrega email do usuário atual ao iniciar se não foi passado
+    if (initialEmail == null) {
+      add(const LoadCurrentUserEmail());
+    }
   }
 
-  Future<void> _onLoadCurrentUserEmail(
-    LoadCurrentUserEmail event,
-    Emitter<CompleteProfileState> emit,
-  ) async {
+  Future<void> _onLoadCurrentUserEmail(LoadCurrentUserEmail event, Emitter<CompleteProfileState> emit) async {
     try {
       final authResult = await getCurrentUserUseCase();
       if (authResult.client != null) {
         final email = authResult.client!.email;
         // Atualiza apenas o email, preservando outros dados
         final updatedData = state.data.copyWith(email: email);
-        emit(
-          CompleteProfileInProgress(
-            currentStep: state.currentStep,
-            data: updatedData,
-          ),
-        );
+        emit(CompleteProfileInProgress(currentStep: state.currentStep, data: updatedData));
       }
     } catch (e) {
       AppLogger.warning('Não foi possível carregar email do usuário: $e');
@@ -55,39 +51,20 @@ class CompleteProfileBloc
     }
   }
 
-  void _onNextStepPressed(
-    NextStepPressed event,
-    Emitter<CompleteProfileState> emit,
-  ) {
+  void _onNextStepPressed(NextStepPressed event, Emitter<CompleteProfileState> emit) {
     // Agora só temos 2 steps (0 e 1), então limite máximo é 1
     if (state.currentStep < 1) {
-      emit(
-        CompleteProfileInProgress(
-          currentStep: state.currentStep + 1,
-          data: state.data,
-        ),
-      );
+      emit(CompleteProfileInProgress(currentStep: state.currentStep + 1, data: state.data));
     }
   }
 
-  void _onPreviousStepPressed(
-    PreviousStepPressed event,
-    Emitter<CompleteProfileState> emit,
-  ) {
+  void _onPreviousStepPressed(PreviousStepPressed event, Emitter<CompleteProfileState> emit) {
     if (state.currentStep > 0) {
-      emit(
-        CompleteProfileInProgress(
-          currentStep: state.currentStep - 1,
-          data: state.data,
-        ),
-      );
+      emit(CompleteProfileInProgress(currentStep: state.currentStep - 1, data: state.data));
     }
   }
 
-  void _onUpdatePersonalData(
-    UpdatePersonalData event,
-    Emitter<CompleteProfileState> emit,
-  ) {
+  void _onUpdatePersonalData(UpdatePersonalData event, Emitter<CompleteProfileState> emit) {
     final updatedData = state.data.copyWith(
       name: event.name,
       nickname: event.nickname,
@@ -97,18 +74,10 @@ class CompleteProfileBloc
       birthday: event.birthday,
     );
 
-    emit(
-      CompleteProfileInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(CompleteProfileInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onUpdateProfessionalData(
-    UpdateProfessionalData event,
-    Emitter<CompleteProfileState> emit,
-  ) {
+  void _onUpdateProfessionalData(UpdateProfessionalData event, Emitter<CompleteProfileState> emit) {
     final updatedData = state.data.copyWith(
       specialties: event.specialties,
       professionalRegistrations: event.professionalRegistrations,
@@ -116,18 +85,10 @@ class CompleteProfileBloc
       address: event.address,
     );
 
-    emit(
-      CompleteProfileInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(CompleteProfileInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  Future<void> _onSubmitCompleteProfile(
-    SubmitCompleteProfile event,
-    Emitter<CompleteProfileState> emit,
-  ) async {
+  Future<void> _onSubmitCompleteProfile(SubmitCompleteProfile event, Emitter<CompleteProfileState> emit) async {
     AppLogger.func();
     final data = state.data;
 
@@ -145,26 +106,15 @@ class CompleteProfileBloc
       return;
     }
 
-    emit(
-      CompleteProfileLoading(currentStep: state.currentStep, data: state.data),
-    );
+    emit(CompleteProfileLoading(currentStep: state.currentStep, data: state.data));
 
     try {
       // Prepara dados do terapeuta
-      final registry = _extractProfessionalRegistry(
-        data.professionalRegistrations,
-      );
+      final registry = _extractProfessionalRegistry(data.professionalRegistrations);
 
-      final specialties = data.specialties
-          ?.map((e) => e.trim())
-          .where((element) => element.isNotEmpty)
-          .toList();
-      final presentation = (data.presentation?.trim().isNotEmpty ?? false)
-          ? data.presentation!.trim()
-          : null;
-      final address = (data.address?.trim().isNotEmpty ?? false)
-          ? data.address!.trim()
-          : null;
+      final specialties = data.specialties?.map((e) => e.trim()).where((element) => element.isNotEmpty).toList();
+      final presentation = (data.presentation?.trim().isNotEmpty ?? false) ? data.presentation!.trim() : null;
+      final address = (data.address?.trim().isNotEmpty ?? false) ? data.address!.trim() : null;
 
       final therapistInput = TherapistSignupInput(
         name: data.name!.trim(),
@@ -190,10 +140,7 @@ class CompleteProfileBloc
       final updatedClient = authResult.client;
 
       AppLogger.info('✅ Perfil completado com sucesso!');
-      AppLogger.variable(
-        'accountId após criar terapeuta',
-        updatedClient?.accountId?.toString() ?? 'null',
-      );
+      AppLogger.variable('accountId após criar terapeuta', updatedClient?.accountId?.toString() ?? 'null');
 
       // Verifica se o accountId foi atualizado
       if (updatedClient?.accountId == null) {
@@ -208,57 +155,36 @@ class CompleteProfileBloc
       try {
         final refreshToken = await secureStorageService.getRefreshToken();
         if (refreshToken != null) {
-          AppLogger.info(
-            '🔄 Fazendo refresh do token para atualizar accountId...',
-          );
+          AppLogger.info('🔄 Fazendo refresh do token para atualizar accountId...');
           final refreshResult = await refreshTokenUseCase.call(refreshToken);
 
           if (refreshResult.authToken != null) {
             // Agora que o perfil está completo (accountId != null), salva no storage
             await secureStorageService.saveToken(refreshResult.authToken!);
-            AppLogger.info(
-              '✅ Novo token salvo no storage com accountId atualizado',
-            );
+            AppLogger.info('✅ Novo token salvo no storage com accountId atualizado');
 
             if (refreshResult.refreshAuthToken != null) {
-              await secureStorageService.saveRefreshToken(
-                refreshResult.refreshAuthToken!,
-              );
+              await secureStorageService.saveRefreshToken(refreshResult.refreshAuthToken!);
             }
 
             // Limpa tokens temporários (não são mais necessários)
             secureStorageService.clearTemporaryTokens();
           } else {
-            AppLogger.warning(
-              '⚠️ Não foi possível obter novo token após refresh',
-            );
+            AppLogger.warning('⚠️ Não foi possível obter novo token após refresh');
           }
         } else {
-          AppLogger.warning(
-            '⚠️ Refresh token não encontrado. Token não será atualizado.',
-          );
+          AppLogger.warning('⚠️ Refresh token não encontrado. Token não será atualizado.');
         }
       } catch (e) {
         AppLogger.warning('⚠️ Erro ao fazer refresh do token: $e');
         // Não falha o cadastro por causa disso, mas loga o erro
       }
 
-      emit(
-        CompleteProfileSuccess(
-          currentStep: state.currentStep,
-          data: state.data,
-        ),
-      );
+      emit(CompleteProfileSuccess(currentStep: state.currentStep, data: state.data));
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
 
-      emit(
-        CompleteProfileFailure(
-          currentStep: state.currentStep,
-          data: state.data,
-          error: _mapErrorMessage(e),
-        ),
-      );
+      emit(CompleteProfileFailure(currentStep: state.currentStep, data: state.data, error: _mapErrorMessage(e)));
     }
   }
 

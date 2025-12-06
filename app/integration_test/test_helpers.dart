@@ -240,7 +240,7 @@ class IntegrationTestHelpers {
 
 /// Common test data
 class TestData {
-  static const String validEmail = 'teste@terafy.com';
+  static const String validEmail = 'teste@terafy.app.br';
   static const String validPassword = '123456';
   static const String invalidEmail = 'invalid@test.com';
   static const String invalidPassword = 'wrongpassword';

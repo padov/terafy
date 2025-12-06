@@ -112,7 +112,7 @@ void main() async {
   final scheduleHandler = ScheduleHandler(scheduleController);
   final sessionRepository = SessionRepository(dbConnection);
   final financialRepository = FinancialRepository(dbConnection);
-  final sessionController = SessionController(sessionRepository, financialRepository);
+  final sessionController = SessionController(sessionRepository, scheduleRepository, financialRepository);
   final sessionHandler = SessionHandler(sessionController);
   final financialController = FinancialController(financialRepository, sessionRepository);
   final financialHandler = FinancialHandler(financialController);

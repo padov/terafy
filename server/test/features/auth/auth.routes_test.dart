@@ -14,11 +14,7 @@ void main() {
       final userRepository = TestUserRepository();
       final refreshTokenRepository = TestRefreshTokenRepository();
       final blacklistRepository = TestTokenBlacklistRepository();
-      handler = AuthHandler(
-        userRepository,
-        refreshTokenRepository,
-        blacklistRepository,
-      );
+      handler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
       router = configureAuthRoutes(handler);
     });
 
@@ -28,7 +24,7 @@ void main() {
           'POST',
           Uri.parse('http://localhost/login'),
           headers: {'Content-Type': 'application/json'},
-          body: '{"email": "teste@terafy.com", "password": "senha123"}',
+          body: '{"email": "teste@terafy.app.br", "password": "senha123"}',
         );
 
         final response = await router(request);
@@ -121,10 +117,7 @@ void main() {
       });
 
       test('Rota inválida retorna 404', () async {
-        final request = Request(
-          'GET',
-          Uri.parse('http://localhost/rota_inexistente'),
-        );
+        final request = Request('GET', Uri.parse('http://localhost/rota_inexistente'));
 
         final response = await router(request);
 
@@ -135,13 +128,7 @@ void main() {
 
     group('Validação de padrões de rota', () {
       test('Rotas com padrões corretos são reconhecidas', () async {
-        final validRoutes = [
-          'POST /login',
-          'POST /register',
-          'GET /me',
-          'POST /refresh',
-          'POST /logout',
-        ];
+        final validRoutes = ['POST /login', 'POST /register', 'GET /me', 'POST /refresh', 'POST /logout'];
 
         for (final route in validRoutes) {
           final parts = route.split(' ');
@@ -173,4 +160,3 @@ void main() {
     });
   });
 }
-

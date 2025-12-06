@@ -35,7 +35,7 @@ void main() {
         final passwordHash = PasswordService.hashPassword(password);
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: passwordHash,
             role: 'therapist',
             status: 'active',
@@ -44,10 +44,10 @@ void main() {
         );
 
         // Tenta fazer login
-        final result = await controller.login('teste@terafy.com', password);
+        final result = await controller.login('teste@terafy.app.br', password);
 
         expect(result.user.id, user.id);
-        expect(result.user.email, 'teste@terafy.com');
+        expect(result.user.email, 'teste@terafy.app.br');
         expect(result.authToken, isNotEmpty);
         expect(result.refreshToken, isNotEmpty);
 
@@ -55,7 +55,7 @@ void main() {
         final accessTokenClaims = JwtService.validateToken(result.authToken);
         expect(accessTokenClaims, isNotNull);
         expect(accessTokenClaims!['sub'], user.id.toString());
-        expect(accessTokenClaims['email'], 'teste@terafy.com');
+        expect(accessTokenClaims['email'], 'teste@terafy.app.br');
         expect(accessTokenClaims['role'], 'therapist');
         expect(accessTokenClaims['type'], 'access');
 
@@ -79,7 +79,7 @@ void main() {
         final passwordHash = PasswordService.hashPassword('senha123');
         await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: passwordHash,
             role: 'therapist',
             status: 'active',
@@ -88,7 +88,7 @@ void main() {
         );
 
         expect(
-          () => controller.login('teste@terafy.com', 'senha_errada'),
+          () => controller.login('teste@terafy.app.br', 'senha_errada'),
           throwsA(
             isA<AuthException>()
                 .having((e) => e.message, 'message', 'Credenciais inválidas')
@@ -102,7 +102,7 @@ void main() {
         final passwordHash = PasswordService.hashPassword(password);
         await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: passwordHash,
             role: 'therapist',
             status: 'suspended',
@@ -111,7 +111,7 @@ void main() {
         );
 
         expect(
-          () => controller.login('teste@terafy.com', password),
+          () => controller.login('teste@terafy.app.br', password),
           throwsA(
             isA<AuthException>()
                 .having((e) => e.message, 'message', 'Conta suspensa ou cancelada')
@@ -125,7 +125,7 @@ void main() {
         final passwordHash = PasswordService.hashPassword(password);
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: passwordHash,
             role: 'therapist',
             status: 'active',
@@ -135,7 +135,7 @@ void main() {
 
         expect(user.lastLoginAt, isNull);
 
-        await controller.login('teste@terafy.com', password);
+        await controller.login('teste@terafy.app.br', password);
 
         final updatedUser = await userRepository.getUserById(user.id!);
         expect(updatedUser?.lastLoginAt, isNotNull);
@@ -203,7 +203,7 @@ void main() {
       test('deve retornar usuário quando token é válido', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -257,7 +257,7 @@ void main() {
       test('deve renovar access token com refresh token válido', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -303,7 +303,7 @@ void main() {
       test('deve lançar exceção quando não é refresh token', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -327,7 +327,7 @@ void main() {
       test('deve lançar exceção quando conta está suspensa', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'suspended',
@@ -357,7 +357,7 @@ void main() {
       test('deve lançar exceção quando refresh token está revogado', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -390,7 +390,7 @@ void main() {
       test('deve lançar exceção quando refresh token não está no banco', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -423,7 +423,7 @@ void main() {
       test('deve revogar refresh token com sucesso', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',

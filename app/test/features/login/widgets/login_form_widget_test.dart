@@ -14,14 +14,13 @@ import 'package:terafy/core/services/secure_storage_service.dart';
 import 'package:terafy/features/login/bloc/login_bloc.dart';
 import 'package:terafy/features/login/bloc/login_bloc_models.dart';
 import 'package:terafy/features/login/widgets/_login_form.dart';
+import 'package:terafy/core/dependencies/dependency_container.dart';
 
 class _MockLoginUseCase extends Mock implements LoginUseCase {}
 
-class _MockSignInWithGoogleUseCase extends Mock
-    implements SignInWithGoogleUseCase {}
+class _MockSignInWithGoogleUseCase extends Mock implements SignInWithGoogleUseCase {}
 
-class _MockGetCurrentUserUseCase extends Mock
-    implements GetCurrentUserUseCase {}
+class _MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 
 class _MockRefreshTokenUseCase extends Mock implements RefreshTokenUseCase {}
 
@@ -42,15 +41,11 @@ void main() {
   late _MockSecureStorageService secureStorageService;
   late _MockAuthService authService;
 
-  final client = Client(
-    id: '1',
-    name: 'Terapeuta Teste',
-    email: 'teste@terafy.com',
-    accountId: 123,
-  );
+  final client = Client(id: '1', name: 'Terapeuta Teste', email: 'teste@terafy.app.br', accountId: 123);
 
   Widget buildTestWidget(Widget child) {
     return MaterialApp(
+      routes: {'/home': (context) => const Scaffold(body: Text('Home'))},
       home: BlocProvider<LoginBloc>(
         create: (context) => LoginBloc(
           loginUseCase: loginUseCase,
@@ -75,39 +70,27 @@ void main() {
     secureStorageService = _MockSecureStorageService();
     authService = _MockAuthService();
 
+    // Inject mocks into DependencyContainer
+    DependencyContainer().authService = authService;
+    DependencyContainer().secureStorageService = secureStorageService;
+
     // Configurações padrão para mocks
     when(() => secureStorageService.getToken()).thenAnswer((_) async => null);
-    when(
-      () => secureStorageService.getRefreshToken(),
-    ).thenAnswer((_) async => null);
-    when(
-      () => secureStorageService.getUserIdentifier(),
-    ).thenAnswer((_) async => null);
-    when(
-      () => secureStorageService.saveToken(any()),
-    ).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.saveRefreshToken(any()),
-    ).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.saveUserIdentifier(any()),
-    ).thenAnswer((_) async => {});
+    when(() => secureStorageService.getRefreshToken()).thenAnswer((_) async => null);
+    when(() => secureStorageService.getUserIdentifier()).thenAnswer((_) async => null);
+    when(() => secureStorageService.saveToken(any())).thenAnswer((_) async => {});
+    when(() => secureStorageService.saveRefreshToken(any())).thenAnswer((_) async => {});
+    when(() => secureStorageService.saveUserIdentifier(any())).thenAnswer((_) async => {});
     when(() => secureStorageService.deleteToken()).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.deleteRefreshToken(),
-    ).thenAnswer((_) async => {});
-    when(
-      () => secureStorageService.deleteUserIdentifier(),
-    ).thenAnswer((_) async => {});
+    when(() => secureStorageService.deleteRefreshToken()).thenAnswer((_) async => {});
+    when(() => secureStorageService.deleteUserIdentifier()).thenAnswer((_) async => {});
 
     when(() => authService.canCheckBiometrics()).thenAnswer((_) async => false);
     when(() => authService.authenticate()).thenAnswer((_) async => true);
   });
 
   group('LoginForm - Testes Visuais', () {
-    testWidgets('1.1.3 - Renderiza campos de email e senha corretamente', (
-      tester,
-    ) async {
+    testWidgets('1.1.3 - Renderiza campos de email e senha corretamente', (tester) async {
       await tester.pumpWidget(buildTestWidget(const LoginForm()));
       await tester.pumpAndSettle();
 
@@ -120,9 +103,7 @@ void main() {
       expect(loginButton, findsOneWidget);
     });
 
-    testWidgets('1.1.3 - Exibe mensagem de erro ao validar email vazio', (
-      tester,
-    ) async {
+    testWidgets('1.1.3 - Exibe mensagem de erro ao validar email vazio', (tester) async {
       await tester.pumpWidget(buildTestWidget(const LoginForm()));
       await tester.pumpAndSettle();
 
@@ -139,14 +120,10 @@ void main() {
       // se o botão está desabilitado ou se há feedback visual
     });
 
-    testWidgets('1.1.3 - Exibe loading indicator durante login', (
-      tester,
-    ) async {
-      when(() => loginUseCase('teste@terafy.com', '123456')).thenAnswer(
-        (_) async => Future.delayed(
-          const Duration(milliseconds: 100),
-          () => AuthResult(authToken: 'token', client: client),
-        ),
+    testWidgets('1.1.3 - Exibe loading indicator durante login', (tester) async {
+      when(() => loginUseCase('teste@terafy.app.br', '123456')).thenAnswer(
+        (_) async =>
+            Future.delayed(const Duration(milliseconds: 100), () => AuthResult(authToken: 'token', client: client)),
       );
 
       await tester.pumpWidget(buildTestWidget(const LoginForm()));
@@ -156,7 +133,7 @@ void main() {
       final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
 
       // Preenche os campos
-      await tester.enterText(textFields.first, 'teste@terafy.com');
+      await tester.enterText(textFields.first, 'teste@terafy.app.br');
       await tester.enterText(textFields.last, '123456');
 
       // Clica no botão de login
@@ -164,19 +141,18 @@ void main() {
       await tester.pump(); // Primeiro pump para iniciar o loading
 
       // Verifica se o loading indicator aparece
-      // Nota: O LoginForm pode mostrar loading de diferentes formas
-      // Pode ser um CircularProgressIndicator ou desabilitar o botão
       final loadingIndicators = find.byType(CircularProgressIndicator);
-      // Se houver loading indicator, deve estar visível
-      // Se não houver, o botão deve estar desabilitado
+      expect(loadingIndicators, findsOneWidget);
+
+      // Aguarda o tempo do delay para evitar erro de Timer pendente
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
     });
 
-    testWidgets('1.1.2 - Exibe SnackBar com erro ao falhar login', (
-      tester,
-    ) async {
-      when(() => loginUseCase('teste@terafy.com', '123456')).thenAnswer(
-        (_) async => const AuthResult(error: 'Credenciais inválidas'),
-      );
+    testWidgets('1.1.2 - Exibe SnackBar com erro ao falhar login', (tester) async {
+      when(
+        () => loginUseCase('teste@terafy.app.br', '123456'),
+      ).thenAnswer((_) async => const AuthResult(error: 'Credenciais inválidas'));
 
       await tester.pumpWidget(buildTestWidget(const LoginForm()));
       await tester.pumpAndSettle();
@@ -185,7 +161,7 @@ void main() {
       final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
 
       // Preenche os campos
-      await tester.enterText(textFields.first, 'teste@terafy.com');
+      await tester.enterText(textFields.first, 'teste@terafy.app.br');
       await tester.enterText(textFields.last, '123456');
 
       // Clica no botão de login
@@ -197,40 +173,32 @@ void main() {
       expect(snackBar, findsOneWidget);
 
       // Verifica se a mensagem de erro está correta
-      expect(
-        find.textContaining('Erro: Credenciais inválidas'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Erro: Credenciais inválidas'), findsOneWidget);
     });
 
-    testWidgets(
-      '1.1.1 - Botão de login está habilitado quando campos preenchidos',
-      (tester) async {
-        await tester.pumpWidget(buildTestWidget(const LoginForm()));
-        await tester.pumpAndSettle();
+    testWidgets('1.1.1 - Botão de login está habilitado quando campos preenchidos', (tester) async {
+      await tester.pumpWidget(buildTestWidget(const LoginForm()));
+      await tester.pumpAndSettle();
 
-        final textFields = find.byType(TextFormField);
-        final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
+      final textFields = find.byType(TextFormField);
+      final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
 
-        // Verifica que o botão existe
-        expect(loginButton, findsOneWidget);
+      // Verifica que o botão existe
+      expect(loginButton, findsOneWidget);
 
-        // Preenche os campos
-        await tester.enterText(textFields.first, 'teste@terafy.com');
-        await tester.enterText(textFields.last, '123456');
-        await tester.pumpAndSettle();
+      // Preenche os campos
+      await tester.enterText(textFields.first, 'teste@terafy.app.br');
+      await tester.enterText(textFields.last, '123456');
+      await tester.pumpAndSettle();
 
-        // Verifica que o botão ainda está presente e pode ser clicado
-        expect(loginButton, findsOneWidget);
-        final button = tester.widget<ElevatedButton>(loginButton);
-        // O botão deve estar habilitado (não deve ter onPressed == null)
-        expect(button.onPressed, isNotNull);
-      },
-    );
+      // Verifica que o botão ainda está presente e pode ser clicado
+      expect(loginButton, findsOneWidget);
+      final button = tester.widget<ElevatedButton>(loginButton);
+      // O botão deve estar habilitado (não deve ter onPressed == null)
+      expect(button.onPressed, isNotNull);
+    });
 
-    testWidgets('1.1.3 - Campo de senha está presente e pode receber texto', (
-      tester,
-    ) async {
+    testWidgets('1.1.3 - Campo de senha está presente e pode receber texto', (tester) async {
       await tester.pumpWidget(buildTestWidget(const LoginForm()));
       await tester.pumpAndSettle();
 
@@ -243,12 +211,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verifica se o texto foi inserido (mesmo que obscurecido)
-      expect(find.text('senha123'), findsNothing); // Não deve aparecer visível
+      // Verifica se o campo tem a propriedade obscureText = true
+      final editableText = tester.widget<EditableText>(
+        find.descendant(of: passwordField, matching: find.byType(EditableText)),
+      );
+      expect(editableText.obscureText, isTrue);
     });
 
-    testWidgets('1.1.3 - Toggle de visibilidade de senha (se implementado)', (
-      tester,
-    ) async {
+    testWidgets('1.1.3 - Toggle de visibilidade de senha (se implementado)', (tester) async {
       await tester.pumpWidget(buildTestWidget(const LoginForm()));
       await tester.pumpAndSettle();
 
@@ -266,9 +236,7 @@ void main() {
   });
 
   group('LoginForm - Estados Visuais do BLoC', () {
-    testWidgets('Exibe loading quando BLoC está em LoginLoading', (
-      tester,
-    ) async {
+    testWidgets('Exibe loading quando BLoC está em LoginLoading', (tester) async {
       final bloc = LoginBloc(
         loginUseCase: loginUseCase,
         signInWithGoogleUseCase: signInWithGoogleUseCase,
@@ -290,13 +258,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Emite estado de loading
-      bloc.add(
-        const LoginButtonPressed(
-          email: 'teste@terafy.com',
-          password: '123456',
-          isBiometricsEnabled: false,
-        ),
-      );
+      bloc.add(const LoginButtonPressed(email: 'teste@terafy.app.br', password: '123456', isBiometricsEnabled: false));
       await tester.pump();
 
       // Verifica se há algum indicador visual de loading
@@ -304,9 +266,7 @@ void main() {
       bloc.close();
     });
 
-    testWidgets('Exibe SnackBar quando BLoC está em LoginFailure', (
-      tester,
-    ) async {
+    testWidgets('Exibe SnackBar quando BLoC está em LoginFailure', (tester) async {
       final bloc = LoginBloc(
         loginUseCase: loginUseCase,
         signInWithGoogleUseCase: signInWithGoogleUseCase,

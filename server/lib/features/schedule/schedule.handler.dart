@@ -17,6 +17,7 @@ class ScheduleHandler extends BaseHandler {
   Router get router => configureScheduleRoutes(this);
 
   Future<Response> handleGetSettings(Request request) async {
+    AppLogger.func();
     try {
       final userId = getUserId(request);
       final userRole = getUserRole(request);
@@ -60,6 +61,7 @@ class ScheduleHandler extends BaseHandler {
   }
 
   Future<Response> handleUpdateSettings(Request request) async {
+    AppLogger.func();
     try {
       final body = await request.readAsString();
       if (body.trim().isEmpty) {
@@ -97,9 +99,11 @@ class ScheduleHandler extends BaseHandler {
       final updated = await _controller.updateSettings(settings: settings, userId: userId, userRole: userRole);
 
       return successResponse(updated.toJson());
-    } on ScheduleException catch (e) {
+    } on ScheduleException catch (e, stack) {
+      AppLogger.error(e, stack);
       return errorResponse(e.message, statusCode: e.statusCode);
-    } on FormatException catch (e) {
+    } on FormatException catch (e, stack) {
+      AppLogger.error(e, stack);
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
@@ -108,6 +112,7 @@ class ScheduleHandler extends BaseHandler {
   }
 
   Future<Response> handleListAppointments(Request request) async {
+    AppLogger.func();
     try {
       final userId = getUserId(request);
       final userRole = getUserRole(request);
@@ -327,9 +332,11 @@ class ScheduleHandler extends BaseHandler {
       );
 
       return successResponse(existing.toJson());
-    } on ScheduleException catch (e) {
+    } on ScheduleException catch (e, stack) {
+      AppLogger.error(e, stack);
       return errorResponse(e.message, statusCode: e.statusCode);
-    } on FormatException catch (e) {
+    } on FormatException catch (e, stack) {
+      AppLogger.error(e, stack);
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
@@ -337,7 +344,72 @@ class ScheduleHandler extends BaseHandler {
     }
   }
 
+  Future<Response> handleValidateAvailability(Request request) async {
+    AppLogger.func();
+    try {
+      final body = await request.readAsString();
+      if (body.trim().isEmpty) {
+        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      }
+
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      final rawSlots = data['slots'] as List<dynamic>?;
+
+      if (rawSlots == null || rawSlots.isEmpty) {
+        return successResponse([]); // Sem slots para validar, sem conflitos
+      }
+
+      final slots = rawSlots.map((s) {
+        return {'start': DateTime.parse(s['start']), 'end': DateTime.parse(s['end'])};
+      }).toList();
+
+      final userId = getUserId(request);
+      final userRole = getUserRole(request);
+      final accountId = getAccountId(request);
+
+      if (userId == null || userRole == null) {
+        return unauthorizedResponse('Autenticação necessária');
+      }
+
+      int? therapistId;
+      if (userRole == 'admin' && data.containsKey('therapistId')) {
+        therapistId = int.tryParse(data['therapistId'].toString());
+      } else if (userRole == 'therapist') {
+        therapistId = accountId;
+      }
+
+      // Se for admin, passa o therapistId via accountId para o controller usar como contexto?
+      // Ou ajustamos o controller para receber therapistId explícito?
+      // O controller usa accountId ?? therapistId para RLS.
+      // Vamos passar o therapistId como accountId se for admin, ou deixar null para controller reclamar se necessário.
+      // Melhor: Se for admin e tiver therapistId, passamos como accountId para o método.
+
+      final conflictingSlots = await _controller.validateAppointments(
+        slots: slots,
+        userId: userId,
+        userRole: userRole,
+        accountId: therapistId ?? accountId,
+      );
+
+      return successResponse(
+        conflictingSlots
+            .map((s) => {'start': s['start'].toIso8601String(), 'end': s['end'].toIso8601String()})
+            .toList(),
+      );
+    } on ScheduleException catch (e, stack) {
+      AppLogger.error(e, stack);
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } on FormatException catch (e, stack) {
+      AppLogger.error(e, stack);
+      return badRequestResponse('Formato de data inválido ou JSON malformado: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao validar agendamentos: ${e.toString()}');
+    }
+  }
+
   Future<Response> handleDeleteAppointment(Request request, String id) async {
+    AppLogger.func();
     try {
       final appointmentId = int.tryParse(id);
       if (appointmentId == null) {
@@ -360,9 +432,11 @@ class ScheduleHandler extends BaseHandler {
       );
 
       return successResponse({'message': 'Agendamento removido com sucesso'});
-    } on ScheduleException catch (e) {
+    } on ScheduleException catch (e, stack) {
+      AppLogger.error(e, stack);
       return errorResponse(e.message, statusCode: e.statusCode);
-    } on FormatException catch (e) {
+    } on FormatException catch (e, stack) {
+      AppLogger.error(e, stack);
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);

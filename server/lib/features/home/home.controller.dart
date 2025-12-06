@@ -33,6 +33,7 @@ class HomeController {
     int? accountId,
     DateTime? referenceDate,
   }) async {
+    AppLogger.func();
     try {
       final now = referenceDate ?? DateTime.now();
       final dayStart = DateTime(now.year, now.month, now.day);
@@ -63,7 +64,7 @@ class HomeController {
 
       final todayAgenda =
           todaysAppointments
-              .where((appointment) => appointment.type == 'session')
+              .where((appointment) => appointment.type == 'session' && appointment.status != 'completed')
               .map(
                 (appointment) => HomeAgendaItem(
                   appointmentId: appointment.id,
@@ -75,6 +76,7 @@ class HomeController {
                   description: appointment.description,
                   patientId: appointment.patientId,
                   patientName: appointment.patientName,
+                  sessionId: appointment.sessionId,
                 ),
               )
               .toList()
@@ -103,58 +105,25 @@ class HomeController {
 
         pendingSessionsList = await _sessionRepository.listSessions(
           therapistId: therapistId,
-          status: null, // Buscar todas para filtrar depois
-          startDate: null, // Sem filtro de data inicial
-          endDate: null, // Sem filtro de data final
+          statuses: ['draft', 'scheduled', 'confirmed', 'in_progress'],
+          startDate: null,
+          endDate: null,
           userId: userId,
           userRole: userRole,
           accountId: accountId,
           bypassRLS: userRole == 'admin',
         );
-        AppLogger.info('Total de sessões encontradas (sem filtro de data): ${pendingSessionsList.length}');
+        AppLogger.info('Total de sessões encontradas (já filtradas pelo DB): ${pendingSessionsList.length}');
       } catch (e, stackTrace) {
         AppLogger.error('Erro ao buscar sessões pendentes: $e');
         AppLogger.error('Stack trace: $stackTrace');
-        // Continuar com lista vazia se houver erro
         pendingSessionsList = [];
       }
 
-      // Filtrar sessões pendentes: todas exceto completed (com registro completo) ou canceladas
-      // Log de todas as sessões para debug
-      for (final session in pendingSessionsList) {
-        AppLogger.info(
-          'Sessão encontrada: ID=${session.id}, Status="${session.status}", Notes=${session.sessionNotes?.isNotEmpty ?? false}, PatientId=${session.patientId}',
-        );
-      }
+      // As sessões já vêm filtradas do banco
+      final filteredSessions = pendingSessionsList;
 
-      final filteredSessions = pendingSessionsList.where((session) {
-        final status = session.status.toLowerCase().trim();
-
-        // Excluir: completed com registro completo, canceladas e noShow
-        final isCompleted = status == 'completed';
-        final hasNotes =
-            session.sessionNotes != null && session.sessionNotes!.isNotEmpty && session.sessionNotes!.trim().isNotEmpty;
-        final isCompletedWithNotes = isCompleted && hasNotes;
-
-        final isCancelled = status == 'cancelledbytherapist' || status == 'cancelledbypatient' || status == 'noshow';
-
-        // Incluir todas as outras (draft, scheduled, confirmed, inProgress, completed sem notas)
-        final shouldInclude = !isCompletedWithNotes && !isCancelled;
-
-        if (shouldInclude) {
-          AppLogger.info(
-            '✅ Sessão pendente incluída: ID=${session.id}, Status="$status", Notes=${session.sessionNotes?.isNotEmpty ?? false}',
-          );
-        } else {
-          AppLogger.info(
-            '❌ Sessão excluída: ID=${session.id}, Status="$status", Notes=${session.sessionNotes?.isNotEmpty ?? false}, Motivo: ${isCompletedWithNotes ? "Completed com notas" : "Cancelada/NoShow"}',
-          );
-        }
-
-        return shouldInclude;
-      }).toList();
-
-      AppLogger.info('Total de sessões pendentes após filtro: ${filteredSessions.length}');
+      AppLogger.info('Total de sessões pendentes: ${filteredSessions.length}');
 
       // Buscar nomes dos pacientes
       final patientIds = filteredSessions.map((s) => s.patientId).toSet().toList();
@@ -204,8 +173,8 @@ class HomeController {
         listOfTodaySessions: todayAgenda,
         pendingSessions: pendingSessions,
       );
-    } catch (e) {
-      AppLogger.error(e);
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
       if (e is HomeException) rethrow;
       throw HomeException('Erro ao carregar resumo da home: ${e.toString()}', 500);
     }

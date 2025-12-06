@@ -196,7 +196,7 @@ void main() {
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
         await repository.createSession(session: session2, userId: 1, bypassRLS: true);
 
-        final sessions = await repository.listSessions(userId: 1, status: 'completed', bypassRLS: true);
+        final sessions = await repository.listSessions(userId: 1, statuses: ['completed'], bypassRLS: true);
 
         expect(sessions.length, 1);
         expect(sessions.first.status, 'completed');
@@ -264,11 +264,7 @@ void main() {
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
         await repository.createSession(session: session2, userId: 1, bypassRLS: true);
 
-        final sessions = await repository.listSessions(
-          userId: 1,
-          startDate: DateTime(2024, 2, 1),
-          bypassRLS: true,
-        );
+        final sessions = await repository.listSessions(userId: 1, startDate: DateTime(2024, 2, 1), bypassRLS: true);
 
         expect(sessions.length, 1);
         expect(sessions.first.scheduledStartTime.month, 2);
@@ -301,11 +297,7 @@ void main() {
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
         await repository.createSession(session: session2, userId: 1, bypassRLS: true);
 
-        final sessions = await repository.listSessions(
-          userId: 1,
-          endDate: DateTime(2024, 1, 31),
-          bypassRLS: true,
-        );
+        final sessions = await repository.listSessions(userId: 1, endDate: DateTime(2024, 1, 31), bypassRLS: true);
 
         expect(sessions.length, 1);
         expect(sessions.first.scheduledStartTime.month, 1);
@@ -352,12 +344,7 @@ void main() {
           paymentStatus: 'pendente',
         );
 
-        final updated = await repository.updateSession(
-          sessionId: 999,
-          session: session,
-          userId: 1,
-          bypassRLS: true,
-        );
+        final updated = await repository.updateSession(sessionId: 999, session: session, userId: 1, bypassRLS: true);
 
         expect(updated, isNull);
       });
@@ -403,11 +390,7 @@ void main() {
         );
         final created = await repository.createSession(session: session, userId: 1, bypassRLS: true);
 
-        final deleted = await repository.deleteSession(
-          sessionId: created.id!,
-          userId: 1,
-          bypassRLS: true,
-        );
+        final deleted = await repository.deleteSession(sessionId: created.id!, userId: 1, bypassRLS: true);
 
         expect(deleted, isTrue);
 
@@ -416,11 +399,7 @@ void main() {
       });
 
       test('deve retornar false quando sessão não existe', () async {
-        final deleted = await repository.deleteSession(
-          sessionId: 999,
-          userId: 1,
-          bypassRLS: true,
-        );
+        final deleted = await repository.deleteSession(sessionId: 999, userId: 1, bypassRLS: true);
 
         expect(deleted, isFalse);
       });
@@ -428,11 +407,7 @@ void main() {
 
     group('getNextSessionNumber', () {
       test('deve retornar 1 quando paciente não tem sessões', () async {
-        final nextNumber = await repository.getNextSessionNumber(
-          patientId: 1,
-          userId: 1,
-          bypassRLS: true,
-        );
+        final nextNumber = await repository.getNextSessionNumber(patientId: 1, userId: 1, bypassRLS: true);
 
         expect(nextNumber, 1);
       });
@@ -476,11 +451,7 @@ void main() {
         await repository.createSession(session: session2, userId: 1, bypassRLS: true);
         await repository.createSession(session: session3, userId: 1, bypassRLS: true);
 
-        final nextNumber = await repository.getNextSessionNumber(
-          patientId: 1,
-          userId: 1,
-          bypassRLS: true,
-        );
+        final nextNumber = await repository.getNextSessionNumber(patientId: 1, userId: 1, bypassRLS: true);
 
         expect(nextNumber, 6); // Máximo é 5, então próximo é 6
       });
@@ -512,16 +483,8 @@ void main() {
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
         await repository.createSession(session: session2, userId: 1, bypassRLS: true);
 
-        final nextNumber1 = await repository.getNextSessionNumber(
-          patientId: 1,
-          userId: 1,
-          bypassRLS: true,
-        );
-        final nextNumber2 = await repository.getNextSessionNumber(
-          patientId: 2,
-          userId: 1,
-          bypassRLS: true,
-        );
+        final nextNumber1 = await repository.getNextSessionNumber(patientId: 1, userId: 1, bypassRLS: true);
+        final nextNumber2 = await repository.getNextSessionNumber(patientId: 2, userId: 1, bypassRLS: true);
 
         expect(nextNumber1, 4); // Paciente 1 tem máximo 3
         expect(nextNumber2, 8); // Paciente 2 tem máximo 7

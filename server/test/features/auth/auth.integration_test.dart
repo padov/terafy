@@ -70,7 +70,7 @@ void main() {
           method: 'POST',
           path: '/auth/register',
           body: {
-            'email': 'teste@terafy.com',
+            'email': 'teste@terafy.app.br',
             // password faltando
           },
         );

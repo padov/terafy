@@ -37,8 +37,7 @@ class _SimpleSignupPageContent extends StatelessWidget {
 
             if (token != null && context.mounted) {
               // Busca dados do usuário para verificar se tem accountId
-              final getCurrentUserUseCase =
-                  DependencyContainer().getCurrentUserUseCase;
+              final getCurrentUserUseCase = DependencyContainer().getCurrentUserUseCase;
               final authResult = await getCurrentUserUseCase();
 
               if (authResult.client != null && context.mounted) {
@@ -48,12 +47,10 @@ class _SimpleSignupPageContent extends StatelessWidget {
                   // Cadastro incompleto - redireciona para completar perfil
                   Navigator.of(
                     context,
-                  ).pushReplacementNamed(AppRouter.completeProfileRoute);
+                  ).pushReplacementNamed(AppRouter.completeProfileRoute, arguments: {'email': state.email});
                 } else {
                   // Cadastro completo - vai para home
-                  Navigator.of(
-                    context,
-                  ).pushReplacementNamed(AppRouter.homeRoute);
+                  Navigator.of(context).pushReplacementNamed(AppRouter.homeRoute);
                 }
               }
             }
@@ -62,16 +59,13 @@ class _SimpleSignupPageContent extends StatelessWidget {
             if (context.mounted) {
               Navigator.of(
                 context,
-              ).pushReplacementNamed(AppRouter.completeProfileRoute);
+              ).pushReplacementNamed(AppRouter.completeProfileRoute, arguments: {'email': state.email});
             }
           }
         } else if (state is SimpleSignupFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error), backgroundColor: AppColors.error));
         }
       },
       builder: (context, state) {
@@ -86,10 +80,7 @@ class _SimpleSignupPageContent extends StatelessWidget {
               icon: const Icon(Icons.close, color: AppColors.offBlack),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: Text(
-              'Criar Conta',
-              style: const TextStyle(color: AppColors.offBlack),
-            ),
+            title: Text('Criar Conta', style: const TextStyle(color: AppColors.offBlack)),
             centerTitle: true,
           ),
           body: SingleChildScrollView(
@@ -97,9 +88,7 @@ class _SimpleSignupPageContent extends StatelessWidget {
             child: SimpleSignupForm(
               onSignup: ({required String email, required String password}) {
                 if (!isLoading) {
-                  context.read<SimpleSignupBloc>().add(
-                    SimpleSignupSubmitted(email: email, password: password),
-                  );
+                  context.read<SimpleSignupBloc>().add(SimpleSignupSubmitted(email: email, password: password));
                 }
               },
             ),

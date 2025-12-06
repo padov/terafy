@@ -40,7 +40,7 @@ void main() {
         final passwordHash = PasswordService.hashPassword(password);
         await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: passwordHash,
             role: 'therapist',
             status: 'active',
@@ -51,7 +51,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/login'),
-          body: jsonEncode({'email': 'teste@terafy.com', 'password': password}),
+          body: jsonEncode({'email': 'teste@terafy.app.br', 'password': password}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -65,7 +65,7 @@ void main() {
         expect(data['auth_token'], isNotEmpty);
         expect(data['refresh_token'], isNotEmpty);
         expect(data['user'], isNotNull);
-        expect(data['user']['email'], 'teste@terafy.com');
+        expect(data['user']['email'], 'teste@terafy.app.br');
       });
 
       test('deve retornar 401 quando credenciais são inválidas', () async {
@@ -113,7 +113,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/login'),
-          body: jsonEncode({'email': 'teste@terafy.com'}),
+          body: jsonEncode({'email': 'teste@terafy.app.br'}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -130,7 +130,7 @@ void main() {
         final passwordHash = PasswordService.hashPassword(password);
         await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: passwordHash,
             role: 'therapist',
             status: 'suspended',
@@ -141,7 +141,7 @@ void main() {
         final request = Request(
           'POST',
           Uri.parse('http://localhost/login'),
-          body: jsonEncode({'email': 'teste@terafy.com', 'password': password}),
+          body: jsonEncode({'email': 'teste@terafy.app.br', 'password': password}),
           headers: {'Content-Type': 'application/json'},
         );
 
@@ -236,7 +236,7 @@ void main() {
       test('deve retornar usuário quando token é válido', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -255,7 +255,7 @@ void main() {
         final data = jsonDecode(body) as Map;
         expect(data['user'], isNotNull);
         expect(data['user']['id'], user.id);
-        expect(data['user']['email'], 'teste@terafy.com');
+        expect(data['user']['email'], 'teste@terafy.app.br');
       });
 
       test('deve retornar 401 quando token não é fornecido', () async {
@@ -304,7 +304,7 @@ void main() {
       test('deve renovar access token com refresh token válido', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -388,7 +388,7 @@ void main() {
       test('deve fazer logout com refresh token', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',
@@ -438,7 +438,7 @@ void main() {
       test('deve fazer logout apenas com access token', () async {
         final user = await userRepository.createUser(
           User(
-            email: 'teste@terafy.com',
+            email: 'teste@terafy.app.br',
             passwordHash: PasswordService.hashPassword('senha123'),
             role: 'therapist',
             status: 'active',

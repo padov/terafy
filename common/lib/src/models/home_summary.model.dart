@@ -87,6 +87,7 @@ class HomeAgendaItem {
     this.description,
     this.patientId,
     this.patientName,
+    this.sessionId,
   });
 
   final int? appointmentId;
@@ -98,6 +99,7 @@ class HomeAgendaItem {
   final String? description;
   final int? patientId;
   final String? patientName;
+  final int? sessionId;
 
   HomeAgendaItem copyWith({
     int? appointmentId,
@@ -109,6 +111,7 @@ class HomeAgendaItem {
     String? description,
     int? patientId,
     String? patientName,
+    int? sessionId,
   }) {
     return HomeAgendaItem(
       appointmentId: appointmentId ?? this.appointmentId,
@@ -120,6 +123,7 @@ class HomeAgendaItem {
       description: description ?? this.description,
       patientId: patientId ?? this.patientId,
       patientName: patientName ?? this.patientName,
+      sessionId: sessionId ?? this.sessionId,
     );
   }
 
@@ -134,6 +138,7 @@ class HomeAgendaItem {
       'description': description,
       'patientId': patientId,
       'patientName': patientName,
+      'sessionId': sessionId,
     };
   }
 
@@ -148,6 +153,7 @@ class HomeAgendaItem {
       description: json['description'] as String?,
       patientId: json['patientId'] as int?,
       patientName: json['patientName'] as String?,
+      sessionId: json['sessionId'] as int?,
     );
   }
 }

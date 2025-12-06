@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:terafy/common/app_colors.dart';
-import 'package:terafy/features/agenda/models/appointment.dart';
+import 'package:terafy/features/appointments/models/appointment.dart';
 
 class AppointmentCard extends StatelessWidget {
   final Appointment appointment;
@@ -13,8 +13,7 @@ class AppointmentCard extends StatelessWidget {
     final isSession = appointment.type == AppointmentType.session;
 
     final colors = _getStatusColors(appointment.status);
-    final patientLabel = (appointment.patientName ?? appointment.patientId)
-        ?.trim();
+    final patientLabel = (appointment.patientName ?? appointment.patientId)?.trim();
     final timeRange =
         '${appointment.dateTime.hour.toString().padLeft(2, '0')}:${appointment.dateTime.minute.toString().padLeft(2, '0')}'
         ' - '
@@ -29,10 +28,7 @@ class AppointmentCard extends StatelessWidget {
     );
   }
 
-  Widget _sessionAppointmentCard({
-    required String? patientLabel,
-    required Map<String, Color> colors,
-  }) {
+  Widget _sessionAppointmentCard({required String? patientLabel, required Map<String, Color> colors}) {
     return Container(
       width: double.infinity,
       alignment: Alignment.centerLeft,
@@ -46,11 +42,7 @@ class AppointmentCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _getStatusIcon(appointment.status),
-            size: 10,
-            color: colors['border'],
-          ),
+          Icon(_getStatusIcon(appointment.status), size: 10, color: colors['border']),
           if (patientLabel != null && patientLabel.isNotEmpty) ...[
             const SizedBox(height: 1),
             Text(
@@ -58,12 +50,7 @@ class AppointmentCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10,
-                color: colors['text'],
-                height: 1.2,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 10, color: colors['text'], height: 1.2, fontWeight: FontWeight.w500),
             ),
           ],
         ],
@@ -102,29 +89,13 @@ class AppointmentCard extends StatelessWidget {
           'text': AppColors.primary,
         };
       case AppointmentStatus.confirmed:
-        return {
-          'background': Colors.blue.withOpacity(0.1),
-          'border': Colors.blue,
-          'text': Colors.blue.shade700,
-        };
+        return {'background': Colors.blue.withOpacity(0.1), 'border': Colors.blue, 'text': Colors.blue.shade700};
       case AppointmentStatus.completed:
-        return {
-          'background': Colors.green.withOpacity(0.1),
-          'border': Colors.green,
-          'text': Colors.green.shade700,
-        };
+        return {'background': Colors.green.withOpacity(0.1), 'border': Colors.green, 'text': Colors.green.shade700};
       case AppointmentStatus.cancelled:
-        return {
-          'background': Colors.red.withOpacity(0.1),
-          'border': Colors.red,
-          'text': Colors.red.shade700,
-        };
+        return {'background': Colors.red.withOpacity(0.1), 'border': Colors.red, 'text': Colors.red.shade700};
       case AppointmentStatus.noShow:
-        return {
-          'background': Colors.orange.withOpacity(0.1),
-          'border': Colors.orange,
-          'text': Colors.orange.shade700,
-        };
+        return {'background': Colors.orange.withOpacity(0.1), 'border': Colors.orange, 'text': Colors.orange.shade700};
     }
   }
 

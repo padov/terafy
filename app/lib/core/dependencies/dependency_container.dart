@@ -39,6 +39,7 @@ import 'package:terafy/core/domain/usecases/schedule/get_appointments_usecase.da
 import 'package:terafy/core/domain/usecases/schedule/get_schedule_settings_usecase.dart';
 import 'package:terafy/core/domain/usecases/schedule/update_appointment_usecase.dart';
 import 'package:terafy/core/domain/usecases/schedule/update_schedule_settings_usecase.dart';
+import 'package:terafy/core/domain/usecases/schedule/validate_appointments_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/create_session_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/delete_session_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/get_next_session_number_usecase.dart';
@@ -58,6 +59,7 @@ import 'package:terafy/core/interceptors/auth_interceptor.dart';
 import 'package:terafy/core/services/auth_service.dart';
 import 'package:terafy/core/services/secure_storage_service.dart';
 import 'package:terafy/core/services/patients_cache_service.dart';
+import 'package:terafy/core/services/session_manager.dart';
 import 'package:terafy/package/http.dart';
 
 // Este é um container de dependências simples. Em projetos maiores,
@@ -100,6 +102,7 @@ class DependencyContainer {
   late final CreateAppointmentUseCase createAppointmentUseCase;
   late final UpdateAppointmentUseCase updateAppointmentUseCase;
   late final DeleteAppointmentUseCase deleteAppointmentUseCase;
+  late final ValidateAppointmentsUseCase validateAppointmentsUseCase;
   late final GetSessionsUseCase getSessionsUseCase;
   late final GetSessionUseCase getSessionUseCase;
   late final CreateSessionUseCase createSessionUseCase;
@@ -112,14 +115,17 @@ class DependencyContainer {
   late final UpdateTransactionUseCase updateTransactionUseCase;
   late final DeleteTransactionUseCase deleteTransactionUseCase;
   late final GetFinancialSummaryUseCase getFinancialSummaryUseCase;
-  late final SecureStorageService secureStorageService;
+  late SecureStorageService secureStorageService;
   late AuthService authService; // Não é final para permitir substituição em testes
+  late final SessionManager sessionManager;
   late final HttpClient httpClient;
   late final PatientsCacheService patientsCacheService;
 
   // Obtém a URL base do backend dependendo da plataforma
   String get _baseUrl {
     // Em desenvolvimento, usa localhost
+    // return 'https://api.terafy.app.br';
+
     if (kDebugMode) {
       if (kIsWeb) {
         return 'http://localhost:8080';
@@ -205,6 +211,16 @@ class DependencyContainer {
     getCurrentUserUseCase = GetCurrentUserUseCase(authRepository);
     refreshTokenUseCase = RefreshTokenUseCase(authRepository);
     logoutUseCase = LogoutUseCase(authRepository);
+
+    sessionManager = SessionManager(
+      loginUseCase: loginUseCase,
+      signInWithGoogleUseCase: signInWithGoogleUseCase,
+      getCurrentUserUseCase: getCurrentUserUseCase,
+      refreshTokenUseCase: refreshTokenUseCase,
+      logoutUseCase: logoutUseCase,
+      secureStorageService: secureStorageService,
+      authService: authService,
+    );
     createTherapistUseCase = CreateTherapistUseCase(therapistRepository);
     getCurrentTherapistUseCase = GetCurrentTherapistUseCase(therapistRepository);
     updateTherapistUseCase = UpdateTherapistUseCase(therapistRepository);
@@ -231,7 +247,9 @@ class DependencyContainer {
     createTransactionUseCase = CreateTransactionUseCase(financialRepository);
     updateTransactionUseCase = UpdateTransactionUseCase(financialRepository);
     deleteTransactionUseCase = DeleteTransactionUseCase(financialRepository);
+
     getFinancialSummaryUseCase = GetFinancialSummaryUseCase(financialRepository);
+    validateAppointmentsUseCase = ValidateAppointmentsUseCase(scheduleRepository);
   }
 
   /// Substitui o AuthService (útil para testes)

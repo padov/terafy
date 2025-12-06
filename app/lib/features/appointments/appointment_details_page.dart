@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc_models.dart';
-import 'package:terafy/features/agenda/models/appointment.dart';
-import 'package:terafy/features/agenda/new_appointment_page.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc_models.dart';
+import 'package:terafy/features/appointments/models/appointment.dart';
+import 'package:terafy/features/appointments/new_appointment_page.dart';
+import 'package:terafy/features/schedule/bloc/schedule_settings_bloc.dart';
 import 'package:terafy/routes/app_routes.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
 
 class AppointmentDetailsPage extends StatefulWidget {
   final String appointmentId;
@@ -19,7 +21,7 @@ class AppointmentDetailsPage extends StatefulWidget {
 }
 
 class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
-  late final AgendaBloc _agendaBloc;
+  late final AppointmentBloc _agendaBloc;
   String? _loadedPatientId;
   int? _patientCompletedSessions;
   DateTime? _patientLastSessionDate;
@@ -28,7 +30,7 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _agendaBloc = context.read<AgendaBloc>();
+    _agendaBloc = context.read<AppointmentBloc>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _agendaBloc.add(LoadAppointmentDetails(widget.appointmentId));
@@ -37,7 +39,7 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
 
   @override
   void dispose() {
-    _agendaBloc.add(const ResetAgendaView());
+    _agendaBloc.add(const ResetAppointmentsView());
     super.dispose();
   }
 
@@ -49,7 +51,7 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: BlocConsumer<AgendaBloc, AgendaState>(
+      body: BlocConsumer<AppointmentBloc, AppointmentState>(
         listener: (context, state) {
           if (state is AppointmentCancelled) {
             ScaffoldMessenger.of(
@@ -85,18 +87,18 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(message), backgroundColor: backgroundColor, duration: const Duration(seconds: 2)),
             );
-          } else if (state is AgendaError) {
+          } else if (state is AppointmentError) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
           }
         },
         builder: (context, state) {
-          if (state is AgendaLoading) {
+          if (state is AppointmentLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is AgendaError) {
+          if (state is AppointmentError) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -254,14 +256,14 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
     );
   }
 
-  Appointment? _resolveAppointment(AgendaState state) {
+  Appointment? _resolveAppointment(AppointmentState state) {
     if (state is AppointmentDetailsLoaded) {
       return state.appointment;
     }
     if (state is AppointmentUpdated) {
       return state.appointment;
     }
-    if (state is AgendaLoaded) {
+    if (state is AppointmentLoaded) {
       try {
         return state.appointments.firstWhere((apt) => apt.id == widget.appointmentId);
       } catch (_) {
@@ -380,7 +382,7 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    context.read<AgendaBloc>().add(ConfirmAppointment(appointment.id));
+                    context.read<AppointmentBloc>().add(ConfirmAppointment(appointment.id));
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
@@ -422,8 +424,11 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
                       // Navega para a página de edição passando o agendamento
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
-                            value: context.read<AgendaBloc>(),
+                          builder: (_) => MultiBlocProvider(
+                            providers: [
+                              BlocProvider.value(value: context.read<AppointmentBloc>()),
+                              BlocProvider.value(value: context.read<ScheduleSettingsBloc>()),
+                            ],
                             child: NewAppointmentPage(appointment: appointment),
                           ),
                         ),
@@ -469,7 +474,7 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Voltar')),
           ElevatedButton(
             onPressed: () {
-              context.read<AgendaBloc>().add(
+              context.read<AppointmentBloc>().add(
                 CancelAppointment(
                   appointmentId: appointment.id,
                   reason: reasonController.text.trim().isEmpty ? null : reasonController.text.trim(),

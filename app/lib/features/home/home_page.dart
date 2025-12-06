@@ -5,22 +5,53 @@ import 'package:terafy/features/home/bloc/home_bloc.dart';
 import 'package:terafy/features/home/bloc/home_bloc_models.dart';
 import 'package:terafy/features/home/widgets/home_header.dart';
 import 'package:terafy/features/home/widgets/stats_cards.dart';
-import 'package:terafy/features/home/widgets/today_agenda.dart';
+import 'package:terafy/features/home/widgets/today_appointment.dart';
 import 'package:terafy/features/home/widgets/pending_sessions.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/routes/app_routes.dart';
+import 'package:terafy/features/settings/settings_page.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final HomeBloc? bloc;
+
+  const HomePage({super.key, this.bloc});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(create: (context) => HomeBloc()..add(const LoadHomeData()), child: const _HomePageContent());
+    return bloc != null
+        ? BlocProvider.value(value: bloc!, child: const _HomePageContent())
+        : BlocProvider(create: (context) => HomeBloc()..add(const LoadHomeData()), child: const _HomePageContent());
   }
 }
 
-class _HomePageContent extends StatelessWidget {
+class _HomePageContent extends StatefulWidget {
   const _HomePageContent();
+
+  @override
+  State<_HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<_HomePageContent> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      AppRouter.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    AppRouter.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Called when the top route has been popped off, and this route shows up.
+    context.read<HomeBloc>().add(const RefreshHomeData());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +111,8 @@ class _HomePageContent extends StatelessWidget {
     // Different content based on bottom nav index
     if (state.currentNavIndex == 0) {
       return _buildHomeContent(context, data);
+    } else if (state.currentNavIndex == 4) {
+      return const SettingsPage();
     } else {
       return _buildPlaceholderScreen(state.currentNavIndex);
     }
@@ -119,7 +152,7 @@ class _HomePageContent extends StatelessWidget {
 
           // Today's Agenda
           SliverToBoxAdapter(
-            child: TodayAgenda(
+            child: TodayAppointment(
               appointments: data.todayAppointments,
               onSeeAll: () {
                 Navigator.of(context).pushNamed(AppRouter.scheduleRoute);

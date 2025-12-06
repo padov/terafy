@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:terafy/features/home/bloc/home_bloc_models.dart';
 import 'package:terafy/features/home/widgets/today_agenda.dart';
 
@@ -8,15 +7,8 @@ void main() {
   group('TodayAgenda', () {
     testWidgets('exibe estado vazio quando não há compromissos', (tester) async {
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: const []),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: const [])),
         ),
       );
       await tester.pumpAndSettle();
@@ -45,15 +37,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: appointments),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: appointments)),
         ),
       );
       await tester.pumpAndSettle();
@@ -79,15 +64,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: appointments),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: appointments)),
         ),
       );
       await tester.pumpAndSettle();
@@ -108,15 +86,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: appointments),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: appointments)),
         ),
       );
       await tester.pumpAndSettle();
@@ -137,15 +108,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: appointments),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: appointments)),
         ),
       );
       await tester.pumpAndSettle();
@@ -166,15 +130,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: appointments),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: appointments)),
         ),
       );
       await tester.pumpAndSettle();
@@ -186,18 +143,13 @@ void main() {
       var seeAllTapped = false;
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(
-                appointments: const [],
-                onSeeAll: () {
-                  seeAllTapped = true;
-                },
-              ),
+        MaterialApp(
+          home: Scaffold(
+            body: TodayAgenda(
+              appointments: const [],
+              onSeeAll: () {
+                seeAllTapped = true;
+              },
             ),
           ),
         ),
@@ -213,15 +165,8 @@ void main() {
 
     testWidgets('exibe ícone de calendário no título', (tester) async {
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: const []),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: const [])),
         ),
       );
       await tester.pumpAndSettle();
@@ -243,15 +188,8 @@ void main() {
       );
 
       await tester.pumpWidget(
-        EasyLocalization(
-          supportedLocales: const [Locale('pt', 'BR')],
-          path: 'assets/translations',
-          fallbackLocale: const Locale('pt', 'BR'),
-          child: MaterialApp(
-            home: Scaffold(
-              body: TodayAgenda(appointments: appointments),
-            ),
-          ),
+        MaterialApp(
+          home: Scaffold(body: TodayAgenda(appointments: appointments)),
         ),
       );
       await tester.pumpAndSettle();

@@ -3,16 +3,17 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
-import 'package:terafy/features/agenda/appointment_details_page.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc.dart';
-import 'package:terafy/features/agenda/bloc/agenda_bloc_models.dart';
+import 'package:terafy/features/appointments/appointment_details_page.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
+import 'package:terafy/features/appointments/bloc/appointment_bloc_models.dart';
 import 'package:terafy/features/home/bloc/home_bloc_models.dart';
+import 'package:terafy/routes/app_routes.dart';
 
-class TodayAgenda extends StatelessWidget {
+class TodayAppointment extends StatelessWidget {
   final List<Appointment> appointments;
   final VoidCallback? onSeeAll;
 
-  const TodayAgenda({super.key, required this.appointments, this.onSeeAll});
+  const TodayAppointment({super.key, required this.appointments, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
@@ -26,26 +27,15 @@ class TodayAgenda extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.calendar_today,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+                  const Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'home.agenda.title'.tr(),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.offBlack,
-                    ),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.offBlack),
                   ),
                 ],
               ),
-              TextButton(
-                onPressed: onSeeAll,
-                child: Text('home.agenda.see_all'.tr()),
-              ),
+              TextButton(onPressed: onSeeAll, child: Text('home.agenda.see_all'.tr())),
             ],
           ),
           const SizedBox(height: 16),
@@ -76,10 +66,7 @@ class TodayAgenda extends StatelessWidget {
           children: [
             Icon(Icons.event_available, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 12),
-            Text(
-              'home.agenda.empty'.tr(),
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            ),
+            Text('home.agenda.empty'.tr(), style: TextStyle(color: Colors.grey[600], fontSize: 14)),
           ],
         ),
       ),
@@ -91,6 +78,14 @@ class TodayAgenda extends StatelessWidget {
 
     return InkWell(
       onTap: () {
+        if (appointment.sessionId != null) {
+          Navigator.of(context).pushNamed(
+            AppRouter.sessionDetailsRoute,
+            arguments: {'sessionId': appointment.sessionId!, 'patientName': appointment.patientName},
+          );
+          return;
+        }
+
         final container = DependencyContainer();
         final weekStart = _getWeekStart(appointment.startTime);
         final weekEnd = weekStart.add(const Duration(days: 7));
@@ -98,17 +93,16 @@ class TodayAgenda extends StatelessWidget {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => BlocProvider(
-              create: (_) => AgendaBloc(
+              create: (_) => AppointmentBloc(
                 getAppointmentsUseCase: container.getAppointmentsUseCase,
                 getAppointmentUseCase: container.getAppointmentUseCase,
                 createAppointmentUseCase: container.createAppointmentUseCase,
                 updateAppointmentUseCase: container.updateAppointmentUseCase,
                 createSessionUseCase: container.createSessionUseCase,
-                getNextSessionNumberUseCase:
-                    container.getNextSessionNumberUseCase,
+                getNextSessionNumberUseCase: container.getNextSessionNumberUseCase,
                 getSessionUseCase: container.getSessionUseCase,
                 updateSessionUseCase: container.updateSessionUseCase,
-              )..add(LoadAgenda(startDate: weekStart, endDate: weekEnd)),
+              )..add(LoadAppointments(startDate: weekStart, endDate: weekEnd)),
               child: AppointmentDetailsPage(appointmentId: appointment.id),
             ),
           ),
@@ -122,11 +116,7 @@ class TodayAgenda extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.lightBorderColor),
           boxShadow: [
-            BoxShadow(
-              color: AppColors.offBlack.withOpacity(0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: AppColors.offBlack.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2)),
           ],
         ),
         child: Row(
@@ -140,11 +130,7 @@ class TodayAgenda extends StatelessWidget {
               ),
               child: Text(
                 appointment.time,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: AppColors.primary, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 16),
@@ -156,27 +142,16 @@ class TodayAgenda extends StatelessWidget {
                 children: [
                   Text(
                     appointment.patientName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.offBlack,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    appointment.serviceType,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
+                  Text(appointment.serviceType, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
                 ],
               ),
             ),
 
             // Status icon (centralizado verticalmente)
-            Icon(
-              _getStatusIcon(appointment.status),
-              size: 22,
-              color: statusColor,
-            ),
+            Icon(_getStatusIcon(appointment.status), size: 22, color: statusColor),
 
             // Action button
             const SizedBox(width: 8),

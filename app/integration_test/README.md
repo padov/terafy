@@ -17,11 +17,13 @@ Os testes cobrem todos os 5 cenários da seção 1.1:
 ### Pré-requisitos
 
 1. **Backend rodando**: Certifique-se de que o backend está ativo
+
    ```bash
    make server-dev
    ```
 
 2. **Usuário de teste criado**: Execute o comando para criar o usuário de teste
+
    ```bash
    make create-test-user
    ```
@@ -60,16 +62,19 @@ flutter drive \
 ### Exemplos por Plataforma
 
 **Android Emulator:**
+
 ```bash
 flutter test integration_test/login_visual_test.dart --device-id=emulator-5554
 ```
 
 **macOS:**
+
 ```bash
 flutter test integration_test/login_visual_test.dart --device-id=macos
 ```
 
 **Chrome (Web):**
+
 ```bash
 flutter test integration_test/login_visual_test.dart --device-id=chrome
 ```
@@ -89,21 +94,25 @@ test_driver/
 ## 🔧 Troubleshooting
 
 ### Erro: "No devices found"
+
 - Certifique-se de que um emulador/dispositivo está rodando
 - Execute `flutter devices` para verificar dispositivos disponíveis
 - Inicie um emulador com `flutter emulators --launch <emulator_id>`
 
 ### Erro: "Connection refused" ou "Failed to connect to backend"
+
 - Verifique se o backend está rodando em `http://localhost:8080`
 - Execute `make server-dev` no diretório raiz do projeto
 
 ### Erro: "User not found" ou "Invalid credentials"
+
 - Execute `make create-test-user` para criar o usuário de teste
 - Verifique se as credenciais em `test_helpers.dart` estão corretas:
-  - Email: `teste@terafy.com`
+  - Email: `teste@terafy.app.br`
   - Senha: `123456`
 
 ### Testes falhando intermitentemente
+
 - Aumente os timeouts nos testes (ex: `Duration(seconds: 10)`)
 - Verifique a conexão de rede
 - Certifique-se de que o backend não está sobrecarregado
@@ -118,14 +127,15 @@ Para adicionar novos testes de login:
 4. Siga o padrão AAA (Arrange, Act, Assert)
 
 Exemplo:
+
 ```dart
 testWidgets('Novo cenário de teste', (tester) async {
   // Arrange: Configurar o estado inicial
   await IntegrationTestHelpers.pumpApp(tester);
-  
+
   // Act: Executar a ação
   await IntegrationTestHelpers.tap(tester, find.text('Botão'));
-  
+
   // Assert: Verificar o resultado
   expect(find.text('Resultado Esperado'), findsOneWidget);
 });

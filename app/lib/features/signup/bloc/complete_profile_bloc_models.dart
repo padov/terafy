@@ -34,14 +34,7 @@ class UpdatePersonalData extends CompleteProfileEvent {
   });
 
   @override
-  List<Object?> get props => [
-    name,
-    nickname,
-    legalDocument,
-    email,
-    phone,
-    birthday,
-  ];
+  List<Object?> get props => [name, nickname, legalDocument, email, phone, birthday];
 }
 
 class UpdateProfessionalData extends CompleteProfileEvent {
@@ -58,12 +51,7 @@ class UpdateProfessionalData extends CompleteProfileEvent {
   });
 
   @override
-  List<Object?> get props => [
-    specialties,
-    professionalRegistrations,
-    presentation,
-    address,
-  ];
+  List<Object?> get props => [specialties, professionalRegistrations, presentation, address];
 }
 
 class SelectPlan extends CompleteProfileEvent {
@@ -95,39 +83,26 @@ abstract class CompleteProfileState extends Equatable {
 }
 
 class CompleteProfileInitial extends CompleteProfileState {
-  const CompleteProfileInitial()
-    : super(currentStep: 0, data: const CompleteProfileData());
+  CompleteProfileInitial({String? initialEmail})
+    : super(currentStep: 0, data: CompleteProfileData(email: initialEmail));
 }
 
 class CompleteProfileInProgress extends CompleteProfileState {
-  const CompleteProfileInProgress({
-    required super.currentStep,
-    required super.data,
-  });
+  const CompleteProfileInProgress({required super.currentStep, required super.data});
 }
 
 class CompleteProfileLoading extends CompleteProfileState {
-  const CompleteProfileLoading({
-    required super.currentStep,
-    required super.data,
-  });
+  const CompleteProfileLoading({required super.currentStep, required super.data});
 }
 
 class CompleteProfileSuccess extends CompleteProfileState {
-  const CompleteProfileSuccess({
-    required super.currentStep,
-    required super.data,
-  });
+  const CompleteProfileSuccess({required super.currentStep, required super.data});
 }
 
 class CompleteProfileFailure extends CompleteProfileState {
   final String error;
 
-  const CompleteProfileFailure({
-    required super.currentStep,
-    required super.data,
-    required this.error,
-  });
+  const CompleteProfileFailure({required super.currentStep, required super.data, required this.error});
 
   @override
   List<Object?> get props => [currentStep, data, error];
@@ -187,8 +162,7 @@ class CompleteProfileData extends Equatable {
       phone: phone ?? this.phone,
       birthday: birthday ?? this.birthday,
       specialties: specialties ?? this.specialties,
-      professionalRegistrations:
-          professionalRegistrations ?? this.professionalRegistrations,
+      professionalRegistrations: professionalRegistrations ?? this.professionalRegistrations,
       presentation: presentation ?? this.presentation,
       address: address ?? this.address,
       planId: planId ?? this.planId,

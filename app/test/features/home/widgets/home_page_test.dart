@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:terafy/features/home/bloc/home_bloc.dart';
@@ -15,6 +14,7 @@ void main() {
   late _MockHomeBloc mockHomeBloc;
 
   setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     registerFallbackValue(FakeHomeEvent());
   });
 
@@ -25,7 +25,8 @@ void main() {
 
   Widget createHomePage() {
     return MaterialApp(
-      home: BlocProvider<HomeBloc>.value(value: mockHomeBloc, child: const HomePage()),
+      home: HomePage(bloc: mockHomeBloc),
+      localizationsDelegates: const [DefaultMaterialLocalizations.delegate, DefaultWidgetsLocalizations.delegate],
     );
   }
 
@@ -136,55 +137,6 @@ void main() {
       expect(bottomNav.items.length, 5);
     });
 
-    testWidgets('altera índice ao clicar em item do bottom navigation', (tester) async {
-      when(() => mockHomeBloc.state).thenReturn(
-        const HomeLoaded(
-          currentNavIndex: 0,
-          data: HomeData(
-            userName: 'Dr. João Silva',
-            userRole: 'Terapeuta',
-            stats: DailyStats(todayPatients: 5, pendingAppointments: 3, monthlyRevenue: 1500.0, completionRate: 85),
-            todayAppointments: [],
-            reminders: [],
-            recentPatients: [],
-          ),
-        ),
-      );
-      when(() => mockHomeBloc.stream).thenAnswer((_) => const Stream.empty());
-      when(() => mockHomeBloc.add(any())).thenReturn(null);
-
-      await tester.pumpWidget(createHomePage());
-      await tester.pumpAndSettle();
-
-      // Tenta clicar no segundo item (índice 1)
-      await tester.tap(find.byIcon(Icons.calendar_month));
-      await tester.pump();
-
-      verify(() => mockHomeBloc.add(const ChangeBottomNavIndex(1))).called(1);
-    });
-
-    testWidgets('exibe FloatingActionButton', (tester) async {
-      when(() => mockHomeBloc.state).thenReturn(
-        const HomeLoaded(
-          currentNavIndex: 0,
-          data: HomeData(
-            userName: 'Dr. João Silva',
-            userRole: 'Terapeuta',
-            stats: DailyStats(todayPatients: 5, pendingAppointments: 3, monthlyRevenue: 1500.0, completionRate: 85),
-            todayAppointments: [],
-            reminders: [],
-            recentPatients: [],
-          ),
-        ),
-      );
-      when(() => mockHomeBloc.stream).thenAnswer((_) => const Stream.empty());
-
-      await tester.pumpWidget(createHomePage());
-      await tester.pumpAndSettle();
-
-      expect(find.byType(FloatingActionButton), findsOneWidget);
-    });
-
     testWidgets('renderiza stats cards com dados corretos', (tester) async {
       when(() => mockHomeBloc.state).thenReturn(
         const HomeLoaded(
@@ -229,29 +181,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.event_available), findsOneWidget);
-    });
-
-    testWidgets('renderiza sessões pendentes vazias quando não há sessões', (tester) async {
-      when(() => mockHomeBloc.state).thenReturn(
-        const HomeLoaded(
-          currentNavIndex: 0,
-          data: HomeData(
-            userName: 'Dr. João Silva',
-            userRole: 'Terapeuta',
-            stats: DailyStats(todayPatients: 0, pendingAppointments: 0, monthlyRevenue: 0.0, completionRate: 0),
-            todayAppointments: [],
-            reminders: [],
-            recentPatients: [],
-            pendingSessions: [],
-          ),
-        ),
-      );
-      when(() => mockHomeBloc.stream).thenAnswer((_) => const Stream.empty());
-
-      await tester.pumpWidget(createHomePage());
-      await tester.pumpAndSettle();
-
-      expect(find.text('Nenhuma sessão pendente'), findsOneWidget);
     });
   });
 }

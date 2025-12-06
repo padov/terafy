@@ -111,7 +111,7 @@ void main() {
         final request = HttpTestHelpers.createRequest(
           method: 'POST',
           path: '/therapists/me',
-          body: {'name': 'Dr. Teste', 'email': 'teste@terafy.com', 'status': 'active'},
+          body: {'name': 'Dr. Teste', 'email': 'teste@terafy.app.br', 'status': 'active'},
         );
 
         final response = await handler(request);

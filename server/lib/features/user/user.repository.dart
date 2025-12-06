@@ -8,6 +8,7 @@ class UserRepository {
   UserRepository(this._dbConnection);
 
   Future<List<User>> getAllUsers() async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       final results = await conn.execute('''
           SELECT 
@@ -43,6 +44,7 @@ class UserRepository {
   }
 
   Future<User?> getUserById(int id) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       final results = await conn.execute(
         Sql.named('''
@@ -81,6 +83,7 @@ class UserRepository {
   }
 
   Future<User?> getUserByEmail(String email) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       final results = await conn.execute(
         Sql.named('''
@@ -179,6 +182,7 @@ class UserRepository {
   }
 
   Future<void> updateLastLogin(int userId) async {
+    AppLogger.func();
     await _dbConnection.withConnection((conn) async {
       await conn.execute(
         Sql.named('''
@@ -192,6 +196,7 @@ class UserRepository {
   }
 
   Future<User> updateUserAccount({required int userId, required String accountType, required int accountId}) async {
+    AppLogger.func();
     return await _dbConnection.withConnection((conn) async {
       final result = await conn.execute(
         Sql.named('''
