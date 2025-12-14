@@ -9,7 +9,6 @@ void main() {
     late Handler handler;
     late TestDBConnection dbConnection;
     late String therapistToken;
-    late String adminToken;
     late int therapistId;
 
     setUpAll(() async {
@@ -51,18 +50,6 @@ void main() {
       final loginResponse = await handler(loginRequest);
       final loginData = await HttpTestHelpers.parseJsonResponse(loginResponse);
       therapistToken = loginData['auth_token'] as String;
-
-      // Cria usuário admin
-      final adminRegisterRequest = HttpTestHelpers.createRequest(
-        method: 'POST',
-        path: '/auth/register',
-        body: {'email': 'admin@terafy.com', 'password': 'senha123'},
-      );
-      final adminRegisterResponse = await handler(adminRegisterRequest);
-      final adminData = await HttpTestHelpers.parseJsonResponse(adminRegisterResponse);
-      adminToken = adminData['auth_token'] as String;
-
-      // TODO: Atualizar role do admin no banco (se necessário)
     });
 
     tearDown(() async {

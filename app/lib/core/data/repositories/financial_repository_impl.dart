@@ -12,7 +12,6 @@ class FinancialRepositoryImpl implements FinancialRepository {
   Future<List<FinancialTransaction>> fetchTransactions({
     int? therapistId,
     int? patientId,
-    int? sessionId,
     String? status,
     String? category,
     DateTime? startDate,
@@ -21,10 +20,8 @@ class FinancialRepositoryImpl implements FinancialRepository {
     try {
       AppLogger.func();
       final queryParams = <String, dynamic>{};
-      if (therapistId != null)
-        queryParams['therapistId'] = therapistId.toString();
+      if (therapistId != null) queryParams['therapistId'] = therapistId.toString();
       if (patientId != null) queryParams['patientId'] = patientId.toString();
-      if (sessionId != null) queryParams['sessionId'] = sessionId.toString();
       if (status != null) queryParams['status'] = status;
       if (category != null) queryParams['category'] = category;
       if (startDate != null) {
@@ -34,10 +31,7 @@ class FinancialRepositoryImpl implements FinancialRepository {
         queryParams['endDate'] = endDate.toUtc().toIso8601String();
       }
 
-      final response = await httpClient.get(
-        '/financial',
-        queryParameters: queryParams.isEmpty ? null : queryParams,
-      );
+      final response = await httpClient.get('/financial', queryParameters: queryParams.isEmpty ? null : queryParams);
 
       if (response.data is! List) {
         throw Exception('Resposta inválida ao carregar transações');
@@ -45,13 +39,7 @@ class FinancialRepositoryImpl implements FinancialRepository {
 
       final data = response.data as List;
 
-      return data
-          .map(
-            (item) => FinancialTransaction.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
-          )
-          .toList();
+      return data.map((item) => FinancialTransaction.fromJson(Map<String, dynamic>.from(item as Map))).toList();
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e) ?? 'Erro ao carregar transações');
     }
@@ -70,9 +58,7 @@ class FinancialRepositoryImpl implements FinancialRepository {
         throw Exception('Resposta inválida ao carregar transação');
       }
 
-      return FinancialTransaction.fromJson(
-        Map<String, dynamic>.from(response.data as Map),
-      );
+      return FinancialTransaction.fromJson(Map<String, dynamic>.from(response.data as Map));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return null;
@@ -82,47 +68,32 @@ class FinancialRepositoryImpl implements FinancialRepository {
   }
 
   @override
-  Future<FinancialTransaction> createTransaction(
-    FinancialTransaction transaction,
-  ) async {
+  Future<FinancialTransaction> createTransaction(FinancialTransaction transaction) async {
     AppLogger.func();
     try {
-      final response = await httpClient.post(
-        '/financial',
-        data: transaction.toJson(),
-      );
+      final response = await httpClient.post('/financial', data: transaction.toJson());
 
       if (response.data is! Map<String, dynamic>) {
         throw Exception('Resposta inválida ao criar transação');
       }
 
-      return FinancialTransaction.fromJson(
-        Map<String, dynamic>.from(response.data as Map),
-      );
+      return FinancialTransaction.fromJson(Map<String, dynamic>.from(response.data as Map));
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e) ?? 'Erro ao criar transação');
     }
   }
 
   @override
-  Future<FinancialTransaction> updateTransaction(
-    int transactionId,
-    FinancialTransaction transaction,
-  ) async {
+  Future<FinancialTransaction> updateTransaction(int transactionId, FinancialTransaction transaction) async {
     AppLogger.func();
     try {
-      final response = await httpClient.put(
-        '/financial/$transactionId',
-        data: transaction.toJson(),
-      );
+      final response = await httpClient.put('/financial/$transactionId', data: transaction.toJson());
 
       if (response.data is! Map<String, dynamic>) {
         throw Exception('Resposta inválida ao atualizar transação');
       }
 
-      return FinancialTransaction.fromJson(
-        Map<String, dynamic>.from(response.data as Map),
-      );
+      return FinancialTransaction.fromJson(Map<String, dynamic>.from(response.data as Map));
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e) ?? 'Erro ao atualizar transação');
     }
@@ -146,9 +117,7 @@ class FinancialRepositoryImpl implements FinancialRepository {
   }) async {
     AppLogger.func();
     try {
-      final queryParams = <String, dynamic>{
-        'therapistId': therapistId.toString(),
-      };
+      final queryParams = <String, dynamic>{'therapistId': therapistId.toString()};
       if (startDate != null) {
         queryParams['startDate'] = startDate.toUtc().toIso8601String();
       }
@@ -156,10 +125,7 @@ class FinancialRepositoryImpl implements FinancialRepository {
         queryParams['endDate'] = endDate.toUtc().toIso8601String();
       }
 
-      final response = await httpClient.get(
-        '/financial/summary',
-        queryParameters: queryParams,
-      );
+      final response = await httpClient.get('/financial/dashboard', queryParameters: queryParams);
 
       if (response.data is! Map<String, dynamic>) {
         throw Exception('Resposta inválida ao carregar resumo financeiro');
@@ -167,9 +133,7 @@ class FinancialRepositoryImpl implements FinancialRepository {
 
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (e) {
-      throw Exception(
-        _extractErrorMessage(e) ?? 'Erro ao carregar resumo financeiro',
-      );
+      throw Exception(_extractErrorMessage(e) ?? 'Erro ao carregar resumo financeiro');
     }
   }
 

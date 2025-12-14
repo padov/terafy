@@ -1,6 +1,7 @@
 import 'package:common/common.dart';
 import 'package:server/features/user/user.repository.dart';
 import 'therapist.repository.dart';
+import 'package:common/src/validators/document_validator.dart';
 
 /// Resultado de uma operação de criação de terapeuta
 class CreateTherapistResult {
@@ -118,6 +119,12 @@ class TherapistController {
       throw TherapistException('Usuário já possui um perfil de terapeuta vinculado', 400);
     }
 
+    // Valida o documento (CPF/CNPJ) se fornecido
+    final documentError = DocumentValidator.validateDocument(therapist.document);
+    if (documentError != null) {
+      throw TherapistException(documentError, 400);
+    }
+
     // Cria o therapist (com contexto RLS para policy de criação)
     final createdTherapist = await _repository.createTherapist(therapist, userId: userId, userRole: userRole);
 
@@ -177,6 +184,13 @@ class TherapistController {
     bool bypassRLS = false,
   }) async {
     AppLogger.func();
+
+    // Valida o documento (CPF/CNPJ) se fornecido
+    final documentError = DocumentValidator.validateDocument(therapist.document);
+    if (documentError != null) {
+      throw TherapistException(documentError, 400);
+    }
+
     final updatedTherapist = await _repository.updateTherapist(
       id,
       therapist,

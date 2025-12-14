@@ -15,8 +15,8 @@ class Session {
   final String? cancellationReason;
   final DateTime? cancellationTime;
   final double? chargedAmount;
-  final String paymentStatus; // payment_status enum
-  
+  final int? transactionId; // FK para financial_transactions
+
   // Registro Clínico
   final String? patientMood;
   final List<String> topicsDiscussed;
@@ -33,14 +33,14 @@ class Session {
   final bool needsReferral;
   final String currentRisk; // 'low', 'medium', 'high'
   final String? importantObservations;
-  
+
   // Dados Administrativos
   final DateTime? presenceConfirmationTime;
   final bool reminderSent;
   final DateTime? reminderSentTime;
   final int? patientRating;
   final List<String> attachments;
-  
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -61,7 +61,7 @@ class Session {
     this.cancellationReason,
     this.cancellationTime,
     this.chargedAmount,
-    required this.paymentStatus,
+    this.transactionId,
     this.patientMood,
     this.topicsDiscussed = const [],
     this.sessionNotes,
@@ -103,7 +103,7 @@ class Session {
     String? cancellationReason,
     DateTime? cancellationTime,
     double? chargedAmount,
-    String? paymentStatus,
+    int? transactionId,
     String? patientMood,
     List<String>? topicsDiscussed,
     String? sessionNotes,
@@ -144,7 +144,7 @@ class Session {
       cancellationReason: cancellationReason ?? this.cancellationReason,
       cancellationTime: cancellationTime ?? this.cancellationTime,
       chargedAmount: chargedAmount ?? this.chargedAmount,
-      paymentStatus: paymentStatus ?? this.paymentStatus,
+      transactionId: transactionId ?? this.transactionId,
       patientMood: patientMood ?? this.patientMood,
       topicsDiscussed: topicsDiscussed ?? this.topicsDiscussed,
       sessionNotes: sessionNotes ?? this.sessionNotes,
@@ -188,7 +188,7 @@ class Session {
       'cancellationReason': cancellationReason,
       'cancellationTime': cancellationTime?.toIso8601String(),
       'chargedAmount': chargedAmount,
-      'paymentStatus': paymentStatus,
+      'transactionId': transactionId,
       'patientMood': patientMood,
       'topicsDiscussed': topicsDiscussed,
       'sessionNotes': sessionNotes,
@@ -231,7 +231,7 @@ class Session {
       'cancellation_reason': cancellationReason,
       'cancellation_time': cancellationTime,
       'charged_amount': chargedAmount,
-      'payment_status': paymentStatus,
+      'transaction_id': transactionId,
       'patient_mood': patientMood,
       'topics_discussed': topicsDiscussed,
       'session_notes': sessionNotes,
@@ -262,9 +262,7 @@ class Session {
       therapistId: json['therapistId'] as int,
       appointmentId: json['appointmentId'] as int?,
       scheduledStartTime: DateTime.parse(json['scheduledStartTime'] as String),
-      scheduledEndTime: json['scheduledEndTime'] != null
-          ? DateTime.parse(json['scheduledEndTime'] as String)
-          : null,
+      scheduledEndTime: json['scheduledEndTime'] != null ? DateTime.parse(json['scheduledEndTime'] as String) : null,
       durationMinutes: json['durationMinutes'] as int,
       sessionNumber: json['sessionNumber'] as int,
       type: json['type'] as String,
@@ -273,17 +271,11 @@ class Session {
       onlineRoomLink: json['onlineRoomLink'] as String?,
       status: json['status'] as String,
       cancellationReason: json['cancellationReason'] as String?,
-      cancellationTime: json['cancellationTime'] != null
-          ? DateTime.parse(json['cancellationTime'] as String)
-          : null,
-      chargedAmount: json['chargedAmount'] != null
-          ? (json['chargedAmount'] as num).toDouble()
-          : null,
-      paymentStatus: json['paymentStatus'] as String,
+      cancellationTime: json['cancellationTime'] != null ? DateTime.parse(json['cancellationTime'] as String) : null,
+      chargedAmount: json['chargedAmount'] != null ? (json['chargedAmount'] as num).toDouble() : null,
+      transactionId: json['transactionId'] as int?,
       patientMood: json['patientMood'] as String?,
-      topicsDiscussed: json['topicsDiscussed'] != null
-          ? List<String>.from(json['topicsDiscussed'] as List)
-          : const [],
+      topicsDiscussed: json['topicsDiscussed'] != null ? List<String>.from(json['topicsDiscussed'] as List) : const [],
       sessionNotes: json['sessionNotes'] as String?,
       observedBehavior: json['observedBehavior'] as String?,
       interventionsUsed: json['interventionsUsed'] != null
@@ -303,19 +295,11 @@ class Session {
           ? DateTime.parse(json['presenceConfirmationTime'] as String)
           : null,
       reminderSent: json['reminderSent'] as bool? ?? false,
-      reminderSentTime: json['reminderSentTime'] != null
-          ? DateTime.parse(json['reminderSentTime'] as String)
-          : null,
+      reminderSentTime: json['reminderSentTime'] != null ? DateTime.parse(json['reminderSentTime'] as String) : null,
       patientRating: json['patientRating'] as int?,
-      attachments: json['attachments'] != null
-          ? List<String>.from(json['attachments'] as List)
-          : const [],
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : null,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+      attachments: json['attachments'] != null ? List<String>.from(json['attachments'] as List) : const [],
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : null,
     );
   }
 
@@ -337,7 +321,7 @@ class Session {
       cancellationReason: map['cancellation_reason'] as String?,
       cancellationTime: _parseDate(map['cancellation_time']),
       chargedAmount: _parseDouble(map['charged_amount']),
-      paymentStatus: map['payment_status']?.toString() ?? 'pending',
+      transactionId: _parseInt(map['transaction_id']),
       patientMood: map['patient_mood'] as String?,
       topicsDiscussed: _parseStringList(map['topics_discussed']),
       sessionNotes: map['session_notes'] as String?,

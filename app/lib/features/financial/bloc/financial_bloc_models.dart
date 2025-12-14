@@ -29,20 +29,10 @@ class LoadPayments extends FinancialEvent {
   final PaymentStatus? statusFilter;
   final String? patientIdFilter;
 
-  const LoadPayments({
-    this.startDate,
-    this.endDate,
-    this.statusFilter,
-    this.patientIdFilter,
-  });
+  const LoadPayments({this.startDate, this.endDate, this.statusFilter, this.patientIdFilter});
 
   @override
-  List<Object?> get props => [
-    startDate,
-    endDate,
-    statusFilter,
-    patientIdFilter,
-  ];
+  List<Object?> get props => [startDate, endDate, statusFilter, patientIdFilter];
 }
 
 /// Carregar detalhes de um pagamento
@@ -82,12 +72,7 @@ class MarkPaymentAsPaid extends FinancialEvent {
   final DateTime paidAt;
   final String? receiptNumber;
 
-  const MarkPaymentAsPaid({
-    required this.paymentId,
-    required this.method,
-    required this.paidAt,
-    this.receiptNumber,
-  });
+  const MarkPaymentAsPaid({required this.paymentId, required this.method, required this.paidAt, this.receiptNumber});
 
   @override
   List<Object?> get props => [paymentId, method, paidAt, receiptNumber];
@@ -155,55 +140,71 @@ class FinancialLoading extends FinancialState {
   const FinancialLoading();
 }
 
-/// Resumo financeiro carregado
-class FinancialSummaryLoaded extends FinancialState {
-  final FinancialSummary summary;
-  final DateTime startDate;
-  final DateTime endDate;
+/// Dados financeiros carregados (Resumo e/ou Pagamentos)
+class FinancialData extends FinancialState {
+  final FinancialSummary? summary;
+  final List<Payment>? payments;
+  final DateTime? summaryStartDate;
+  final DateTime? summaryEndDate;
+  final DateTime? paymentsStartDate;
+  final DateTime? paymentsEndDate;
+  final PaymentStatus? statusFilter;
+  final String? patientIdFilter;
 
-  const FinancialSummaryLoaded({
-    required this.summary,
-    required this.startDate,
-    required this.endDate,
+  const FinancialData({
+    this.summary,
+    this.payments,
+    this.summaryStartDate,
+    this.summaryEndDate,
+    this.paymentsStartDate,
+    this.paymentsEndDate,
+    this.statusFilter,
+    this.patientIdFilter,
   });
 
+  FinancialData copyWith({
+    FinancialSummary? summary,
+    List<Payment>? payments,
+    DateTime? summaryStartDate,
+    DateTime? summaryEndDate,
+    DateTime? paymentsStartDate,
+    DateTime? paymentsEndDate,
+    PaymentStatus? statusFilter,
+    String? patientIdFilter,
+  }) {
+    return FinancialData(
+      summary: summary ?? this.summary,
+      payments: payments ?? this.payments,
+      summaryStartDate: summaryStartDate ?? this.summaryStartDate,
+      summaryEndDate: summaryEndDate ?? this.summaryEndDate,
+      paymentsStartDate: paymentsStartDate ?? this.paymentsStartDate,
+      paymentsEndDate: paymentsEndDate ?? this.paymentsEndDate,
+      statusFilter: statusFilter ?? this.statusFilter,
+      patientIdFilter: patientIdFilter ?? this.patientIdFilter,
+    );
+  }
+
   @override
-  List<Object> get props => [summary, startDate, endDate];
+  List<Object?> get props => [
+    summary,
+    payments,
+    summaryStartDate,
+    summaryEndDate,
+    paymentsStartDate,
+    paymentsEndDate,
+    statusFilter,
+    patientIdFilter,
+  ];
 }
 
-/// Pagamentos carregados
-class PaymentsLoaded extends FinancialState {
-  final List<Payment> payments;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final PaymentStatus? statusFilter;
+/// Erro
+class FinancialError extends FinancialState {
+  final String message;
 
-  const PaymentsLoaded({
-    required this.payments,
-    this.startDate,
-    this.endDate,
-    this.statusFilter,
-  });
+  const FinancialError(this.message);
 
   @override
-  List<Object?> get props => [payments, startDate, endDate, statusFilter];
-
-  /// Pagamentos por status
-  List<Payment> getPaymentsByStatus(PaymentStatus status) {
-    return payments.where((p) => p.status == status).toList();
-  }
-
-  /// Total por status
-  double getTotalByStatus(PaymentStatus status) {
-    return payments
-        .where((p) => p.status == status)
-        .fold(0.0, (sum, p) => sum + p.amount);
-  }
-
-  /// Pagamentos atrasados
-  List<Payment> get overduePayments {
-    return payments.where((p) => p.isOverdue).toList();
-  }
+  List<Object> get props => [message];
 }
 
 /// Detalhes do pagamento carregado
@@ -286,14 +287,4 @@ class InvoiceIssued extends FinancialState {
 
   @override
   List<Object> get props => [invoice];
-}
-
-/// Erro
-class FinancialError extends FinancialState {
-  final String message;
-
-  const FinancialError(this.message);
-
-  @override
-  List<Object> get props => [message];
 }

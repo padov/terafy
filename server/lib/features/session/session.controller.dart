@@ -79,7 +79,7 @@ class SessionController {
           if (appointment != null && appointment.status != 'completed') {
             final updatedAppointment = appointment.copyWith(status: 'completed');
             await _scheduleRepository.updateAppointment(
-              appointmentId: appointment.id,
+              appointmentId: appointment.id!,
               appointment: updatedAppointment,
               userId: userId,
               userRole: userRole,
@@ -94,7 +94,6 @@ class SessionController {
           AppLogger.warning('Falha ao atualizar status do agendamento vinculado: $e');
         }
       }
-
       return created;
     } catch (e, stack) {
       AppLogger.error(e, stack);
@@ -248,7 +247,6 @@ class SessionController {
               userId: userId,
               userRole: userRole,
               accountId: accountId,
-              sessionId: sessionId,
               bypassRLS: userRole == 'admin',
             );
 
@@ -258,7 +256,6 @@ class SessionController {
               final transaction = FinancialTransaction(
                 therapistId: updated.therapistId,
                 patientId: updated.patientId,
-                sessionId: updated.id,
                 transactionDate: updated.scheduledStartTime.toLocal(),
                 type: 'recebimento',
                 amount: chargedAmount,

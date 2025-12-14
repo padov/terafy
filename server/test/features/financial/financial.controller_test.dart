@@ -2,12 +2,9 @@ import 'package:common/common.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:server/features/financial/financial.controller.dart';
 import 'package:server/features/financial/financial.repository.dart';
-import 'package:server/features/session/session.repository.dart';
 import 'package:test/test.dart';
 
 class _MockFinancialRepository extends Mock implements FinancialRepository {}
-
-class _MockSessionRepository extends Mock implements SessionRepository {}
 
 void main() {
   setUpAll(() {
@@ -23,23 +20,9 @@ void main() {
         category: 'session',
       ),
     );
-    registerFallbackValue(
-      Session(
-        patientId: 1,
-        therapistId: 1,
-        scheduledStartTime: DateTime.now(),
-        durationMinutes: 60,
-        sessionNumber: 1,
-        type: 'presential',
-        modality: 'individual',
-        status: 'completed',
-        paymentStatus: 'pending',
-      ),
-    );
   });
 
   late _MockFinancialRepository repository;
-  late _MockSessionRepository sessionRepository;
   late FinancialController controller;
 
   final sampleTransaction = FinancialTransaction(
@@ -58,8 +41,7 @@ void main() {
 
   setUp(() {
     repository = _MockFinancialRepository();
-    sessionRepository = _MockSessionRepository();
-    controller = FinancialController(repository, sessionRepository);
+    controller = FinancialController(repository);
   });
 
   group('FinancialController - createTransaction', () {
@@ -313,7 +295,6 @@ void main() {
           accountId: 1,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -339,7 +320,6 @@ void main() {
           accountId: 5, // accountId ?? therapistId = 5
           therapistId: 5,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -359,7 +339,6 @@ void main() {
           accountId: 5, // accountId ?? therapistId = 5
           therapistId: 5,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -377,7 +356,6 @@ void main() {
           accountId: 1,
           therapistId: null,
           patientId: 10,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -391,28 +369,6 @@ void main() {
       expect(result, hasLength(1));
     });
 
-    test('deve filtrar por sessionId', () async {
-      when(
-        () => repository.listTransactions(
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          therapistId: null,
-          patientId: null,
-          sessionId: 20,
-          status: null,
-          category: null,
-          startDate: null,
-          endDate: null,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => [sampleTransaction]);
-
-      final result = await controller.listTransactions(userId: 1, userRole: 'therapist', accountId: 1, sessionId: 20);
-
-      expect(result, hasLength(1));
-    });
-
     test('deve filtrar por status', () async {
       when(
         () => repository.listTransactions(
@@ -421,7 +377,6 @@ void main() {
           accountId: 1,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: 'pago',
           category: null,
           startDate: null,
@@ -444,7 +399,6 @@ void main() {
           accountId: 1,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: null,
           category: 'sessao',
           startDate: null,
@@ -474,7 +428,6 @@ void main() {
           accountId: 1,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: startDate,
@@ -502,7 +455,6 @@ void main() {
           accountId: null,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -520,7 +472,6 @@ void main() {
           accountId: null,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -538,7 +489,6 @@ void main() {
           accountId: 1,
           therapistId: null,
           patientId: null,
-          sessionId: null,
           status: null,
           category: null,
           startDate: null,
@@ -731,192 +681,6 @@ void main() {
       );
     });
 
-    test('deve atualizar sessão quando status muda para pago', () async {
-      final existingTransaction = sampleTransaction.copyWith(status: 'pendente', sessionId: 10);
-      final updatedTransaction = sampleTransaction.copyWith(status: 'pago', sessionId: 10);
-
-      final session = Session(
-        id: 10,
-        therapistId: 1,
-        patientId: 1,
-        scheduledStartTime: DateTime.now(),
-        durationMinutes: 60,
-        sessionNumber: 1,
-        type: 'presential',
-        modality: 'individual',
-        status: 'completed',
-        paymentStatus: 'pending',
-      );
-
-      // O controller chama getTransactionById duas vezes (linhas 173 e 194)
-      when(
-        () => repository.getTransactionById(
-          transactionId: 1,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => existingTransaction);
-
-      when(
-        () => repository.updateTransaction(
-          transactionId: 1,
-          transaction: any(named: 'transaction'),
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => updatedTransaction);
-
-      when(
-        () => sessionRepository.getSessionById(
-          sessionId: 10,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => session);
-
-      when(
-        () => sessionRepository.updateSession(
-          sessionId: 10,
-          session: any(named: 'session'),
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => session.copyWith(paymentStatus: 'paid'));
-
-      final result = await controller.updateTransaction(
-        transactionId: 1,
-        transaction: updatedTransaction,
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
-
-      expect(result.status, 'pago');
-      verify(
-        () => sessionRepository.updateSession(
-          sessionId: 10,
-          session: any(named: 'session'),
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).called(1);
-    });
-
-    test('não deve atualizar sessão quando status já era pago', () async {
-      final existingTransaction = sampleTransaction.copyWith(status: 'pago', sessionId: 10);
-      final updatedTransaction = sampleTransaction.copyWith(status: 'pago', sessionId: 10);
-
-      when(
-        () => repository.getTransactionById(
-          transactionId: 1,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => existingTransaction);
-
-      when(
-        () => repository.updateTransaction(
-          transactionId: 1,
-          transaction: any(named: 'transaction'),
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => updatedTransaction);
-
-      await controller.updateTransaction(
-        transactionId: 1,
-        transaction: updatedTransaction,
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
-
-      verifyNever(
-        () => sessionRepository.updateSession(
-          sessionId: any(named: 'sessionId'),
-          session: any(named: 'session'),
-          userId: any(named: 'userId'),
-          userRole: any(named: 'userRole'),
-          accountId: any(named: 'accountId'),
-          bypassRLS: any(named: 'bypassRLS'),
-        ),
-      );
-    });
-
-    test('não deve falhar transação se erro ao atualizar sessão', () async {
-      final existingTransaction = sampleTransaction.copyWith(status: 'pendente', sessionId: 10);
-      final updatedTransaction = sampleTransaction.copyWith(status: 'pago', sessionId: 10);
-
-      // O controller chama getTransactionById duas vezes (linhas 173 e 194)
-      when(
-        () => repository.getTransactionById(
-          transactionId: 1,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => existingTransaction);
-
-      when(
-        () => repository.updateTransaction(
-          transactionId: 1,
-          transaction: any(named: 'transaction'),
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenAnswer((_) async => updatedTransaction);
-
-      when(
-        () => sessionRepository.getSessionById(
-          sessionId: 10,
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).thenThrow(Exception('Erro ao buscar sessão'));
-
-      // Não deve lançar exceção, apenas logar o erro
-      final result = await controller.updateTransaction(
-        transactionId: 1,
-        transaction: updatedTransaction,
-        userId: 1,
-        userRole: 'therapist',
-        accountId: 1,
-      );
-
-      expect(result.status, 'pago');
-      expect(result.sessionId, 10);
-      // Verifica que a transação foi atualizada mesmo com erro na sessão
-      verify(
-        () => repository.updateTransaction(
-          transactionId: 1,
-          transaction: any(named: 'transaction'),
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-        ),
-      ).called(1);
-    });
-
     test('deve usar bypassRLS quando role é admin', () async {
       when(
         () => repository.getTransactionById(
@@ -1040,7 +804,7 @@ void main() {
     });
 
     test('deve validar que transação paga não pode ser deletada', () async {
-      final paidTransaction = sampleTransaction.copyWith(status: 'pago');
+      final paidTransaction = sampleTransaction.copyWith(status: 'paid');
 
       when(
         () => repository.getTransactionById(

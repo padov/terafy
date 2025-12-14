@@ -4,7 +4,6 @@ abstract class FinancialRepository {
   Future<List<FinancialTransaction>> fetchTransactions({
     int? therapistId,
     int? patientId,
-    int? sessionId,
     String? status,
     String? category,
     DateTime? startDate,
@@ -13,14 +12,9 @@ abstract class FinancialRepository {
 
   Future<FinancialTransaction?> fetchTransaction(int transactionId);
 
-  Future<FinancialTransaction> createTransaction(
-    FinancialTransaction transaction,
-  );
+  Future<FinancialTransaction> createTransaction(FinancialTransaction transaction);
 
-  Future<FinancialTransaction> updateTransaction(
-    int transactionId,
-    FinancialTransaction transaction,
-  );
+  Future<FinancialTransaction> updateTransaction(int transactionId, FinancialTransaction transaction);
 
   Future<void> deleteTransaction(int transactionId);
 

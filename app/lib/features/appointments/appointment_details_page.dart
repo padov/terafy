@@ -427,7 +427,12 @@ class _AppointmentDetailsPageState extends State<AppointmentDetailsPage> {
                           builder: (_) => MultiBlocProvider(
                             providers: [
                               BlocProvider.value(value: context.read<AppointmentBloc>()),
-                              BlocProvider.value(value: context.read<ScheduleSettingsBloc>()),
+                              BlocProvider(
+                                create: (_) => ScheduleSettingsBloc(
+                                  getScheduleSettingsUseCase: DependencyContainer().getScheduleSettingsUseCase,
+                                  updateScheduleSettingsUseCase: DependencyContainer().updateScheduleSettingsUseCase,
+                                ),
+                              ),
                             ],
                             child: NewAppointmentPage(appointment: appointment),
                           ),

@@ -187,6 +187,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                 required List<String> professionalRegistrations,
                 required String presentation,
                 required String address,
+                double? defaultSessionPrice,
               }) {
                 context.read<SignupBloc>().add(
                   UpdateProfessionalData(

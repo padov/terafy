@@ -1,38 +1,38 @@
 -- migrate:up
 
--- Cria tipos ENUM para transações financeiras
-CREATE TYPE transaction_type AS ENUM ('recebimento', 'estorno', 'desconto');
-CREATE TYPE transaction_status AS ENUM ('pendente', 'pago', 'atrasado', 'cancelado');
-CREATE TYPE transaction_category AS ENUM ('sessao', 'avaliacao', 'documento', 'outro');
+-- Create ENUM types for financial transactions
+CREATE TYPE transaction_type AS ENUM ('income', 'refund', 'discount');
+CREATE TYPE transaction_status AS ENUM ('pending', 'paid', 'overdue', 'cancelled');
+CREATE TYPE transaction_category AS ENUM ('session', 'evaluation', 'document', 'other');
 
--- Cria tipo ENUM para formas de pagamento
--- Nota: Já existe payment_method para plan_subscriptions, mas vamos criar um específico para transações
--- para ter mais flexibilidade (inclui convênio, etc.)
+-- Create ENUM type for payment methods
+-- Note: payment_method already exists for plan_subscriptions, but we create a specific one for transactions
+-- for more flexibility (includes insurance, etc.)
 CREATE TYPE financial_payment_method AS ENUM (
-    'dinheiro',
+    'cash',
     'pix',
-    'cartao_debito',
-    'cartao_credito',
-    'transferencia',
-    'boleto',
-    'convenio'
+    'debit_card',
+    'credit_card',
+    'transfer',
+    'bank_slip',
+    'insurance',
+    'others'
 );
 
--- Cria a tabela de transações financeiras
+-- Create financial transactions table
 CREATE TABLE financial_transactions (
     id SERIAL PRIMARY KEY,
     therapist_id INTEGER NOT NULL REFERENCES therapists(id) ON DELETE CASCADE,
     patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    session_id INTEGER NULL REFERENCES sessions(id) ON DELETE SET NULL,
     transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    type transaction_type NOT NULL DEFAULT 'recebimento',
+    type transaction_type NOT NULL DEFAULT 'income',
     amount NUMERIC(10, 2) NOT NULL,
     payment_method financial_payment_method NOT NULL,
-    status transaction_status NOT NULL DEFAULT 'pendente',
+    status transaction_status NOT NULL DEFAULT 'pending',
     due_date DATE,
     paid_at TIMESTAMP WITH TIME ZONE,
     receipt_number VARCHAR(50),
-    category transaction_category NOT NULL DEFAULT 'sessao',
+    category transaction_category NOT NULL DEFAULT 'session',
     notes TEXT,
     invoice_number VARCHAR(50),
     invoice_issued BOOLEAN NOT NULL DEFAULT FALSE,
@@ -44,10 +44,9 @@ CREATE TABLE financial_transactions (
     CONSTRAINT chk_paid_at_after_transaction CHECK (paid_at IS NULL OR paid_at >= transaction_date::timestamp)
 );
 
--- Índices para performance
+-- Indexes for performance
 CREATE INDEX idx_financial_transactions_therapist_id ON financial_transactions(therapist_id);
 CREATE INDEX idx_financial_transactions_patient_id ON financial_transactions(patient_id);
-CREATE INDEX idx_financial_transactions_session_id ON financial_transactions(session_id);
 CREATE INDEX idx_financial_transactions_status ON financial_transactions(status);
 CREATE INDEX idx_financial_transactions_transaction_date ON financial_transactions(transaction_date);
 CREATE INDEX idx_financial_transactions_due_date ON financial_transactions(due_date);
@@ -62,7 +61,6 @@ DROP INDEX IF EXISTS idx_financial_transactions_category;
 DROP INDEX IF EXISTS idx_financial_transactions_due_date;
 DROP INDEX IF EXISTS idx_financial_transactions_transaction_date;
 DROP INDEX IF EXISTS idx_financial_transactions_status;
-DROP INDEX IF EXISTS idx_financial_transactions_session_id;
 DROP INDEX IF EXISTS idx_financial_transactions_patient_id;
 DROP INDEX IF EXISTS idx_financial_transactions_therapist_id;
 

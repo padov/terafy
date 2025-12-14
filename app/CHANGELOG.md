@@ -4,20 +4,47 @@ Este documento descreve as principais mudanças e melhorias do aplicativo Terafy
 
 ---
 
+## [0.3.0] - Dezembro 2025
+
+### ✨ Novidades
+
+#### 💰 Integração Financeira Automática
+
+Agora suas sessões e finanças estão conectadas!
+
+- **Criação Automática**: Ao registrar uma sessão, uma transação financeira "Pendente" é criada automaticamente.
+- **Preço Padrão**: Configure um valor padrão para suas sessões no seu perfil, agilizando o registro.
+- **Visualização Integrada**: Acompanhe o status de pagamento diretamente nos detalhes da sessão.
+
+#### 👤 Melhorias no Perfil
+
+- Novo campo para definir o **Valor da Sessão**.
+- Atualização visual na edição de perfil.
+
+### 🔧 Melhorias Técnicas
+
+- Refatoração da estrutura de testes.
+- Otimização na sincronização de dados entre app e servidor.
+
+---
+
 ## [0.2.0] - Janeiro 2025
 
 ### ✨ Novidades
 
 #### 📋 Sistema de Anamnese Completo
+
 Agora você pode criar e gerenciar anamneses completas para seus pacientes de forma muito mais organizada!
 
 - **Formulário de Anamnese Inteligente**
+
   - Template padrão com 13 seções e mais de 70 campos
   - Formulário dinâmico que se adapta ao template escolhido
   - Validação automática de campos obrigatórios
   - Interface intuitiva e fácil de preencher
 
 - **Visualização de Anamnese**
+
   - Visualize todas as anamneses preenchidas de forma organizada
   - Navegação fácil entre seções
   - Histórico completo de anamneses por paciente
@@ -28,11 +55,13 @@ Agora você pode criar e gerenciar anamneses completas para seus pacientes de fo
   - Facilita o trabalho com pacientes que têm necessidades similares
 
 #### 👥 Melhorias no Cadastro de Pacientes
+
 - Interface de cadastro simplificada e mais intuitiva
 - Processo de cadastro otimizado para ser mais rápido
 - Melhor organização das informações do paciente
 
 ### 🔧 Melhorias Técnicas
+
 - Melhorias na estabilidade e performance do aplicativo
 - Correções de bugs menores
 - Otimizações gerais de desempenho
@@ -44,7 +73,9 @@ Agora você pode criar e gerenciar anamneses completas para seus pacientes de fo
 ### 🎉 Lançamento Inicial
 
 #### 🔐 Login e Segurança
+
 - **Login Seguro**
+
   - Faça login com email e senha
   - Sua sessão é mantida automaticamente
   - Logout seguro que protege suas informações
@@ -55,9 +86,11 @@ Agora você pode criar e gerenciar anamneses completas para seus pacientes de fo
   - Escolha seu plano (Gratuito, Básico ou Premium)
 
 #### 👥 Gestão de Pacientes
+
 Gerencie todos os seus pacientes em um só lugar!
 
 - **Cadastro Completo de Pacientes**
+
   - Cadastro em etapas simples e organizadas:
     - Dados pessoais básicos
     - Informações de contato
@@ -67,6 +100,7 @@ Gerencie todos os seus pacientes em um só lugar!
   - Informações de convênio e pagamento
 
 - **Lista de Pacientes**
+
   - Veja todos os seus pacientes em uma lista organizada
   - Filtre e encontre pacientes rapidamente
   - Acesse o dashboard individual de cada paciente
@@ -77,14 +111,17 @@ Gerencie todos os seus pacientes em um só lugar!
   - Veja o histórico completo de sessões
 
 #### 📅 Agenda e Agendamentos
+
 Organize sua agenda de forma simples e eficiente!
 
 - **Visualização de Agenda**
+
   - Veja todos os seus agendamentos em uma visualização de calendário
   - Navegue facilmente entre diferentes datas
   - Diferentes status de agendamento (disponível, reservado, confirmado, realizado, cancelado)
 
 - **Criar Agendamentos**
+
   - Crie novos agendamentos rapidamente
   - O sistema previne automaticamente sobreposição de horários
   - Suporte a agendamentos recorrentes
@@ -96,9 +133,11 @@ Organize sua agenda de forma simples e eficiente!
   - **Novo**: Agendamentos cancelados voltam automaticamente para "reservado" quando editados
 
 #### 📝 Sessões Terapêuticas
+
 Registre todas as suas sessões de forma completa e organizada!
 
 - **Registro de Sessões**
+
   - Registre sessões com todos os detalhes importantes:
     - Humor e estado emocional do paciente
     - Temas abordados na sessão
@@ -111,11 +150,13 @@ Registre todas as suas sessões de forma completa e organizada!
     - Nível de risco (baixo, médio, alto)
 
 - **Histórico de Sessões**
+
   - Veja todas as sessões de um paciente em ordem cronológica
   - Acompanhe a evolução do paciente ao longo do tempo
   - Detalhes completos de cada sessão
 
 - **Tipos de Sessão**
+
   - Presencial
   - Online (vídeo)
   - Online (áudio)
@@ -129,9 +170,11 @@ Registre todas as suas sessões de forma completa e organizada!
   - Grupo
 
 #### 💰 Módulo Financeiro
+
 Controle financeiro completo e organizado!
 
 - **Transações Financeiras**
+
   - Registre todos os pagamentos por sessão
   - Controle o status de pagamento (pendente, pago, isento)
   - Veja detalhes completos de cada transação
@@ -142,12 +185,14 @@ Controle financeiro completo e organizado!
   - Organize suas finanças de forma simples
 
 #### 🏠 Tela Inicial (Home)
+
 - Dashboard com informações importantes
 - Estatísticas rápidas sobre seus pacientes e agendamentos
 - Agenda do dia
 - Sessões pendentes de registro
 
 #### 👤 Perfil
+
 - Visualize e edite suas informações pessoais
 - Gerencie suas configurações de conta
 
@@ -163,4 +208,3 @@ Controle financeiro completo e organizado!
 ---
 
 **Nota**: Este changelog foca nas mudanças visíveis e utilizáveis pelo usuário final. Para detalhes técnicos completos, consulte o CHANGELOG.md na raiz do projeto.
-

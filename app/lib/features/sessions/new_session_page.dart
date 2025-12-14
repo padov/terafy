@@ -550,7 +550,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
       chargedAmount: _chargedAmountController.text.isNotEmpty
           ? double.tryParse(_chargedAmountController.text)
           : null,
-      paymentStatus: PaymentStatus.pending,
+      transactionId: null,
       reminderSent: false,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

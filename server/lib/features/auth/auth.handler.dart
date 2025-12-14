@@ -68,9 +68,15 @@ class AuthHandler extends BaseHandler {
       final registerData = jsonDecode(body) as Map<String, dynamic>;
       final email = registerData['email'] as String?;
       final password = registerData['password'] as String?;
+      final role = registerData['role'] as String?;
 
       if (email == null || password == null) {
         return badRequestResponse('Email e senha são obrigatórios');
+      }
+
+      // Bloqueia criação de usuários admin via API
+      if (role != null && role.toLowerCase() == 'admin') {
+        return forbiddenResponse('Não é permitido criar usuários administradores via API');
       }
 
       final result = await _controller.register(email, password);

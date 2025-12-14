@@ -78,6 +78,34 @@ void main() {
         final response = await handler(request);
         expect(response.statusCode, 400);
       });
+
+      test('deve bloquear criação de usuário admin via API', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'admin@terafy.com', 'password': 'senha123', 'role': 'admin'},
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 403);
+        final body = await response.readAsString();
+        expect(body, contains('Não é permitido criar usuários administradores via API'));
+      });
+
+      test('deve bloquear criação de admin mesmo com role em maiúsculas', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/register',
+          body: {'email': 'admin@terafy.com', 'password': 'senha123', 'role': 'ADMIN'},
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 403);
+        final body = await response.readAsString();
+        expect(body, contains('Não é permitido criar usuários administradores via API'));
+      });
     });
 
     group('POST /auth/login', () {

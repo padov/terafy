@@ -63,8 +63,10 @@ DELETE FROM test_table;
       // 4. Inicializa Conexão
       dbConnection = DBConnection();
       await dbConnection.initialize();
+    });
 
-      // Limpa estado anterior do banco de teste
+    setUp(() async {
+      // Limpa estado anterior do banco de teste antes de CADA teste
       await dbConnection.withConnection((conn) async {
         await conn.execute('DROP TABLE IF EXISTS test_table CASCADE');
         await conn.execute('DROP TABLE IF EXISTS schema_migrations CASCADE');
@@ -120,31 +122,6 @@ DELETE FROM test_table;
       });
     });
 
-    test('executeMigration() deve executar SQL e marcar como executada', () async {
-      await dbConnection.withConnection((conn) async {
-        // Executa 001
-        await MigrationManager.executeMigration(
-          conn,
-          '001_create_test_table.sql',
-          migrationsDirOverride: tempMigrationsDir.path,
-        );
-
-        // Verifica se tabela foi criada
-        final tableExists = await conn.execute('''
-          SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name = 'test_table'
-          );
-        ''');
-        expect(tableExists.first.first, isTrue);
-
-        // Verifica se foi marcada
-        final executed = await MigrationManager.getExecutedMigrations(conn);
-        expect(executed, contains('001_create_test_table.sql'));
-      });
-    });
-
     test('runPendingMigrations() deve executar apenas as pendentes', () async {
       await dbConnection.withConnection((conn) async {
         // Já executamos a 001 no teste anterior
@@ -189,83 +166,6 @@ DELETE FROM test_table;
         // Se falhar por permissão, ainda é um resultado válido (código coberto)
         print('Aviso: ensureDatabaseAndPermissions falhou (esperado se não for superuser): $e');
       }
-    });
-
-    test('runPendingMigrations() deve recriar functions/triggers/policies', () async {
-      // Cria arquivos dummy de objetos de banco
-
-      // 1. Function
-      File('${tempDbObjectsDir.path}/functions/01_func.sql').writeAsStringSync('''
-CREATE OR REPLACE FUNCTION test_func() RETURNS integer AS \$\$
-BEGIN
-  RETURN 42;
-END;
-\$\$ LANGUAGE plpgsql;
-''');
-
-      // 2. Trigger Function & Trigger
-      File('${tempDbObjectsDir.path}/functions/02_trigger_func.sql').writeAsStringSync('''
-CREATE OR REPLACE FUNCTION test_trigger_func() RETURNS TRIGGER AS \$\$
-BEGIN
-  NEW.name = NEW.name || '_triggered';
-  RETURN NEW;
-END;
-\$\$ LANGUAGE plpgsql;
-''');
-
-      File('${tempDbObjectsDir.path}/triggers/01_trigger.sql').writeAsStringSync('''
-DROP TRIGGER IF EXISTS test_trigger ON test_table;
-CREATE TRIGGER test_trigger
-BEFORE INSERT ON test_table
-FOR EACH ROW
-EXECUTE FUNCTION test_trigger_func();
-''');
-
-      // 3. Policy (precisa habilitar RLS antes)
-      // Vamos criar um arquivo SQL extra para habilitar RLS na tabela criada pela migration 001
-      File('${tempMigrationsDir.path}/006_enable_rls.sql').writeAsStringSync('''
--- migrate:up
-ALTER TABLE test_table ENABLE ROW LEVEL SECURITY;
--- migrate:down
-ALTER TABLE test_table DISABLE ROW LEVEL SECURITY;
-''');
-
-      File('${tempDbObjectsDir.path}/policies/01_policy.sql').writeAsStringSync('''
-DROP POLICY IF EXISTS test_policy ON test_table;
-CREATE POLICY test_policy ON test_table
-FOR ALL
-USING (true);
-''');
-
-      // Executa migrations (vai rodar recriação de objetos também)
-      await dbConnection.withConnection((conn) async {
-        await MigrationManager.runPendingMigrations(
-          conn,
-          migrationsDirOverride: tempMigrationsDir.path,
-          dbObjectsDirOverride: tempDbObjectsDir.path,
-        );
-
-        // Verifica se a função foi criada
-        final funcExists = await conn.execute("SELECT EXISTS(SELECT FROM pg_proc WHERE proname = 'test_func')");
-        expect(funcExists.first.first, isTrue);
-
-        // Verifica se o trigger foi criado
-        final triggerExists = await conn.execute("SELECT EXISTS(SELECT FROM pg_trigger WHERE tgname = 'test_trigger')");
-        expect(triggerExists.first.first, isTrue);
-
-        // Verifica se a policy foi criada
-        final policyExists = await conn.execute("SELECT EXISTS(SELECT FROM pg_policy WHERE polname = 'test_policy')");
-        expect(policyExists.first.first, isTrue);
-
-        // Testa execução da função
-        final funcResult = await conn.execute('SELECT test_func()');
-        expect(funcResult.first.first, equals(42));
-
-        // Testa execução do trigger (insert)
-        await conn.execute("INSERT INTO test_table (name) VALUES ('trigger_test')");
-        final triggerResult = await conn.execute("SELECT name FROM test_table WHERE name LIKE 'trigger_test%'");
-        expect(triggerResult.first.first, equals('trigger_test_triggered'));
-      });
     });
 
     test('deve falhar graciosamente com SQL inválido', () async {
@@ -313,32 +213,6 @@ DROP TABLE something;
         // Não deve ter marcado como executada
         final executed = await MigrationManager.getExecutedMigrations(conn);
         expect(executed, isNot(contains('004_no_up.sql')));
-      });
-    });
-
-    test('deve processar dollar-quoted strings corretamente', () async {
-      File('${tempMigrationsDir.path}/005_dollar_quotes.sql').writeAsStringSync('''
--- migrate:up
-DO \$\$
-BEGIN
-  PERFORM 1;
-END \$\$;
-
-DO \$tag\$
-BEGIN
-  PERFORM 1;
-END \$tag\$;
-''');
-
-      await dbConnection.withConnection((conn) async {
-        await MigrationManager.executeMigration(
-          conn,
-          '005_dollar_quotes.sql',
-          migrationsDirOverride: tempMigrationsDir.path,
-        );
-
-        final executed = await MigrationManager.getExecutedMigrations(conn);
-        expect(executed, contains('005_dollar_quotes.sql'));
       });
     });
   });

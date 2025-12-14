@@ -37,9 +37,7 @@ class FinancialHandler extends BaseHandler {
       int? therapistId;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
@@ -47,19 +45,12 @@ class FinancialHandler extends BaseHandler {
         if (therapistIdParam == null) {
           return badRequestResponse('Informe o therapistId para criar transação.');
         }
-        therapistId =
-            int.tryParse(therapistIdParam.toString()) ??
-            (throw FormatException('therapistId inválido'));
+        therapistId = int.tryParse(therapistIdParam.toString()) ?? (throw FormatException('therapistId inválido'));
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem criar transações.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem criar transações.');
       }
 
-      final transaction = FinancialTransaction.fromJson({
-        ...data,
-        'therapistId': therapistId,
-      });
+      final transaction = FinancialTransaction.fromJson({...data, 'therapistId': therapistId});
 
       final created = await _controller.createTransaction(
         transaction: transaction,
@@ -77,9 +68,7 @@ class FinancialHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao criar transação: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao criar transação: ${e.toString()}');
     }
   }
 
@@ -116,9 +105,7 @@ class FinancialHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao buscar transação: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao buscar transação: ${e.toString()}');
     }
   }
 
@@ -136,9 +123,7 @@ class FinancialHandler extends BaseHandler {
       int? therapistId;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
@@ -147,14 +132,11 @@ class FinancialHandler extends BaseHandler {
           therapistId = int.tryParse(therapistIdParam);
         }
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem listar transações.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem listar transações.');
       }
 
       // Parse query parameters
       final patientIdParam = request.url.queryParameters['patientId'];
-      final sessionIdParam = request.url.queryParameters['sessionId'];
       final statusParam = request.url.queryParameters['status'];
       final categoryParam = request.url.queryParameters['category'];
       final startDateParam = request.url.queryParameters['startDate'];
@@ -163,11 +145,6 @@ class FinancialHandler extends BaseHandler {
       int? patientId;
       if (patientIdParam != null) {
         patientId = int.tryParse(patientIdParam);
-      }
-
-      int? sessionId;
-      if (sessionIdParam != null) {
-        sessionId = int.tryParse(sessionIdParam);
       }
 
       DateTime? startDate;
@@ -186,24 +163,19 @@ class FinancialHandler extends BaseHandler {
         accountId: accountId,
         therapistId: therapistId,
         patientId: patientId,
-        sessionId: sessionId,
         status: statusParam,
         category: categoryParam,
         startDate: startDate,
         endDate: endDate,
       );
 
-      return successResponse(
-        transactions.map((t) => t.toJson()).toList(),
-      );
+      return successResponse(transactions.map((t) => t.toJson()).toList());
     } on FinancialException catch (e, stack) {
       AppLogger.error(e, stack);
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao listar transações: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao listar transações: ${e.toString()}');
     }
   }
 
@@ -265,9 +237,7 @@ class FinancialHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao atualizar transação: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao atualizar transação: ${e.toString()}');
     }
   }
 
@@ -300,9 +270,7 @@ class FinancialHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao deletar transação: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao deletar transação: ${e.toString()}');
     }
   }
 
@@ -320,9 +288,7 @@ class FinancialHandler extends BaseHandler {
       int? therapistId;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
@@ -335,9 +301,7 @@ class FinancialHandler extends BaseHandler {
           return badRequestResponse('therapistId inválido');
         }
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem acessar resumo financeiro.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem acessar resumo financeiro.');
       }
 
       final startDateParam = request.url.queryParameters['startDate'];
@@ -368,10 +332,69 @@ class FinancialHandler extends BaseHandler {
       return errorResponse(e.message, statusCode: e.statusCode);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao buscar resumo financeiro: ${e.toString()}',
+      return internalServerErrorResponse('Erro ao buscar resumo financeiro: ${e.toString()}');
+    }
+  }
+
+  Future<Response> handleGetDashboardMetrics(Request request) async {
+    AppLogger.func();
+    try {
+      final userId = getUserId(request);
+      final userRole = getUserRole(request);
+      final accountId = getAccountId(request);
+
+      if (userId == null || userRole == null) {
+        return unauthorizedResponse('Autenticação necessária');
+      }
+
+      int? therapistId;
+      if (userRole == 'therapist') {
+        if (accountId == null) {
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
+        }
+        therapistId = accountId;
+      } else if (userRole == 'admin') {
+        final therapistIdParam = request.url.queryParameters['therapistId'];
+        if (therapistIdParam == null) {
+          return badRequestResponse('Informe o therapistId para buscar métricas.');
+        }
+        therapistId = int.tryParse(therapistIdParam);
+        if (therapistId == null) {
+          return badRequestResponse('therapistId inválido');
+        }
+      } else {
+        return forbiddenResponse('Somente terapeutas ou administradores podem acessar métricas.');
+      }
+
+      final startDateParam = request.url.queryParameters['startDate'];
+      final endDateParam = request.url.queryParameters['endDate'];
+
+      DateTime? startDate;
+      if (startDateParam != null) {
+        startDate = DateTime.tryParse(startDateParam);
+      }
+
+      DateTime? endDate;
+      if (endDateParam != null) {
+        endDate = DateTime.tryParse(endDateParam);
+      }
+
+      final metrics = await _controller.getDashboardMetrics(
+        therapistId: therapistId,
+        userId: userId,
+        userRole: userRole,
+        accountId: accountId,
+        startDate: startDate,
+        endDate: endDate,
       );
+
+      return successResponse(metrics);
+    } on FinancialException catch (e, stack) {
+      AppLogger.error(e, stack);
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      return internalServerErrorResponse('Erro ao buscar métricas: ${e.toString()}');
     }
   }
 }
-

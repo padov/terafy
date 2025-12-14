@@ -19,7 +19,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
       interval: 10s
@@ -42,15 +42,14 @@ services:
       - JWT_EXPIRATION_DAYS=${JWT_EXPIRATION_DAYS:-7}
       - DB_SSL_MODE=${DB_SSL_MODE:-disable}
     ports:
-      - '${SERVER_PORT:-8080}:8080'
+      - "${SERVER_PORT:-8080}:8080"
     depends_on:
       postgres_db:
         condition: service_healthy
     volumes:
-      # Monta migrations, functions, triggers e policies para o servidor encontrar
+      # Monta migrations, functions (inclui triggers) e policies para o servidor encontrar
       - ./migrations:/app/db/migrations:ro
       - ./functions:/app/db/functions:ro
-      - ./triggers:/app/db/triggers:ro
       - ./policies:/app/db/policies:ro
       - ./.env:/app/.env:ro
 
@@ -60,14 +59,14 @@ services:
     container_name: terafy_nginx
     restart: unless-stopped
     ports:
-      - '${NGINX_HTTP_PORT:-80}:80'
-      - '${NGINX_HTTPS_PORT:-443}:443'
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       # Volume para arquivos estáticos do Flutter Web (app.terafy.app.br)
       # Os arquivos do Flutter Web estão em ./web/app/ (gerado no build)
       - ./web/app:/usr/share/nginx/html/app:ro
-      # 
+      #
       # Para o site institucional (www.terafy.app.br), quando estiver pronto:
       - ./web/www:/usr/share/nginx/html/www:ro
       # Volumes para certificados SSL do Let's Encrypt
@@ -88,13 +87,11 @@ services:
     profiles:
       - with-nginx
 
-
 volumes:
   postgres_data:
-    name: docker_postgres_data  # Usa o volume existente ao invés de criar um novo
+    name: docker_postgres_data # Usa o volume existente ao invés de criar um novo
     driver: local
   certbot_certs:
     driver: local
   certbot_www:
     driver: local
-

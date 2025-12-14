@@ -70,13 +70,7 @@ void main() async {
   // Passo 2: Conecta ao banco recém-criado e executa migrations
   print('📦 Executando migrations...');
   final conn = await Connection.open(
-    Endpoint(
-      host: host,
-      port: port,
-      database: database,
-      username: username,
-      password: password,
-    ),
+    Endpoint(host: host, port: port, database: database, username: username, password: password),
     settings: const ConnectionSettings(sslMode: SslMode.disable),
   );
 
@@ -98,24 +92,31 @@ void main() async {
 
 /// Executa todas as migrations na ordem correta
 Future<void> runMigrations(Connection conn) async {
-  // Lista de migrations na ordem correta
-  final migrations = [
-    '20251102000001_create_users_table.sql',
-    '20251102000002_create_refresh_tokens_table.sql',
-    '20251102000003_create_token_blacklist_table.sql',
-    '20251102000004_create_therapists_table.sql',
-    '20251102000005_add_user_id_to_therapists.sql',
-    '20251102000006_enable_rls_therapists.sql',
-    '20251102000007_create_plans_and_subscriptions.sql',
-    '20251102000008_create_patients_table.sql',
-    '20251102000009_enable_rls_patients.sql',
-    '20251102000010_create_therapist_schedule.sql',
-    '20251112090000_update_patient_trigger.sql',
-    '20251112093000_add_parent_to_appointments.sql',
-  ];
+  // Descobre todas as migrations dinamicamente
+  final migrationsDir = Directory('db/migrations');
 
-  for (final migration in migrations) {
-    final file = File('server/db/migrations/$migration');
+  if (!migrationsDir.existsSync()) {
+    print('   ⚠️  Diretório de migrations não encontrado: ${migrationsDir.path}');
+    return;
+  }
+
+  // Lista todos os arquivos .sql no diretório de migrations
+  final migrationFiles =
+      migrationsDir
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.sql'))
+          .map((f) => f.path.split('/').last)
+          .where(
+            (name) => !name.startsWith('0000000000001_') && !name.startsWith('0000000000002_'),
+          ) // Pula migrations de setup
+          .toList()
+        ..sort(); // Ordena alfabeticamente (que é a ordem cronológica devido ao timestamp)
+
+  print('   📋 Encontradas ${migrationFiles.length} migrations\n');
+
+  for (final migration in migrationFiles) {
+    final file = File('db/migrations/$migration');
     if (!file.existsSync()) {
       print('   ⚠️  Migration não encontrada: $migration');
       continue;
@@ -132,40 +133,94 @@ Future<void> runMigrations(Connection conn) async {
         continue;
       }
 
-      final upSection = content
-          .split('-- migrate:up')[1]
-          .split('-- migrate:down')[0];
+      final upSection = content.split('-- migrate:up')[1].split('-- migrate:down')[0].trim();
 
-      // Executa cada comando SQL separadamente
-      final commands = upSection
+      // Divide por ponto-e-vírgula e executa cada comando separadamente
+      final statements = upSection
           .split(';')
-          .map((c) => c.trim())
-          .where((c) => c.isNotEmpty && !c.startsWith('--'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && !s.startsWith('--'))
           .toList();
 
-      for (final command in commands) {
-        if (command.trim().isNotEmpty) {
-          try {
-            await conn.execute(command);
-          } catch (e) {
-            // Ignora erros de "já existe" (pode acontecer em alguns casos)
-            if (!e.toString().contains('already exists') &&
-                !e.toString().contains('duplicate')) {
-              print('      ❌ Erro ao executar comando:');
-              print(
-                '         ${command.substring(0, command.length > 100 ? 100 : command.length)}...',
-              );
-              print('         Erro: $e');
-              rethrow;
+      try {
+        for (final statement in statements) {
+          if (statement.isNotEmpty) {
+            try {
+              await conn.execute(statement);
+            } catch (e) {
+              // Ignora erros de "já existe"
+              if (!e.toString().contains('already exists') && !e.toString().contains('duplicate')) {
+                print('      ❌ Erro ao executar statement:');
+                print('         ${statement.substring(0, statement.length > 100 ? 100 : statement.length)}...');
+                print('         Erro: $e');
+                rethrow;
+              }
             }
           }
         }
+        print('      ✅ $migration executada com sucesso');
+      } catch (e) {
+        print('      ❌ Erro fatal em $migration: $e');
+        rethrow;
       }
-
-      print('      ✅ $migration executada com sucesso');
     } catch (e) {
       print('      ❌ Erro ao executar $migration: $e');
       rethrow;
+    }
+  }
+
+  // Aplica todas as functions/triggers
+  await applyFunctions(conn);
+}
+
+/// Aplica todas as functions e triggers do diretório db/functions
+Future<void> applyFunctions(Connection conn) async {
+  print('\n🔧 Aplicando functions e triggers...');
+
+  final functionsDir = Directory('db/functions');
+
+  if (!functionsDir.existsSync()) {
+    print('   ⚠️  Diretório de functions não encontrado: ${functionsDir.path}');
+    return;
+  }
+
+  // Lista todos os arquivos .sql no diretório de functions
+  final functionFiles =
+      functionsDir
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.sql'))
+          .map((f) => f.path.split('/').last)
+          .toList()
+        ..sort(); // Ordena alfabeticamente
+
+  print('   📋 Encontradas ${functionFiles.length} functions/triggers\n');
+
+  for (final functionFile in functionFiles) {
+    final file = File('db/functions/$functionFile');
+    if (!file.existsSync()) {
+      print('   ⚠️  Function não encontrada: $functionFile');
+      continue;
+    }
+
+    print('   🔧 Aplicando: $functionFile');
+
+    try {
+      final content = await file.readAsString();
+
+      // Executa o conteúdo completo do arquivo
+      // Functions e triggers geralmente são um único bloco SQL
+      await conn.execute(content);
+
+      print('      ✅ $functionFile aplicada com sucesso');
+    } catch (e) {
+      // Ignora erros de "já existe" para functions/triggers
+      if (!e.toString().contains('already exists') && !e.toString().contains('duplicate')) {
+        print('      ❌ Erro ao aplicar $functionFile: $e');
+        rethrow;
+      } else {
+        print('      ✅ $functionFile já existe (ok)');
+      }
     }
   }
 }

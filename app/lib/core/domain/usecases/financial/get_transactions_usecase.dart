@@ -9,7 +9,6 @@ class GetTransactionsUseCase {
   Future<List<FinancialTransaction>> call({
     int? therapistId,
     int? patientId,
-    int? sessionId,
     String? status,
     String? category,
     DateTime? startDate,
@@ -18,7 +17,6 @@ class GetTransactionsUseCase {
     return _repository.fetchTransactions(
       therapistId: therapistId,
       patientId: patientId,
-      sessionId: sessionId,
       status: status,
       category: category,
       startDate: startDate,

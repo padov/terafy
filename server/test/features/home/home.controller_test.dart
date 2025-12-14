@@ -33,7 +33,7 @@ void main() {
         type: 'individual',
         modality: 'presencial',
         status: 'agendada',
-        paymentStatus: 'pendente',
+        transactionId: null,
       ),
     );
   });
@@ -66,7 +66,7 @@ void main() {
     type: 'individual',
     modality: 'presencial',
     status: 'agendada',
-    paymentStatus: 'pendente',
+    transactionId: null,
     createdAt: DateTime.now(),
     updatedAt: DateTime.now(),
   );

@@ -8,7 +8,6 @@ class FinancialTransactionMapper {
       id: transaction.id?.toString() ?? '',
       therapistId: transaction.therapistId.toString(),
       patientId: transaction.patientId.toString(),
-      sessionId: transaction.sessionId?.toString(),
       amount: transaction.amount,
       status: _mapStatusFromString(transaction.status),
       method: _mapPaymentMethodFromString(transaction.paymentMethod),
@@ -28,9 +27,6 @@ class FinancialTransactionMapper {
       id: int.tryParse(payment.id),
       therapistId: int.tryParse(payment.therapistId) ?? 0,
       patientId: int.tryParse(payment.patientId) ?? 0,
-      sessionId: payment.sessionId != null
-          ? int.tryParse(payment.sessionId!)
-          : null,
       transactionDate: payment.dueDate,
       type: 'recebimento', // Default, pode ser ajustado
       amount: payment.amount,

@@ -83,6 +83,7 @@ void main() {
           path: '/sessions',
           body: {
             'patientId': patientId,
+            'therapistId': therapistId,
             'scheduledStartTime': scheduledStartTime.toIso8601String(),
             'scheduledEndTime': scheduledEndTime.toIso8601String(),
             'durationMinutes': durationMinutes,
@@ -90,7 +91,7 @@ void main() {
             'type': 'onlineVideo',
             'modality': 'individual',
             'status': 'scheduled',
-            'paymentStatus': 'pending',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
           },
@@ -117,7 +118,7 @@ void main() {
             'type': 'onlineVideo',
             'modality': 'individual',
             'status': 'scheduled',
-            'paymentStatus': 'pending',
+            'transactionId': null,
           },
         );
 
@@ -193,13 +194,14 @@ void main() {
           path: '/sessions',
           body: {
             'patientId': patientId,
+            'therapistId': therapistId,
             'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
             'durationMinutes': 60,
             'sessionNumber': 1,
             'type': 'presential',
             'modality': 'individual',
             'status': 'scheduled',
-            'paymentStatus': 'pending',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
           },
@@ -243,13 +245,14 @@ void main() {
           path: '/sessions',
           body: {
             'patientId': patientId,
+            'therapistId': therapistId,
             'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
             'durationMinutes': 60,
             'sessionNumber': 1,
             'type': 'presential',
             'modality': 'individual',
             'status': 'scheduled',
-            'paymentStatus': 'pending',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
           },
@@ -304,13 +307,14 @@ void main() {
           path: '/sessions',
           body: {
             'patientId': patientId,
+            'therapistId': therapistId,
             'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
             'durationMinutes': 60,
             'sessionNumber': 1,
             'type': 'presential',
             'modality': 'individual',
             'status': 'scheduled',
-            'paymentStatus': 'pending',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
           },
@@ -333,7 +337,7 @@ void main() {
             'type': 'presential',
             'modality': 'individual',
             'status': 'completed',
-            'paymentStatus': 'paid',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
             'sessionNotes': 'Sessão concluída com sucesso',
@@ -361,7 +365,7 @@ void main() {
             'sessionNumber': 1,
             'type': 'presential',
             'modality': 'individual',
-            'paymentStatus': 'pending',
+            'transactionId': null,
           },
           token: therapistToken,
         );
@@ -394,13 +398,14 @@ void main() {
           path: '/sessions',
           body: {
             'patientId': patientId,
+            'therapistId': therapistId,
             'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
             'durationMinutes': 60,
             'sessionNumber': 1,
             'type': 'presential',
             'modality': 'individual',
             'status': 'scheduled',
-            'paymentStatus': 'pending',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
           },
@@ -478,13 +483,14 @@ void main() {
             path: '/sessions',
             body: {
               'patientId': patient1Id,
+              'therapistId': therapistId,
               'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
               'durationMinutes': 60,
               'sessionNumber': 1,
               'type': 'presential',
               'modality': 'individual',
               'status': 'scheduled',
-              'paymentStatus': 'pending',
+              'transactionId': null,
               'currentRisk': 'low',
               'needsReferral': false,
             },
@@ -498,13 +504,14 @@ void main() {
             path: '/sessions',
             body: {
               'patientId': patient2Id,
+              'therapistId': therapistId,
               'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
               'durationMinutes': 60,
               'sessionNumber': 1,
               'type': 'presential',
               'modality': 'individual',
               'status': 'scheduled',
-              'paymentStatus': 'pending',
+              'transactionId': null,
               'currentRisk': 'low',
               'needsReferral': false,
             },
@@ -550,13 +557,14 @@ void main() {
             path: '/sessions',
             body: {
               'patientId': patientId,
+              'therapistId': therapistId,
               'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
               'durationMinutes': 60,
               'sessionNumber': 1,
               'type': 'presential',
               'modality': 'individual',
               'status': 'scheduled',
-              'paymentStatus': 'pending',
+              'transactionId': null,
               'currentRisk': 'low',
               'needsReferral': false,
             },
@@ -569,13 +577,14 @@ void main() {
           path: '/sessions',
           body: {
             'patientId': patientId,
+            'therapistId': therapistId,
             'scheduledStartTime': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
             'durationMinutes': 60,
             'sessionNumber': 2,
             'type': 'presential',
             'modality': 'individual',
             'status': 'completed',
-            'paymentStatus': 'paid',
+            'transactionId': null,
             'currentRisk': 'low',
             'needsReferral': false,
           },
@@ -594,6 +603,187 @@ void main() {
         expect(filterResponse.statusCode, 200);
         final filterData = await HttpTestHelpers.parseJsonListResponse(filterResponse);
         expect(filterData.every((s) => s['status'] == 'completed'), isTrue);
+      });
+    });
+
+    group('Trigger - Financial Transaction Creation', () {
+      test('deve criar transação financeira automaticamente quando sessão tem chargedAmount', () async {
+        // Cria paciente
+        final patientRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/patients',
+          body: {
+            'fullName': 'Paciente Trigger Test',
+            'email': 'paciente.trigger@terafy.com',
+            'phones': ['11999999999'],
+            'birthDate': '1990-01-01',
+          },
+          token: therapistToken,
+        );
+        final patientResponse = await handler(patientRequest);
+        final patientData = await HttpTestHelpers.parseJsonResponse(patientResponse);
+        final patientId = patientData['id'] as int;
+
+        // Cria sessão com chargedAmount
+        final sessionRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/sessions',
+          body: {
+            'patientId': patientId,
+            'therapistId': therapistId,
+            'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+            'durationMinutes': 60,
+            'sessionNumber': 1,
+            'type': 'presential',
+            'modality': 'individual',
+            'status': 'completed',
+            'chargedAmount': 150.0,
+            'currentRisk': 'low',
+            'needsReferral': false,
+          },
+          token: therapistToken,
+        );
+        final sessionResponse = await handler(sessionRequest);
+        expect(sessionResponse.statusCode, 200);
+        final sessionData = await HttpTestHelpers.parseJsonResponse(sessionResponse);
+        final transactionId = sessionData['transactionId'] as int?;
+
+        // Verifica que transactionId foi preenchido pelo trigger
+        expect(transactionId, isNotNull, reason: 'Transaction ID should be set by trigger');
+
+        // Busca a transação financeira criada
+        print('transactionId: $transactionId');
+        final transactionRequest = HttpTestHelpers.createRequest(
+          method: 'GET',
+          path: '/financial/$transactionId',
+          token: therapistToken,
+        );
+        final transactionResponse = await handler(transactionRequest);
+        expect(transactionResponse.statusCode, 200);
+
+        final transactionData = await HttpTestHelpers.parseJsonResponse(transactionResponse);
+        expect(transactionData['amount'], 150.0);
+        expect(transactionData['type'], 'income');
+        expect(transactionData['category'], 'session');
+        expect(transactionData['status'], 'pending');
+        expect(transactionData['paymentMethod'], 'others');
+        expect(transactionData['patientId'], patientId);
+        expect(transactionData['therapistId'], therapistId);
+      });
+
+      test('NÃO deve criar transação financeira quando chargedAmount é 0', () async {
+        // Cria paciente
+        final patientRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/patients',
+          body: {
+            'fullName': 'Paciente Free Session',
+            'email': 'paciente.free@terafy.com',
+            'phones': ['11999999999'],
+            'birthDate': '1990-01-01',
+          },
+          token: therapistToken,
+        );
+        final patientResponse = await handler(patientRequest);
+        final patientData = await HttpTestHelpers.parseJsonResponse(patientResponse);
+        final patientId = patientData['id'] as int;
+
+        // Cria sessão com chargedAmount = 0
+        final sessionRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/sessions',
+          body: {
+            'patientId': patientId,
+            'therapistId': therapistId,
+            'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+            'durationMinutes': 60,
+            'sessionNumber': 1,
+            'type': 'presential',
+            'modality': 'individual',
+            'status': 'completed',
+            'chargedAmount': 0.0,
+            'currentRisk': 'low',
+            'needsReferral': false,
+          },
+          token: therapistToken,
+        );
+        final sessionResponse = await handler(sessionRequest);
+        expect(sessionResponse.statusCode, 200);
+        final sessionData = await HttpTestHelpers.parseJsonResponse(sessionResponse);
+        final transactionId = sessionData['transactionId'];
+
+        // Verifica que transactionId NÃO foi preenchido
+        expect(transactionId, isNull, reason: 'Transaction should NOT be created for 0 amount');
+      });
+
+      test('deve usar default_session_price do terapeuta quando chargedAmount é null', () async {
+        // Atualiza terapeuta com default_session_price
+        final updateTherapistRequest = HttpTestHelpers.createRequest(
+          method: 'PUT',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. Teste',
+            'email': 'teste@terafy.app.br',
+            'status': 'active',
+            'default_session_price': 200.0,
+          },
+          token: therapistToken,
+        );
+        await handler(updateTherapistRequest);
+
+        // Cria paciente
+        final patientRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/patients',
+          body: {
+            'fullName': 'Paciente Default Price',
+            'email': 'paciente.default@terafy.com',
+            'phones': ['11999999999'],
+            'birthDate': '1990-01-01',
+          },
+          token: therapistToken,
+        );
+        final patientResponse = await handler(patientRequest);
+        final patientData = await HttpTestHelpers.parseJsonResponse(patientResponse);
+        final patientId = patientData['id'] as int;
+
+        // Cria sessão SEM chargedAmount (deve usar default do terapeuta)
+        final sessionRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/sessions',
+          body: {
+            'patientId': patientId,
+            'therapistId': therapistId,
+            'scheduledStartTime': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+            'durationMinutes': 60,
+            'sessionNumber': 1,
+            'type': 'presential',
+            'modality': 'individual',
+            'status': 'completed',
+            'currentRisk': 'low',
+            'needsReferral': false,
+            // chargedAmount não enviado
+          },
+          token: therapistToken,
+        );
+        final sessionResponse = await handler(sessionRequest);
+        expect(sessionResponse.statusCode, 200);
+        final sessionData = await HttpTestHelpers.parseJsonResponse(sessionResponse);
+        final transactionId = sessionData['transactionId'] as int?;
+
+        // Verifica que transactionId foi preenchido
+        expect(transactionId, isNotNull, reason: 'Transaction should be created using default price');
+
+        // Busca a transação e verifica o valor
+        final transactionRequest = HttpTestHelpers.createRequest(
+          method: 'GET',
+          path: '/financial/$transactionId',
+          token: therapistToken,
+        );
+        final transactionResponse = await handler(transactionRequest);
+        final transactionData = await HttpTestHelpers.parseJsonResponse(transactionResponse);
+
+        expect(transactionData['amount'], 200.0, reason: 'Should use therapist default_session_price');
       });
     });
   });

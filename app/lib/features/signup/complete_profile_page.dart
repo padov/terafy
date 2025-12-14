@@ -174,6 +174,7 @@ class _CompleteProfilePageContentState extends State<_CompleteProfilePageContent
                 required List<String> professionalRegistrations,
                 required String presentation,
                 required String address,
+                double? defaultSessionPrice,
               }) {
                 context.read<CompleteProfileBloc>().add(
                   UpdateProfessionalData(

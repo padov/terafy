@@ -7,48 +7,25 @@ Router configureFinancialRoutes(FinancialHandler handler) {
   final router = Router();
   final therapistOrAdmin = requireAnyRole(['therapist', 'admin']);
 
-  router.post(
-    '/',
-    therapistOrAdmin.call(handler.handleCreateTransaction),
-  );
+  router.post('/', therapistOrAdmin.call(handler.handleCreateTransaction));
 
-  router.get(
-    '/',
-    therapistOrAdmin.call(handler.handleListTransactions),
-  );
+  router.get('/', therapistOrAdmin.call(handler.handleListTransactions));
 
-  router.get(
-    '/summary',
-    therapistOrAdmin.call(handler.handleGetFinancialSummary),
-  );
+  router.get('/summary', therapistOrAdmin.call(handler.handleGetFinancialSummary));
 
-  router.get(
-    '/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (req) => handler.handleGetTransaction(req, id),
-      )(request);
-    },
-  );
+  router.get('/dashboard', therapistOrAdmin.call(handler.handleGetDashboardMetrics));
 
-  router.put(
-    '/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (req) => handler.handleUpdateTransaction(req, id),
-      )(request);
-    },
-  );
+  router.get('/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((req) => handler.handleGetTransaction(req, id))(request);
+  });
 
-  router.delete(
-    '/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (req) => handler.handleDeleteTransaction(req, id),
-      )(request);
-    },
-  );
+  router.put('/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((req) => handler.handleUpdateTransaction(req, id))(request);
+  });
+
+  router.delete('/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((req) => handler.handleDeleteTransaction(req, id))(request);
+  });
 
   return router;
 }
-

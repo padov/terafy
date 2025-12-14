@@ -207,10 +207,8 @@ class _SessionDetailsContent extends StatelessWidget {
                 // Ícone de pagamento para sessões completadas
                 if (session.status == SessionStatus.completed) ...[
                   const SizedBox(width: 12),
-                  if (session.paymentStatus == PaymentStatus.paid)
+                  if (session.transactionId != null)
                     Icon(Icons.check_circle, color: Colors.green, size: 18)
-                  else if (session.paymentStatus == PaymentStatus.exempt)
-                    Icon(Icons.remove_circle_outline, color: Colors.orange, size: 18)
                   else
                     Icon(Icons.pending_outlined, color: Colors.orange[300], size: 18),
                 ],
@@ -282,7 +280,7 @@ class _SessionDetailsContent extends StatelessWidget {
                   () => _navigateToEvolution(context, session),
                 ),
               // Mostrar botão de registrar pagamento apenas se pagamento estiver pendente
-              if (session.status == SessionStatus.completed && session.paymentStatus == PaymentStatus.pending)
+              if (session.status == SessionStatus.completed && session.transactionId == null)
                 _buildActionChip(
                   context,
                   'Registrar Pagamento',
@@ -356,7 +354,7 @@ class _SessionDetailsContent extends StatelessWidget {
           if (session.onlineRoomLink != null) _buildInfoRow('Link Online', session.onlineRoomLink!, Icons.video_call),
           if (session.chargedAmount != null)
             _buildInfoRow('Valor', 'R\$ ${session.chargedAmount!.toStringAsFixed(2)}', Icons.attach_money),
-          _buildInfoRow('Pagamento', _getPaymentStatusText(session.paymentStatus), Icons.payment),
+          _buildInfoRow('Pagamento', session.transactionId != null ? 'Vinculado' : 'Pendente', Icons.payment),
         ],
       ),
     );
@@ -807,17 +805,6 @@ class _SessionDetailsContent extends StatelessWidget {
     }
   }
 
-  String _getPaymentStatusText(PaymentStatus status) {
-    switch (status) {
-      case PaymentStatus.pending:
-        return 'Pendente';
-      case PaymentStatus.paid:
-        return 'Pago';
-      case PaymentStatus.exempt:
-        return 'Isento';
-    }
-  }
-
   void _handleMenuAction(BuildContext context, String action, Session session) {
     switch (action) {
       case 'confirm':
@@ -1048,7 +1035,7 @@ class _SessionDetailsContent extends StatelessWidget {
 
                 // Atualizar paymentStatus da sessão para 'paid'
                 final updatedSession = session.copyWith(
-                  paymentStatus: PaymentStatus.paid,
+                  transactionId: null,
                   chargedAmount: amount,
                   updatedAt: DateTime.now(),
                 );

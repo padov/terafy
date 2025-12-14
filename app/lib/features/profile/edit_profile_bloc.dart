@@ -9,10 +9,8 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
   final GetCurrentTherapistUseCase getCurrentTherapistUseCase;
   final UpdateTherapistUseCase updateTherapistUseCase;
 
-  EditProfileBloc({
-    required this.getCurrentTherapistUseCase,
-    required this.updateTherapistUseCase,
-  }) : super(const EditProfileInitial()) {
+  EditProfileBloc({required this.getCurrentTherapistUseCase, required this.updateTherapistUseCase})
+    : super(const EditProfileInitial()) {
     on<LoadProfileData>(_onLoadProfileData);
     on<NextStepPressed>(_onNextStepPressed);
     on<PreviousStepPressed>(_onPreviousStepPressed);
@@ -24,10 +22,7 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
     add(const LoadProfileData());
   }
 
-  Future<void> _onLoadProfileData(
-    LoadProfileData event,
-    Emitter<EditProfileState> emit,
-  ) async {
+  Future<void> _onLoadProfileData(LoadProfileData event, Emitter<EditProfileState> emit) async {
     AppLogger.func();
     emit(const EditProfileLoading(currentStep: 0, data: EditProfileData()));
 
@@ -39,7 +34,7 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
       String? registryType = therapist.professionalRegistryType;
       String? registryNumber = therapist.professionalRegistryNumber;
       List<String> professionalRegistrations = [];
-      
+
       if (registryType != null && registryNumber != null) {
         professionalRegistrations = ['$registryType $registryNumber'];
       } else if (registryNumber != null) {
@@ -54,58 +49,32 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
         phone: therapist.phone,
         birthday: therapist.birthDate,
         specialties: therapist.specialties,
-        professionalRegistrations: professionalRegistrations.isNotEmpty 
-            ? professionalRegistrations 
-            : null,
+        professionalRegistrations: professionalRegistrations.isNotEmpty ? professionalRegistrations : null,
         presentation: therapist.professionalPresentation,
         address: therapist.officeAddress,
+        defaultSessionPrice: therapist.defaultSessionPrice,
       );
 
       emit(EditProfileLoaded(currentStep: 0, data: data));
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
-      emit(
-        EditProfileFailure(
-          currentStep: 0,
-          data: const EditProfileData(),
-          error: _mapErrorMessage(e),
-        ),
-      );
+      emit(EditProfileFailure(currentStep: 0, data: const EditProfileData(), error: _mapErrorMessage(e)));
     }
   }
 
-  void _onNextStepPressed(
-    NextStepPressed event,
-    Emitter<EditProfileState> emit,
-  ) {
+  void _onNextStepPressed(NextStepPressed event, Emitter<EditProfileState> emit) {
     if (state.currentStep < 1) {
-      emit(
-        EditProfileInProgress(
-          currentStep: state.currentStep + 1,
-          data: state.data,
-        ),
-      );
+      emit(EditProfileInProgress(currentStep: state.currentStep + 1, data: state.data));
     }
   }
 
-  void _onPreviousStepPressed(
-    PreviousStepPressed event,
-    Emitter<EditProfileState> emit,
-  ) {
+  void _onPreviousStepPressed(PreviousStepPressed event, Emitter<EditProfileState> emit) {
     if (state.currentStep > 0) {
-      emit(
-        EditProfileInProgress(
-          currentStep: state.currentStep - 1,
-          data: state.data,
-        ),
-      );
+      emit(EditProfileInProgress(currentStep: state.currentStep - 1, data: state.data));
     }
   }
 
-  void _onUpdatePersonalData(
-    UpdatePersonalData event,
-    Emitter<EditProfileState> emit,
-  ) {
+  void _onUpdatePersonalData(UpdatePersonalData event, Emitter<EditProfileState> emit) {
     final updatedData = state.data.copyWith(
       name: event.name,
       nickname: event.nickname,
@@ -115,43 +84,27 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
       birthday: event.birthday,
     );
 
-    emit(
-      EditProfileInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(EditProfileInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  void _onUpdateProfessionalData(
-    UpdateProfessionalData event,
-    Emitter<EditProfileState> emit,
-  ) {
+  void _onUpdateProfessionalData(UpdateProfessionalData event, Emitter<EditProfileState> emit) {
     final updatedData = state.data.copyWith(
       specialties: event.specialties,
       professionalRegistrations: event.professionalRegistrations,
       presentation: event.presentation,
       address: event.address,
+      defaultSessionPrice: event.defaultSessionPrice,
     );
 
-    emit(
-      EditProfileInProgress(
-        currentStep: state.currentStep,
-        data: updatedData,
-      ),
-    );
+    emit(EditProfileInProgress(currentStep: state.currentStep, data: updatedData));
   }
 
-  Future<void> _onSubmitEditProfile(
-    SubmitEditProfile event,
-    Emitter<EditProfileState> emit,
-  ) async {
+  Future<void> _onSubmitEditProfile(SubmitEditProfile event, Emitter<EditProfileState> emit) async {
     AppLogger.func();
     final data = state.data;
 
     // Validações básicas
-    if ((data.name ?? '').trim().isEmpty ||
-        (data.email ?? '').trim().isEmpty) {
+    if ((data.name ?? '').trim().isEmpty || (data.email ?? '').trim().isEmpty) {
       emit(
         EditProfileFailure(
           currentStep: state.currentStep,
@@ -162,26 +115,15 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
       return;
     }
 
-    emit(
-      EditProfileSaving(currentStep: state.currentStep, data: state.data),
-    );
+    emit(EditProfileSaving(currentStep: state.currentStep, data: state.data));
 
     try {
       // Prepara dados do terapeuta
-      final registry = _extractProfessionalRegistry(
-        data.professionalRegistrations,
-      );
+      final registry = _extractProfessionalRegistry(data.professionalRegistrations);
 
-      final specialties = data.specialties
-          ?.map((e) => e.trim())
-          .where((element) => element.isNotEmpty)
-          .toList();
-      final presentation = (data.presentation?.trim().isNotEmpty ?? false)
-          ? data.presentation!.trim()
-          : null;
-      final address = (data.address?.trim().isNotEmpty ?? false)
-          ? data.address!.trim()
-          : null;
+      final specialties = data.specialties?.map((e) => e.trim()).where((element) => element.isNotEmpty).toList();
+      final presentation = (data.presentation?.trim().isNotEmpty ?? false) ? data.presentation!.trim() : null;
+      final address = (data.address?.trim().isNotEmpty ?? false) ? data.address!.trim() : null;
 
       final therapist = Therapist(
         name: data.name!.trim(),
@@ -195,6 +137,7 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
         specialties: (specialties?.isEmpty ?? true) ? null : specialties,
         professionalPresentation: presentation,
         officeAddress: address,
+        defaultSessionPrice: data.defaultSessionPrice,
         status: 'active', // Mantém status ativo
       );
 
@@ -203,22 +146,11 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
 
       AppLogger.info('✅ Perfil atualizado com sucesso!');
 
-      emit(
-        EditProfileSuccess(
-          currentStep: state.currentStep,
-          data: state.data,
-        ),
-      );
+      emit(EditProfileSuccess(currentStep: state.currentStep, data: state.data));
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
 
-      emit(
-        EditProfileFailure(
-          currentStep: state.currentStep,
-          data: state.data,
-          error: _mapErrorMessage(e),
-        ),
-      );
+      emit(EditProfileFailure(currentStep: state.currentStep, data: state.data, error: _mapErrorMessage(e)));
     }
   }
 

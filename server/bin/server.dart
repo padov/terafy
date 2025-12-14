@@ -33,9 +33,66 @@ import 'package:server/features/anamnesis/anamnesis.handler.dart';
 import 'package:server/features/anamnesis/anamnesis.repository.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
+import 'package:path/path.dart' as p;
+import 'package:logging/logging.dart';
 
-/// Versão do servidor
-const String serverVersion = '0.2.1';
+/// Lê a versão do servidor a partir do pubspec.yaml
+String _getServerVersion() {
+  try {
+    // Obtém o caminho do diretório do executável
+    final scriptPath = Platform.script.toFilePath();
+    final serverDir = p.dirname(p.dirname(scriptPath)); // Volta 2 níveis (de bin/ para raiz)
+    final pubspecPath = p.join(serverDir, 'pubspec.yaml');
+
+    final pubspecFile = File(pubspecPath);
+    if (!pubspecFile.existsSync()) {
+      AppLogger.warning('⚠️  pubspec.yaml não encontrado em: $pubspecPath');
+      return 'unknown';
+    }
+
+    final content = pubspecFile.readAsStringSync();
+    final versionMatch = RegExp(r'^version:\s*(.+)$', multiLine: true).firstMatch(content);
+
+    if (versionMatch != null) {
+      return versionMatch.group(1)!.trim();
+    }
+
+    AppLogger.warning('⚠️  Versão não encontrada no pubspec.yaml');
+    return 'unknown';
+  } catch (e) {
+    AppLogger.error('❌ Erro ao ler versão do pubspec.yaml: $e');
+    return 'unknown';
+  }
+}
+
+/// Converte string de nível de log para Level
+Level _parseLogLevel(String levelStr) {
+  switch (levelStr.toUpperCase()) {
+    case 'ALL':
+      return Level.ALL;
+    case 'FINEST':
+      return Level.FINEST;
+    case 'FINER':
+      return Level.FINER;
+    case 'FINE':
+      return Level.FINE;
+    case 'CONFIG':
+      return Level.CONFIG;
+    case 'INFO':
+      return Level.INFO;
+    case 'WARNING':
+      return Level.WARNING;
+    case 'SEVERE':
+      return Level.SEVERE;
+    case 'SHOUT':
+      return Level.SHOUT;
+    case 'OFF':
+      return Level.OFF;
+    default:
+      AppLogger.warning('⚠️  Nível de log desconhecido: $levelStr. Usando ALL.');
+      return Level.ALL;
+  }
+}
 
 void main() async {
   // Carrega variáveis de ambiente do arquivo .env
@@ -61,7 +118,15 @@ void main() async {
 
   // Configura o logger
   // Em produção, pode usar variável de ambiente: const bool.fromEnvironment('DEBUG', defaultValue: false)
-  AppLogger.config(isDebugMode: true);
+  AppLogger.config(
+    isDebugMode: true,
+    logToFile: EnvConfig.getOrDefault('LOG_TO_FILE', 'false') == 'true',
+    logDirectory: EnvConfig.getOrDefault('LOG_DIR', './log'),
+    logLevel: _parseLogLevel(EnvConfig.getOrDefault('LOG_LEVEL', 'ALL')),
+    maxFileSizeMB: EnvConfig.getIntOrDefault('LOG_MAX_FILE_SIZE_MB', 20),
+    retentionDays: EnvConfig.getIntOrDefault('LOG_RETENTION_DAYS', 30),
+    compressRotated: EnvConfig.getOrDefault('LOG_COMPRESS_ROTATED', 'true') == 'true',
+  );
 
   // --- Garantir Banco de Dados e Permissões ---
   // Este passo é opcional - apenas tenta criar/configurar se tiver permissões
@@ -114,7 +179,7 @@ void main() async {
   final financialRepository = FinancialRepository(dbConnection);
   final sessionController = SessionController(sessionRepository, scheduleRepository, financialRepository);
   final sessionHandler = SessionHandler(sessionController);
-  final financialController = FinancialController(financialRepository, sessionRepository);
+  final financialController = FinancialController(financialRepository);
   final financialHandler = FinancialHandler(financialController);
   final homeController = HomeController(scheduleRepository, sessionRepository, patientRepository);
   final homeHandler = HomeHandler(homeController);
@@ -160,6 +225,6 @@ void main() async {
                         |___/
 ''';
   AppLogger.info(ascArt);
-  AppLogger.info('📦 Versão: $serverVersion');
+  AppLogger.info('📦 Versão: ${_getServerVersion()}');
   AppLogger.info('🌐 Servidor rodando em http://${server.address.host}:${server.port}');
 }

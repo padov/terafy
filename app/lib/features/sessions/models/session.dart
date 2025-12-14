@@ -42,10 +42,9 @@ class Session extends Equatable {
   final SessionStatus status;
   final String? cancellationReason;
   final DateTime? cancellationTime;
-
   // Financeiro
   final double? chargedAmount;
-  final PaymentStatus paymentStatus;
+  final String? transactionId; // FK para financial_transactions
 
   // Registro Clínico
   final String? patientMood; // Humor/estado emocional
@@ -92,7 +91,7 @@ class Session extends Equatable {
     this.cancellationReason,
     this.cancellationTime,
     this.chargedAmount,
-    required this.paymentStatus,
+    this.transactionId,
     this.patientMood,
     this.topicsDiscussed = const [],
     this.sessionNotes,
@@ -134,7 +133,7 @@ class Session extends Equatable {
     String? cancellationReason,
     DateTime? cancellationTime,
     double? chargedAmount,
-    PaymentStatus? paymentStatus,
+    String? transactionId,
     String? patientMood,
     List<String>? topicsDiscussed,
     String? sessionNotes,
@@ -175,7 +174,7 @@ class Session extends Equatable {
       cancellationReason: cancellationReason ?? this.cancellationReason,
       cancellationTime: cancellationTime ?? this.cancellationTime,
       chargedAmount: chargedAmount ?? this.chargedAmount,
-      paymentStatus: paymentStatus ?? this.paymentStatus,
+      transactionId: transactionId ?? this.transactionId,
       patientMood: patientMood ?? this.patientMood,
       topicsDiscussed: topicsDiscussed ?? this.topicsDiscussed,
       sessionNotes: sessionNotes ?? this.sessionNotes,
@@ -185,16 +184,13 @@ class Session extends Equatable {
       homework: homework ?? this.homework,
       patientReactions: patientReactions ?? this.patientReactions,
       progressObserved: progressObserved ?? this.progressObserved,
-      difficultiesIdentified:
-          difficultiesIdentified ?? this.difficultiesIdentified,
+      difficultiesIdentified: difficultiesIdentified ?? this.difficultiesIdentified,
       nextSteps: nextSteps ?? this.nextSteps,
       nextSessionGoals: nextSessionGoals ?? this.nextSessionGoals,
       needsReferral: needsReferral ?? this.needsReferral,
       currentRisk: currentRisk ?? this.currentRisk,
-      importantObservations:
-          importantObservations ?? this.importantObservations,
-      presenceConfirmationTime:
-          presenceConfirmationTime ?? this.presenceConfirmationTime,
+      importantObservations: importantObservations ?? this.importantObservations,
+      presenceConfirmationTime: presenceConfirmationTime ?? this.presenceConfirmationTime,
       reminderSent: reminderSent ?? this.reminderSent,
       reminderSentTime: reminderSentTime ?? this.reminderSentTime,
       patientRating: patientRating ?? this.patientRating,
@@ -222,7 +218,7 @@ class Session extends Equatable {
     cancellationReason,
     cancellationTime,
     chargedAmount,
-    paymentStatus,
+    transactionId,
     patientMood,
     topicsDiscussed,
     sessionNotes,

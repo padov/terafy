@@ -19,7 +19,7 @@ ui.Session mapToUiSession(common.Session session) {
     cancellationReason: session.cancellationReason,
     cancellationTime: session.cancellationTime?.toLocal(),
     chargedAmount: session.chargedAmount,
-    paymentStatus: _mapPaymentStatusFromString(session.paymentStatus),
+    transactionId: session.transactionId?.toString(),
     // Campos de registro clínico
     patientMood: session.patientMood,
     topicsDiscussed: session.topicsDiscussed,
@@ -52,9 +52,7 @@ common.Session mapToDomainSession(ui.Session session) {
     id: int.tryParse(session.id),
     patientId: int.tryParse(session.patientId) ?? 0,
     therapistId: int.tryParse(session.therapistId) ?? 0,
-    appointmentId: session.appointmentId != null
-        ? int.tryParse(session.appointmentId!)
-        : null,
+    appointmentId: session.appointmentId != null ? int.tryParse(session.appointmentId!) : null,
     scheduledStartTime: session.scheduledStartTime.toUtc(),
     scheduledEndTime: session.scheduledEndTime?.toUtc(),
     durationMinutes: session.durationMinutes,
@@ -67,7 +65,7 @@ common.Session mapToDomainSession(ui.Session session) {
     cancellationReason: session.cancellationReason,
     cancellationTime: session.cancellationTime?.toUtc(),
     chargedAmount: session.chargedAmount,
-    paymentStatus: _mapPaymentStatusToString(session.paymentStatus),
+    transactionId: session.transactionId != null ? int.tryParse(session.transactionId!) : null,
     // Campos de registro clínico
     patientMood: session.patientMood,
     topicsDiscussed: session.topicsDiscussed,

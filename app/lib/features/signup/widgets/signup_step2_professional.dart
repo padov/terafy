@@ -8,11 +8,13 @@ class SignupStep2Professional extends StatefulWidget {
   final List<String>? initialProfessionalRegistrations;
   final String? initialPresentation;
   final String? initialAddress;
+  final double? initialDefaultSessionPrice;
   final Function({
     required List<String> specialties,
     required List<String> professionalRegistrations,
     required String presentation,
     required String address,
+    double? defaultSessionPrice,
   })
   onDataChanged;
 
@@ -23,6 +25,7 @@ class SignupStep2Professional extends StatefulWidget {
     this.initialProfessionalRegistrations,
     this.initialPresentation,
     this.initialAddress,
+    this.initialDefaultSessionPrice,
     required this.onDataChanged,
   });
 
@@ -37,6 +40,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
   late List<String> _professionalRegistrations;
   final TextEditingController _specialtyController = TextEditingController();
   final TextEditingController _registrationController = TextEditingController();
+  late TextEditingController _defaultSessionPriceController;
 
   @override
   void initState() {
@@ -45,6 +49,9 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
     _addressController = TextEditingController(text: widget.initialAddress);
     _specialties = List.from(widget.initialSpecialties ?? []);
     _professionalRegistrations = List.from(widget.initialProfessionalRegistrations ?? []);
+    _defaultSessionPriceController = TextEditingController(
+      text: widget.initialDefaultSessionPrice != null ? widget.initialDefaultSessionPrice!.toStringAsFixed(2) : '',
+    );
   }
 
   @override
@@ -101,6 +108,7 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
     _addressController.dispose();
     _specialtyController.dispose();
     _registrationController.dispose();
+    _defaultSessionPriceController.dispose();
     super.dispose();
   }
 
@@ -110,6 +118,9 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
       professionalRegistrations: _professionalRegistrations,
       presentation: _presentationController.text,
       address: _addressController.text,
+      defaultSessionPrice: _defaultSessionPriceController.text.isEmpty
+          ? null
+          : double.tryParse(_defaultSessionPriceController.text.replaceAll(',', '.')),
     );
   }
 
@@ -290,6 +301,31 @@ class _SignupStep2ProfessionalState extends State<SignupStep2Professional> {
             maxLines: 3,
             decoration: InputDecoration(
               hintText: 'signup.step2.address_placeholder'.tr(),
+              filled: true,
+              fillColor: Colors.grey[100],
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+            onChanged: (_) => _notifyDataChanged(),
+          ),
+          const SizedBox(height: 16),
+
+          // Preço Padrão de Sessão
+          Text(
+            'Preço Padrão de Sessão (R\$)',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Valor padrão cobrado por sessão. Usado quando não especificado.',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _defaultSessionPriceController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: 'Ex: 150.00',
+              prefixText: 'R\$ ',
               filled: true,
               fillColor: Colors.grey[100],
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),

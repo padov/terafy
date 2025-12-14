@@ -26,8 +26,7 @@ class _EditProfilePageContent extends StatefulWidget {
   const _EditProfilePageContent();
 
   @override
-  State<_EditProfilePageContent> createState() =>
-      _EditProfilePageContentState();
+  State<_EditProfilePageContent> createState() => _EditProfilePageContentState();
 }
 
 class _EditProfilePageContentState extends State<_EditProfilePageContent> {
@@ -40,19 +39,13 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
       listener: (context, state) {
         if (state is EditProfileSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Perfil atualizado com sucesso!'),
-              backgroundColor: AppColors.success,
-            ),
+            const SnackBar(content: Text('Perfil atualizado com sucesso!'), backgroundColor: AppColors.success),
           );
           Navigator.of(context).pop();
         } else if (state is EditProfileFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error), backgroundColor: AppColors.error));
         }
       },
       builder: (context, state) {
@@ -62,15 +55,10 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              title: const Text(
-                'Editar Perfil',
-                style: TextStyle(color: AppColors.offBlack),
-              ),
+              title: const Text('Editar Perfil', style: TextStyle(color: AppColors.offBlack)),
               centerTitle: true,
             ),
-            body: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -80,10 +68,7 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              title: const Text(
-                'Editar Perfil',
-                style: TextStyle(color: AppColors.offBlack),
-              ),
+              title: const Text('Editar Perfil', style: TextStyle(color: AppColors.offBlack)),
               centerTitle: true,
             ),
             body: Center(
@@ -116,16 +101,10 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: AppColors.offBlack,
-              ),
+              icon: const Icon(Icons.arrow_back, color: AppColors.offBlack),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text(
-              'Editar Perfil',
-              style: TextStyle(color: AppColors.offBlack),
-            ),
+            title: const Text('Editar Perfil', style: TextStyle(color: AppColors.offBlack)),
             centerTitle: true,
           ),
           body: Column(
@@ -165,9 +144,7 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
                   child: Container(
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isCompleted || isCurrent
-                          ? AppColors.primary
-                          : Colors.grey[300],
+                      color: isCompleted || isCurrent ? AppColors.primary : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -221,16 +198,17 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
         return SignupStep2Professional(
           formKey: _professionalFormKey,
           initialSpecialties: state.data.specialties,
-          initialProfessionalRegistrations:
-              state.data.professionalRegistrations,
+          initialProfessionalRegistrations: state.data.professionalRegistrations,
           initialPresentation: state.data.presentation,
           initialAddress: state.data.address,
+          initialDefaultSessionPrice: state.data.defaultSessionPrice,
           onDataChanged:
               ({
                 required List<String> specialties,
                 required List<String> professionalRegistrations,
                 required String presentation,
                 required String address,
+                double? defaultSessionPrice,
               }) {
                 context.read<EditProfileBloc>().add(
                   UpdateProfessionalData(
@@ -238,6 +216,7 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
                     professionalRegistrations: professionalRegistrations,
                     presentation: presentation,
                     address: address,
+                    defaultSessionPrice: defaultSessionPrice,
                   ),
                 );
               },
@@ -256,11 +235,7 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: AppColors.offBlack.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
+          BoxShadow(color: AppColors.offBlack.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
         ],
       ),
       child: SafeArea(
@@ -275,33 +250,25 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
                     final messenger = ScaffoldMessenger.of(context);
 
                     if (state.currentStep == 0) {
-                      final isValid =
-                          _personalFormKey.currentState?.validate() ?? false;
+                      final isValid = _personalFormKey.currentState?.validate() ?? false;
                       if (!isValid) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Verifique os dados pessoais informados.',
-                            ),
+                            content: Text('Verifique os dados pessoais informados.'),
                             backgroundColor: AppColors.error,
                           ),
                         );
                         return;
                       }
-                      context.read<EditProfileBloc>().add(
-                        const NextStepPressed(),
-                      );
+                      context.read<EditProfileBloc>().add(const NextStepPressed());
                     } else if (state.currentStep == 1) {
                       // Último step - valida e salva
-                      final isValid =
-                          _professionalFormKey.currentState?.validate() ?? true;
+                      final isValid = _professionalFormKey.currentState?.validate() ?? true;
 
                       if (!isValid) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Verifique os dados profissionais informados.',
-                            ),
+                            content: Text('Verifique os dados profissionais informados.'),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -309,34 +276,24 @@ class _EditProfilePageContentState extends State<_EditProfilePageContent> {
                       }
 
                       // Salva o perfil
-                      context.read<EditProfileBloc>().add(
-                        const SubmitEditProfile(),
-                      );
+                      context.read<EditProfileBloc>().add(const SubmitEditProfile());
                     }
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
             ),
             child: isLoading
                 ? const SizedBox(
                     height: 24,
                     width: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                   )
                 : Text(
                     isLastStep ? 'Salvar' : 'Próximo',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         ),

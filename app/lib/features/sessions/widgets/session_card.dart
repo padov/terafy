@@ -188,15 +188,15 @@ class SessionCard extends StatelessWidget {
                       session.status == SessionStatus.scheduled ||
                       session.status == SessionStatus.confirmed)
                     Icon(
-                      session.paymentStatus == PaymentStatus.paid
+                      session.transactionId == PaymentStatus.paid
                           ? Icons.check_circle
-                          : session.paymentStatus == PaymentStatus.pending
+                          : session.transactionId == PaymentStatus.pending
                           ? Icons.schedule
                           : Icons.cancel,
                       size: 20,
-                      color: session.paymentStatus == PaymentStatus.paid
+                      color: session.transactionId == PaymentStatus.paid
                           ? Colors.green
-                          : session.paymentStatus == PaymentStatus.pending
+                          : session.transactionId == PaymentStatus.pending
                           ? Colors.orange
                           : Colors.grey,
                     ),

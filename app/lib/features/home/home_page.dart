@@ -261,6 +261,9 @@ class _HomePageContentState extends State<_HomePageContent> with RouteAware {
         } else if (index == 2) {
           // Navigate to Patients page
           Navigator.of(context).pushNamed(AppRouter.patientsRoute);
+        } else if (index == 3) {
+          // Navigate to Financial page
+          Navigator.of(context).pushNamed(AppRouter.financialRoute);
         } else {
           context.read<HomeBloc>().add(ChangeBottomNavIndex(index));
         }
@@ -286,10 +289,10 @@ class _HomePageContentState extends State<_HomePageContent> with RouteAware {
           activeIcon: const Icon(Icons.people),
           label: 'home.nav.patients'.tr(),
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.bar_chart_outlined),
-          activeIcon: const Icon(Icons.bar_chart),
-          label: 'home.nav.reports'.tr(),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.attach_money),
+          activeIcon: Icon(Icons.attach_money),
+          label: 'Financeiro',
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.settings_outlined),

@@ -61,7 +61,12 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
   }
 
   Future<void> _onLoadFinancialSummary(LoadFinancialSummary event, Emitter<FinancialState> emit) async {
-    emit(const FinancialLoading());
+    FinancialData? currentData;
+    if (state is FinancialData) {
+      currentData = state as FinancialData;
+    } else {
+      emit(const FinancialLoading());
+    }
 
     try {
       final therapistId = await _getCurrentTherapistId();
@@ -77,24 +82,53 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
       );
 
       final summary = FinancialSummary(
-        totalReceived: (summaryData['totalPaidAmount'] as num?)?.toDouble() ?? 0.0,
+        totalReceived: (summaryData['totalIncome'] as num?)?.toDouble() ?? 0.0,
         totalPending: (summaryData['totalPendingAmount'] as num?)?.toDouble() ?? 0.0,
         totalOverdue: (summaryData['totalOverdueAmount'] as num?)?.toDouble() ?? 0.0,
+        totalExpense: (summaryData['totalExpense'] as num?)?.toDouble() ?? 0.0,
         sessionsCompleted: summaryData['totalPaidCount'] as int? ?? 0,
         sessionsPending:
             (summaryData['totalPendingCount'] as int? ?? 0) + (summaryData['totalOverdueCount'] as int? ?? 0),
+        overduePercentage: (summaryData['overduePercentage'] as num?)?.toDouble() ?? 0.0,
+        paymentMethodDistribution:
+            (summaryData['paymentMethodDistribution'] as List?)
+                ?.map(
+                  (e) => PaymentMethodDistribution(
+                    method: e['method'] as String,
+                    count: e['count'] as int,
+                    amount: (e['amount'] as num).toDouble(),
+                  ),
+                )
+                .toList() ??
+            [],
         startDate: event.startDate,
         endDate: event.endDate,
       );
 
-      emit(FinancialSummaryLoaded(summary: summary, startDate: event.startDate, endDate: event.endDate));
+      emit(
+        FinancialData(
+          summary: summary,
+          payments: currentData?.payments,
+          summaryStartDate: event.startDate,
+          summaryEndDate: event.endDate,
+          paymentsStartDate: currentData?.paymentsStartDate,
+          paymentsEndDate: currentData?.paymentsEndDate,
+          statusFilter: currentData?.statusFilter,
+          patientIdFilter: currentData?.patientIdFilter,
+        ),
+      );
     } catch (e) {
       emit(FinancialError('Erro ao carregar resumo: ${e.toString()}'));
     }
   }
 
   Future<void> _onLoadPayments(LoadPayments event, Emitter<FinancialState> emit) async {
-    emit(const FinancialLoading());
+    FinancialData? currentData;
+    if (state is FinancialData) {
+      currentData = state as FinancialData;
+    } else {
+      emit(const FinancialLoading());
+    }
 
     try {
       final therapistId = await _getCurrentTherapistId();
@@ -143,11 +177,15 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
       payments.sort((a, b) => b.dueDate.compareTo(a.dueDate));
 
       emit(
-        PaymentsLoaded(
+        FinancialData(
+          summary: currentData?.summary,
           payments: payments,
-          startDate: event.startDate,
-          endDate: event.endDate,
+          summaryStartDate: currentData?.summaryStartDate,
+          summaryEndDate: currentData?.summaryEndDate,
+          paymentsStartDate: event.startDate,
+          paymentsEndDate: event.endDate,
           statusFilter: event.statusFilter,
+          patientIdFilter: event.patientIdFilter,
         ),
       );
     } catch (e) {
