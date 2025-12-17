@@ -25,7 +25,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         final created = await repository.createSession(session: session, userId: 1, bypassRLS: true);
@@ -49,7 +49,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final created = await repository.createSession(session: session, userId: 1, bypassRLS: true);
 
@@ -76,7 +76,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 2,
@@ -87,7 +87,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -111,7 +111,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -122,7 +122,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -146,7 +146,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -157,7 +157,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -179,7 +179,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -190,7 +190,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'completed',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -213,7 +213,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -225,7 +225,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -247,7 +247,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -258,7 +258,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -280,7 +280,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -291,7 +291,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -315,7 +315,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final created = await repository.createSession(session: session, userId: 1, bypassRLS: true);
 
@@ -341,7 +341,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         final updated = await repository.updateSession(sessionId: 999, session: session, userId: 1, bypassRLS: true);
@@ -359,7 +359,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final created = await repository.createSession(session: session, userId: 1, bypassRLS: true);
 
@@ -386,7 +386,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final created = await repository.createSession(session: session, userId: 1, bypassRLS: true);
 
@@ -422,7 +422,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 1,
@@ -433,7 +433,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session3 = Session(
           patientId: 1,
@@ -444,7 +444,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -466,7 +466,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
         final session2 = Session(
           patientId: 2,
@@ -477,7 +477,7 @@ void main() {
           type: 'individual',
           modality: 'presencial',
           status: 'agendada',
-          paymentStatus: 'pendente',
+          transactionId: null,
         );
 
         await repository.createSession(session: session1, userId: 1, bypassRLS: true);
@@ -502,7 +502,7 @@ void main() {
           type: 'presential',
           modality: 'individual',
           status: 'completed',
-          paymentStatus: 'paid',
+          transactionId: null,
           patientMood: 'ansioso',
           topicsDiscussed: ['ansiedade', 'trabalho'],
           sessionNotes: 'Notas da sessão',

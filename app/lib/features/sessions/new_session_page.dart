@@ -11,11 +11,7 @@ class NewSessionPage extends StatelessWidget {
   final String patientId;
   final String patientName;
 
-  const NewSessionPage({
-    super.key,
-    required this.patientId,
-    required this.patientName,
-  });
+  const NewSessionPage({super.key, required this.patientId, required this.patientName});
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +22,10 @@ class NewSessionPage extends StatelessWidget {
         getSessionUseCase: container.getSessionUseCase,
         createSessionUseCase: container.createSessionUseCase,
         updateSessionUseCase: container.updateSessionUseCase,
-        deleteSessionUseCase: container.deleteSessionUseCase,
         getAppointmentUseCase: container.getAppointmentUseCase,
         updateAppointmentUseCase: container.updateAppointmentUseCase,
+        getTransactionUseCase: container.getTransactionUseCase,
+        createTransactionUseCase: container.createTransactionUseCase,
       ),
       child: _NewSessionContent(patientId: patientId, patientName: patientName),
     );
@@ -39,10 +36,7 @@ class _NewSessionContent extends StatefulWidget {
   final String patientId;
   final String patientName;
 
-  const _NewSessionContent({
-    required this.patientId,
-    required this.patientName,
-  });
+  const _NewSessionContent({required this.patientId, required this.patientName});
 
   @override
   State<_NewSessionContent> createState() => _NewSessionContentState();
@@ -79,17 +73,14 @@ class _NewSessionContentState extends State<_NewSessionContent> {
     return BlocConsumer<SessionsBloc, SessionsState>(
       listener: (context, state) {
         if (state is SessionCreated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Sessão criada com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Sessão criada com sucesso!'), backgroundColor: Colors.green));
           Navigator.of(context).pop(true);
         } else if (state is SessionsError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
         }
       },
       builder: (context, state) {
@@ -104,17 +95,8 @@ class _NewSessionContentState extends State<_NewSessionContent> {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Nova Sessão',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  widget.patientName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+                const Text('Nova Sessão', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text(widget.patientName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
               ],
             ),
           ),
@@ -155,15 +137,13 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                           prefixIcon: Icon(Icons.place),
                         ),
                         validator: (value) {
-                          if (_sessionType == SessionType.presential &&
-                              (value == null || value.isEmpty)) {
+                          if (_sessionType == SessionType.presential && (value == null || value.isEmpty)) {
                             return 'Por favor, informe o local';
                           }
                           return null;
                         },
                       ),
-                    ] else if (_sessionType == SessionType.onlineVideo ||
-                        _sessionType == SessionType.onlineAudio) ...[
+                    ] else if (_sessionType == SessionType.onlineVideo || _sessionType == SessionType.onlineAudio) ...[
                       TextFormField(
                         controller: _onlineLinkController,
                         decoration: const InputDecoration(
@@ -173,8 +153,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                           prefixIcon: Icon(Icons.link),
                         ),
                         validator: (value) {
-                          if ((_sessionType == SessionType.onlineVideo ||
-                                  _sessionType == SessionType.onlineAudio) &&
+                          if ((_sessionType == SessionType.onlineVideo || _sessionType == SessionType.onlineAudio) &&
                               (value == null || value.isEmpty)) {
                             return 'Por favor, informe o link';
                           }
@@ -184,10 +163,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                     ] else ...[
                       Container(
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline, color: Colors.grey[600]),
@@ -195,10 +171,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                             Expanded(
                               child: Text(
                                 'Para sessões por telefone ou em grupo, não é necessário informar local ou link.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.offBlack,
-                                ),
+                                style: TextStyle(fontSize: 13, color: AppColors.offBlack),
                               ),
                             ),
                           ],
@@ -230,8 +203,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                   _buildSection('Lembrete', Icons.notifications, [
                     SwitchListTile(
                       value: _sendReminder,
-                      onChanged: (value) =>
-                          setState(() => _sendReminder = value),
+                      onChanged: (value) => setState(() => _sendReminder = value),
                       title: const Text('Enviar lembrete automático'),
                       subtitle: const Text('24h antes da sessão'),
                       contentPadding: EdgeInsets.zero,
@@ -249,26 +221,15 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: isLoading
                           ? const SizedBox(
                               height: 24,
                               width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                             )
-                          : const Text(
-                              'Criar Sessão',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                          : const Text('Criar Sessão', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -297,11 +258,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.offBlack,
-                ),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.offBlack),
               ),
             ],
           ),
@@ -332,20 +289,11 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Data',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
+                      Text('Data', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       const SizedBox(height: 2),
                       Text(
-                        DateFormat(
-                          'd \'de\' MMMM \'de\' yyyy',
-                          'pt_BR',
-                        ).format(_selectedDate),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        DateFormat('d \'de\' MMMM \'de\' yyyy', 'pt_BR').format(_selectedDate),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -373,17 +321,11 @@ class _NewSessionContentState extends State<_NewSessionContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Horário',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
+                      Text('Horário', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       const SizedBox(height: 2),
                       Text(
                         _selectedTime.format(context),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -401,10 +343,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Duração: $_durationMinutes minutos',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        Text('Duração: $_durationMinutes minutos', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         Slider(
           value: _durationMinutes.toDouble(),
           min: 30,
@@ -425,10 +364,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tipo',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        const Text('Tipo', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -461,10 +397,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Modalidade',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        const Text('Modalidade', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -505,10 +438,7 @@ class _NewSessionContentState extends State<_NewSessionContent> {
   }
 
   Future<void> _selectTime() async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
+    final time = await showTimePicker(context: context, initialTime: _selectedTime);
 
     if (time != null) {
       setState(() => _selectedTime = time);
@@ -533,24 +463,16 @@ class _NewSessionContentState extends State<_NewSessionContent> {
       patientId: widget.patientId,
       therapistId: 'therapist-1',
       scheduledStartTime: scheduledDateTime,
-      scheduledEndTime: scheduledDateTime.add(
-        Duration(minutes: _durationMinutes),
-      ),
+      scheduledEndTime: scheduledDateTime.add(Duration(minutes: _durationMinutes)),
       durationMinutes: _durationMinutes,
       sessionNumber: 1, // TODO: Calcular número correto
       type: _sessionType,
       modality: _sessionModality,
-      location: _locationController.text.isNotEmpty
-          ? _locationController.text
-          : null,
-      onlineRoomLink: _onlineLinkController.text.isNotEmpty
-          ? _onlineLinkController.text
-          : null,
+      location: _locationController.text.isNotEmpty ? _locationController.text : null,
+      onlineRoomLink: _onlineLinkController.text.isNotEmpty ? _onlineLinkController.text : null,
       status: SessionStatus.scheduled,
-      chargedAmount: _chargedAmountController.text.isNotEmpty
-          ? double.tryParse(_chargedAmountController.text)
-          : null,
-      paymentStatus: PaymentStatus.pending,
+      chargedAmount: _chargedAmountController.text.isNotEmpty ? double.tryParse(_chargedAmountController.text) : null,
+      transactionId: null,
       reminderSent: false,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

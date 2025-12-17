@@ -175,7 +175,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           location: appointment.room,
           onlineRoomLink: appointment.onlineLink,
           status: 'confirmed', // Sessão criada quando agendamento é confirmado
-          paymentStatus: 'pending', // Default
+          transactionId: null, // Default
         );
 
         final createdSession = await _createSessionUseCase(session);

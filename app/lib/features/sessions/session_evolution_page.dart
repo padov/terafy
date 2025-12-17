@@ -22,9 +22,10 @@ class SessionEvolutionPage extends StatelessWidget {
         getSessionUseCase: container.getSessionUseCase,
         createSessionUseCase: container.createSessionUseCase,
         updateSessionUseCase: container.updateSessionUseCase,
-        deleteSessionUseCase: container.deleteSessionUseCase,
         getAppointmentUseCase: container.getAppointmentUseCase,
         updateAppointmentUseCase: container.updateAppointmentUseCase,
+        getTransactionUseCase: container.getTransactionUseCase,
+        createTransactionUseCase: container.createTransactionUseCase,
       )..add(LoadSessionDetails(sessionId)),
       child: _SessionEvolutionContent(sessionId: sessionId, patientName: patientName, existingSession: existingSession),
     );

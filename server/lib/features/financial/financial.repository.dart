@@ -35,7 +35,6 @@ class FinancialRepository {
         INSERT INTO financial_transactions (
           therapist_id,
           patient_id,
-          session_id,
           transaction_date,
           type,
           amount,
@@ -51,7 +50,6 @@ class FinancialRepository {
         ) VALUES (
           @therapist_id,
           @patient_id,
-          @session_id,
           @transaction_date::date,
           @type::transaction_type,
           @amount,
@@ -68,7 +66,6 @@ class FinancialRepository {
         RETURNING id,
                   therapist_id,
                   patient_id,
-                  session_id,
                   transaction_date::timestamp AS transaction_date,
                   type::text AS type,
                   amount,
@@ -87,7 +84,6 @@ class FinancialRepository {
         parameters: {
           'therapist_id': data['therapist_id'],
           'patient_id': data['patient_id'],
-          'session_id': data['session_id'],
           'transaction_date': data['transaction_date'],
           'type': data['type'],
           'amount': data['amount'],
@@ -131,7 +127,6 @@ class FinancialRepository {
         SELECT id,
                therapist_id,
                patient_id,
-               session_id,
                transaction_date::timestamp AS transaction_date,
                type::text AS type,
                amount,
@@ -166,7 +161,6 @@ class FinancialRepository {
     int? accountId,
     int? therapistId,
     int? patientId,
-    int? sessionId,
     String? status,
     String? category,
     DateTime? startDate,
@@ -199,11 +193,6 @@ class FinancialRepository {
         parameters['patient_id'] = patientId;
       }
 
-      if (sessionId != null) {
-        conditions.add('session_id = @session_id');
-        parameters['session_id'] = sessionId;
-      }
-
       if (status != null) {
         conditions.add('status = @status::transaction_status');
         parameters['status'] = status;
@@ -231,7 +220,6 @@ class FinancialRepository {
         SELECT id,
                therapist_id,
                patient_id,
-               session_id,
                transaction_date::timestamp AS transaction_date,
                type::text AS type,
                amount,
@@ -282,7 +270,6 @@ class FinancialRepository {
       // Remove campos que não devem ser atualizados diretamente
       data.remove('therapist_id');
       data.remove('patient_id');
-      data.remove('session_id');
 
       final setClauses = <String>[];
       final parameters = <String, dynamic>{'id': transactionId};
@@ -355,7 +342,6 @@ class FinancialRepository {
           SELECT id,
                  therapist_id,
                  patient_id,
-                 session_id,
                  transaction_date::timestamp AS transaction_date,
                  type::text AS type,
                  amount,
@@ -391,7 +377,6 @@ class FinancialRepository {
         RETURNING id,
                   therapist_id,
                   patient_id,
-                  session_id,
                   transaction_date::timestamp AS transaction_date,
                   type::text AS type,
                   amount,
@@ -487,12 +472,12 @@ class FinancialRepository {
       final result = await conn.execute(
         Sql.named('''
         SELECT 
-          COUNT(*) FILTER (WHERE status = 'pago') AS total_paid_count,
-          COALESCE(SUM(amount) FILTER (WHERE status = 'pago'), 0) AS total_paid_amount,
-          COUNT(*) FILTER (WHERE status = 'pendente') AS total_pending_count,
-          COALESCE(SUM(amount) FILTER (WHERE status = 'pendente'), 0) AS total_pending_amount,
-          COUNT(*) FILTER (WHERE status = 'atrasado') AS total_overdue_count,
-          COALESCE(SUM(amount) FILTER (WHERE status = 'atrasado'), 0) AS total_overdue_amount,
+          COUNT(*) FILTER (WHERE status = 'paid') AS total_paid_count,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid'), 0) AS total_paid_amount,
+          COUNT(*) FILTER (WHERE status = 'pending') AS total_pending_count,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'pending'), 0) AS total_pending_amount,
+          COUNT(*) FILTER (WHERE status = 'overdue') AS total_overdue_count,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'overdue'), 0) AS total_overdue_amount,
           COUNT(*) AS total_count,
           COALESCE(SUM(amount), 0) AS total_amount
         FROM financial_transactions
@@ -524,6 +509,131 @@ class FinancialRepository {
         'totalOverdueAmount': _parseDouble(row[5]) ?? 0.0,
         'totalCount': _parseInt(row[6]) ?? 0,
         'totalAmount': _parseDouble(row[7]) ?? 0.0,
+      };
+    });
+  }
+
+  Future<Map<String, dynamic>> getDashboardMetrics({
+    required int therapistId,
+    required int userId,
+    String? userRole,
+    int? accountId,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool bypassRLS = false,
+  }) async {
+    AppLogger.func();
+    return await _dbConnection.withConnection((conn) async {
+      if (bypassRLS) {
+        await RLSContext.clearContext(conn);
+      } else {
+        await RLSContext.setContext(
+          conn: conn,
+          userId: userId,
+          userRole: userRole,
+          accountId: accountId ?? therapistId,
+        );
+      }
+
+      final conditions = <String>['therapist_id = @therapist_id'];
+      final parameters = <String, dynamic>{'therapist_id': therapistId};
+
+      if (startDate != null) {
+        conditions.add('transaction_date >= @start_date::date');
+        parameters['start_date'] = startDate.toIso8601String();
+      }
+
+      if (endDate != null) {
+        conditions.add('transaction_date <= @end_date::date');
+        parameters['end_date'] = endDate.toIso8601String();
+      }
+
+      final whereClause = conditions.join(' AND ');
+
+      // Summary stats
+      final summaryResult = await conn.execute(
+        Sql.named('''
+          SELECT 
+            -- Income/Expense
+            COALESCE(SUM(amount) FILTER (WHERE type = 'income' AND status = 'paid'), 0) AS total_income,
+            COALESCE(SUM(amount) FILTER (WHERE type = 'refund' AND status = 'paid'), 0) AS total_expense,
+            
+            -- Counts for Percentage
+            COUNT(*) FILTER (WHERE status = 'overdue') AS overdue_count,
+            COUNT(*) FILTER (WHERE status != 'cancelled') AS total_active_count,
+            
+            -- Detailed Amounts/Counts for Cards
+            COALESCE(SUM(amount) FILTER (WHERE status = 'pending'), 0) AS total_pending_amount,
+            COALESCE(SUM(amount) FILTER (WHERE status = 'overdue'), 0) AS total_overdue_amount,
+            
+            COUNT(*) FILTER (WHERE status = 'paid') AS total_paid_count,
+            COUNT(*) FILTER (WHERE status = 'pending') AS total_pending_count,
+            COUNT(*) FILTER (WHERE status = 'overdue') AS total_overdue_count,
+            
+            COALESCE(SUM(amount), 0) AS total_amount
+          FROM financial_transactions
+          WHERE $whereClause
+        '''),
+        parameters: parameters,
+      );
+
+      double totalIncome = 0;
+      double totalExpense = 0;
+      int overdueCount = 0;
+      int totalActiveCount = 0;
+      double totalPendingAmount = 0;
+      double totalOverdueAmount = 0;
+      int totalPaidCount = 0;
+      int totalPendingCount = 0;
+      int totalOverdueCount = 0;
+      double totalAmount = 0;
+
+      if (summaryResult.isNotEmpty) {
+        final row = summaryResult.first;
+        totalIncome = _parseDouble(row[0]) ?? 0;
+        totalExpense = _parseDouble(row[1]) ?? 0;
+        overdueCount = _parseInt(row[2]) ?? 0;
+        totalActiveCount = _parseInt(row[3]) ?? 0;
+
+        totalPendingAmount = _parseDouble(row[4]) ?? 0;
+        totalOverdueAmount = _parseDouble(row[5]) ?? 0;
+        totalPaidCount = _parseInt(row[6]) ?? 0;
+        totalPendingCount = _parseInt(row[7]) ?? 0;
+        totalOverdueCount = _parseInt(row[8]) ?? 0;
+        totalAmount = _parseDouble(row[9]) ?? 0;
+      }
+
+      final overduePercentage = totalActiveCount > 0 ? (overdueCount / totalActiveCount) * 100 : 0.0;
+
+      // Payment method distribution
+      final paymentMethodResult = await conn.execute(
+        Sql.named('''
+          SELECT 
+            payment_method::text,
+            COUNT(*) as count,
+            COALESCE(SUM(amount), 0) as total_amount
+          FROM financial_transactions
+          WHERE $whereClause AND type = 'income' AND status = 'paid'
+          GROUP BY payment_method
+        '''),
+        parameters: parameters,
+      );
+
+      final paymentMethodDistribution = paymentMethodResult.map((row) {
+        return {'method': row[0] as String, 'count': _parseInt(row[1]) ?? 0, 'amount': _parseDouble(row[2]) ?? 0.0};
+      }).toList();
+
+      return {
+        'totalIncome': totalIncome, // Paid Income
+        'totalExpense': totalExpense, // Refunds
+        'totalPendingAmount': totalPendingAmount,
+        'totalOverdueAmount': totalOverdueAmount,
+        'totalPaidCount': totalPaidCount,
+        'totalPendingCount': totalPendingCount,
+        'totalOverdueCount': totalOverdueCount,
+        'totalAmount': totalAmount,
+        'overduePercentage': overduePercentage,
+        'paymentMethodDistribution': paymentMethodDistribution,
       };
     });
   }

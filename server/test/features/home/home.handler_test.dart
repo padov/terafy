@@ -19,6 +19,7 @@ void main() {
         todayConfirmedSessions: 0,
         monthlyCompletionRate: 0.0,
         monthlySessions: 0,
+        monthlyRevenue: 0.0,
         listOfTodaySessions: [],
         pendingSessions: [],
       ),
@@ -130,6 +131,7 @@ void main() {
         todayConfirmedSessions: 3,
         monthlyCompletionRate: 0.85,
         monthlySessions: 20,
+        monthlyRevenue: 2500.0,
         listOfTodaySessions: [],
         pendingSessions: [],
       );
@@ -164,6 +166,7 @@ void main() {
         todayConfirmedSessions: 2,
         monthlyCompletionRate: 0.75,
         monthlySessions: 15,
+        monthlyRevenue: 1800.0,
         listOfTodaySessions: [],
         pendingSessions: [],
       );
@@ -192,6 +195,7 @@ void main() {
         todayConfirmedSessions: 0,
         monthlyCompletionRate: 0.0,
         monthlySessions: 0,
+        monthlyRevenue: 0.0,
         listOfTodaySessions: [],
         pendingSessions: [],
       );

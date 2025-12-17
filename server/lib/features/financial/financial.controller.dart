@@ -1,6 +1,5 @@
 import 'package:common/common.dart';
 import 'package:server/features/financial/financial.repository.dart';
-import 'package:server/features/session/session.repository.dart';
 
 class FinancialException implements Exception {
   FinancialException(this.message, this.statusCode);
@@ -13,13 +12,9 @@ class FinancialException implements Exception {
 }
 
 class FinancialController {
-  FinancialController(
-    this._repository, [
-    this._sessionRepository,
-  ]);
+  FinancialController(this._repository);
 
   final FinancialRepository _repository;
-  final SessionRepository? _sessionRepository;
 
   Future<FinancialTransaction> createTransaction({
     required FinancialTransaction transaction,
@@ -42,20 +37,12 @@ class FinancialController {
         throw FinancialException('Valor deve ser maior que zero', 400);
       }
 
-      if (transaction.dueDate != null &&
-          transaction.transactionDate.isAfter(transaction.dueDate!)) {
-        throw FinancialException(
-          'Data de vencimento deve ser posterior ou igual à data da transação',
-          400,
-        );
+      if (transaction.dueDate != null && transaction.transactionDate.isAfter(transaction.dueDate!)) {
+        throw FinancialException('Data de vencimento deve ser posterior ou igual à data da transação', 400);
       }
 
-      if (transaction.paidAt != null &&
-          transaction.transactionDate.isAfter(transaction.paidAt!)) {
-        throw FinancialException(
-          'Data de pagamento deve ser posterior ou igual à data da transação',
-          400,
-        );
+      if (transaction.paidAt != null && transaction.transactionDate.isAfter(transaction.paidAt!)) {
+        throw FinancialException('Data de pagamento deve ser posterior ou igual à data da transação', 400);
       }
 
       final created = await _repository.createTransaction(
@@ -70,10 +57,7 @@ class FinancialController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is FinancialException) rethrow;
-      throw FinancialException(
-        'Erro ao criar transação: ${e.toString()}',
-        500,
-      );
+      throw FinancialException('Erro ao criar transação: ${e.toString()}', 500);
     }
   }
 
@@ -95,10 +79,7 @@ class FinancialController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is FinancialException) rethrow;
-      throw FinancialException(
-        'Erro ao buscar transação: ${e.toString()}',
-        500,
-      );
+      throw FinancialException('Erro ao buscar transação: ${e.toString()}', 500);
     }
   }
 
@@ -108,7 +89,6 @@ class FinancialController {
     int? accountId,
     int? therapistId,
     int? patientId,
-    int? sessionId,
     String? status,
     String? category,
     DateTime? startDate,
@@ -122,7 +102,6 @@ class FinancialController {
         accountId: accountId ?? therapistId,
         therapistId: therapistId,
         patientId: patientId,
-        sessionId: sessionId,
         status: status,
         category: category,
         startDate: startDate,
@@ -132,10 +111,7 @@ class FinancialController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is FinancialException) rethrow;
-      throw FinancialException(
-        'Erro ao listar transações: ${e.toString()}',
-        500,
-      );
+      throw FinancialException('Erro ao listar transações: ${e.toString()}', 500);
     }
   }
 
@@ -153,20 +129,12 @@ class FinancialController {
         throw FinancialException('Valor deve ser maior que zero', 400);
       }
 
-      if (transaction.dueDate != null &&
-          transaction.transactionDate.isAfter(transaction.dueDate!)) {
-        throw FinancialException(
-          'Data de vencimento deve ser posterior ou igual à data da transação',
-          400,
-        );
+      if (transaction.dueDate != null && transaction.transactionDate.isAfter(transaction.dueDate!)) {
+        throw FinancialException('Data de vencimento deve ser posterior ou igual à data da transação', 400);
       }
 
-      if (transaction.paidAt != null &&
-          transaction.transactionDate.isAfter(transaction.paidAt!)) {
-        throw FinancialException(
-          'Data de pagamento deve ser posterior ou igual à data da transação',
-          400,
-        );
+      if (transaction.paidAt != null && transaction.transactionDate.isAfter(transaction.paidAt!)) {
+        throw FinancialException('Data de pagamento deve ser posterior ou igual à data da transação', 400);
       }
 
       // Verificar se a transação existe
@@ -184,10 +152,7 @@ class FinancialController {
 
       // Validação: não permitir estorno maior que valor original
       if (transaction.type == 'estorno' && transaction.amount > existing.amount) {
-        throw FinancialException(
-          'Valor do estorno não pode ser maior que o valor original da transação',
-          400,
-        );
+        throw FinancialException('Valor do estorno não pode ser maior que o valor original da transação', 400);
       }
 
       // Buscar transação atual para verificar mudança de status
@@ -203,9 +168,6 @@ class FinancialController {
         throw FinancialException('Transação não encontrada', 404);
       }
 
-      final wasPaid = currentTransaction.status == 'pago';
-      final isPaid = transaction.status == 'pago';
-
       final updated = await _repository.updateTransaction(
         transactionId: transactionId,
         transaction: transaction,
@@ -215,55 +177,11 @@ class FinancialController {
         bypassRLS: userRole == 'admin',
       );
 
-      // Se transação foi marcada como paga e tem sessão vinculada, atualizar payment_status da sessão
-      if (!wasPaid && isPaid && updated.sessionId != null && _sessionRepository != null) {
-        try {
-          final sessionRepo = _sessionRepository;
-          final sessionIdValue = updated.sessionId!;
-          final session = await sessionRepo.getSessionById(
-            sessionId: sessionIdValue,
-            userId: userId,
-            userRole: userRole,
-            accountId: accountId,
-            bypassRLS: userRole == 'admin',
-          );
-
-          if (session != null && session.paymentStatus != 'paid') {
-            final updatedSession = session.copyWith(
-              paymentStatus: 'paid',
-              updatedAt: DateTime.now().toUtc(),
-            );
-
-            await sessionRepo.updateSession(
-              sessionId: sessionIdValue,
-              session: updatedSession,
-              userId: userId,
-              userRole: userRole,
-              accountId: accountId,
-              bypassRLS: userRole == 'admin',
-            );
-
-            AppLogger.info(
-              'Status de pagamento da sessão ${updated.sessionId} atualizado para paid',
-            );
-          }
-        } catch (e, stack) {
-          // Log erro mas não falha a atualização da transação
-          AppLogger.error(
-            'Erro ao atualizar status de pagamento da sessão: $e',
-            stack,
-          );
-        }
-      }
-
       return updated;
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is FinancialException) rethrow;
-      throw FinancialException(
-        'Erro ao atualizar transação: ${e.toString()}',
-        500,
-      );
+      throw FinancialException('Erro ao atualizar transação: ${e.toString()}', 500);
     }
   }
 
@@ -289,11 +207,8 @@ class FinancialController {
       }
 
       // Validação: não permitir deletar transação já paga (ou implementar soft delete)
-      if (existing.status == 'pago') {
-        throw FinancialException(
-          'Não é possível deletar uma transação já paga',
-          400,
-        );
+      if (existing.status == 'paid') {
+        throw FinancialException('Não é possível deletar uma transação já paga', 400);
       }
 
       await _repository.deleteTransaction(
@@ -306,10 +221,7 @@ class FinancialController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is FinancialException) rethrow;
-      throw FinancialException(
-        'Erro ao deletar transação: ${e.toString()}',
-        500,
-      );
+      throw FinancialException('Erro ao deletar transação: ${e.toString()}', 500);
     }
   }
 
@@ -327,13 +239,8 @@ class FinancialController {
         throw FinancialException('ID do terapeuta inválido', 400);
       }
 
-      if (startDate != null &&
-          endDate != null &&
-          startDate.isAfter(endDate)) {
-        throw FinancialException(
-          'Data inicial deve ser anterior ou igual à data final',
-          400,
-        );
+      if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+        throw FinancialException('Data inicial deve ser anterior ou igual à data final', 400);
       }
 
       return await _repository.getFinancialSummary(
@@ -348,11 +255,41 @@ class FinancialController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       if (e is FinancialException) rethrow;
-      throw FinancialException(
-        'Erro ao buscar resumo financeiro: ${e.toString()}',
-        500,
+      throw FinancialException('Erro ao buscar resumo financeiro: ${e.toString()}', 500);
+    }
+  }
+
+  Future<Map<String, dynamic>> getDashboardMetrics({
+    required int therapistId,
+    required int userId,
+    String? userRole,
+    int? accountId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    AppLogger.func();
+    try {
+      if (therapistId <= 0) {
+        throw FinancialException('ID do terapeuta inválido', 400);
+      }
+
+      if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+        throw FinancialException('Data inicial deve ser anterior ou igual à data final', 400);
+      }
+
+      return await _repository.getDashboardMetrics(
+        therapistId: therapistId,
+        userId: userId,
+        userRole: userRole,
+        accountId: accountId ?? therapistId,
+        startDate: startDate,
+        endDate: endDate,
+        bypassRLS: userRole == 'admin',
       );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      if (e is FinancialException) rethrow;
+      throw FinancialException('Erro ao buscar métricas do dashboard: ${e.toString()}', 500);
     }
   }
 }
-

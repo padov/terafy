@@ -2,7 +2,6 @@ class FinancialTransaction {
   final int? id;
   final int therapistId;
   final int patientId;
-  final int? sessionId;
   final DateTime transactionDate;
   final String type; // transaction_type enum
   final double amount;
@@ -22,7 +21,6 @@ class FinancialTransaction {
     this.id,
     required this.therapistId,
     required this.patientId,
-    this.sessionId,
     required this.transactionDate,
     required this.type,
     required this.amount,
@@ -43,7 +41,6 @@ class FinancialTransaction {
     int? id,
     int? therapistId,
     int? patientId,
-    int? sessionId,
     DateTime? transactionDate,
     String? type,
     double? amount,
@@ -63,7 +60,6 @@ class FinancialTransaction {
       id: id ?? this.id,
       therapistId: therapistId ?? this.therapistId,
       patientId: patientId ?? this.patientId,
-      sessionId: sessionId ?? this.sessionId,
       transactionDate: transactionDate ?? this.transactionDate,
       type: type ?? this.type,
       amount: amount ?? this.amount,
@@ -86,7 +82,6 @@ class FinancialTransaction {
       'id': id,
       'therapistId': therapistId,
       'patientId': patientId,
-      'sessionId': sessionId,
       'transactionDate': transactionDate.toIso8601String(),
       'type': type,
       'amount': amount,
@@ -109,7 +104,6 @@ class FinancialTransaction {
       id: json['id'] as int?,
       therapistId: json['therapistId'] as int,
       patientId: json['patientId'] as int,
-      sessionId: json['sessionId'] as int?,
       transactionDate: DateTime.parse(json['transactionDate'] as String),
       type: json['type'] as String,
       amount: (json['amount'] as num).toDouble(),
@@ -131,7 +125,6 @@ class FinancialTransaction {
     return {
       'therapist_id': therapistId,
       'patient_id': patientId,
-      if (sessionId != null) 'session_id': sessionId,
       'transaction_date': transactionDate.toIso8601String(),
       'type': type,
       'amount': amount,
@@ -152,16 +145,15 @@ class FinancialTransaction {
       id: _parseInt(map['id']),
       therapistId: _parseInt(map['therapist_id']) ?? 0,
       patientId: _parseInt(map['patient_id']) ?? 0,
-      sessionId: _parseInt(map['session_id']),
       transactionDate: _parseDate(map['transaction_date']) ?? DateTime.now(),
-      type: _parseString(map['type']) ?? 'recebimento',
+      type: _parseString(map['type']) ?? 'income',
       amount: _parseDouble(map['amount']) ?? 0.0,
-      paymentMethod: _parseString(map['payment_method']) ?? 'dinheiro',
-      status: _parseString(map['status']) ?? 'pendente',
+      paymentMethod: _parseString(map['payment_method']) ?? 'others',
+      status: _parseString(map['status']) ?? 'pending',
       dueDate: _parseDate(map['due_date']),
       paidAt: _parseDate(map['paid_at']),
       receiptNumber: _parseString(map['receipt_number']),
-      category: _parseString(map['category']) ?? 'sessao',
+      category: _parseString(map['category']) ?? 'session',
       notes: _parseString(map['notes']),
       invoiceNumber: _parseString(map['invoice_number']),
       invoiceIssued: _parseBool(map['invoice_issued']) ?? false,

@@ -54,7 +54,6 @@ class TestFinancialRepository extends FinancialRepository {
       id: ++_lastId,
       therapistId: transaction.therapistId,
       patientId: transaction.patientId,
-      sessionId: transaction.sessionId,
       transactionDate: transaction.transactionDate,
       type: transaction.type,
       amount: transaction.amount,
@@ -117,7 +116,6 @@ class TestFinancialRepository extends FinancialRepository {
       filtered = filtered.where((t) => t.patientId == patientId).toList();
     }
     if (sessionId != null) {
-      filtered = filtered.where((t) => t.sessionId == sessionId).toList();
     }
     if (status != null) {
       filtered = filtered.where((t) => t.status == status).toList();
@@ -174,7 +172,6 @@ class TestFinancialRepository extends FinancialRepository {
       id: existing.id,
       therapistId: existing.therapistId, // Não pode mudar
       patientId: existing.patientId, // Não pode mudar
-      sessionId: existing.sessionId, // Não pode mudar
       updatedAt: DateTime.now(),
     );
     _transactions[index] = updated;

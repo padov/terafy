@@ -117,6 +117,128 @@ void main() {
         final response = await handler(request);
         expect(response.statusCode, 401);
       });
+
+      test('deve criar therapist com CPF válido', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. João Silva',
+            'email': 'joao@terafy.com',
+            'document': '12345678909', // Valid CPF
+            'status': 'active',
+          },
+          token: therapistToken,
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 201);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['name'], 'Dr. João Silva');
+        expect(data['document'], '12345678909');
+      });
+
+      test('deve criar therapist com CNPJ válido', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {
+            'name': 'Clínica Exemplo',
+            'email': 'clinica@terafy.com',
+            'document': '11222333000181', // Valid CNPJ
+            'status': 'active',
+          },
+          token: therapistToken,
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 201);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['name'], 'Clínica Exemplo');
+        expect(data['document'], '11222333000181');
+      });
+
+      test('deve rejeitar CPF inválido', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. João Silva',
+            'email': 'joao@terafy.com',
+            'document': '12345678900', // Invalid CPF
+            'status': 'active',
+          },
+          token: therapistToken,
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 400);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['error'], contains('CPF inválido'));
+      });
+
+      test('deve rejeitar CNPJ inválido', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {
+            'name': 'Clínica Exemplo',
+            'email': 'clinica@terafy.com',
+            'document': '11222333000180', // Invalid CNPJ
+            'status': 'active',
+          },
+          token: therapistToken,
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 400);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['error'], contains('CNPJ inválido'));
+      });
+
+      test('deve rejeitar documento com tamanho inválido', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. João Silva',
+            'email': 'joao@terafy.com',
+            'document': '123456789', // Invalid length
+            'status': 'active',
+          },
+          token: therapistToken,
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 400);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['error'], contains('11 dígitos (CPF) ou 14 dígitos (CNPJ)'));
+      });
+
+      test('deve aceitar therapist sem documento', () async {
+        final request = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. João Silva',
+            'email': 'joao@terafy.com',
+            'status': 'active',
+            // No document field
+          },
+          token: therapistToken,
+        );
+
+        final response = await handler(request);
+
+        expect(response.statusCode, 201);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['name'], 'Dr. João Silva');
+      });
     });
 
     group('GET /therapists/me', () {
@@ -219,6 +341,86 @@ void main() {
         final data = await HttpTestHelpers.parseJsonResponse(response);
         expect(data['name'], 'Dr. João Atualizado');
         expect(data['id'], therapistId);
+      });
+
+      test('deve atualizar therapist com documento válido', () async {
+        // Cria therapist primeiro
+        final createRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {'name': 'Dr. João', 'email': 'joao@terafy.com', 'status': 'active'},
+          token: therapistToken,
+        );
+        await handler(createRequest);
+
+        // Faz login novamente para obter token atualizado
+        final loginRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/login',
+          body: {'email': 'therapist@terafy.com', 'password': 'senha123'},
+        );
+        final loginResponse = await handler(loginRequest);
+        final loginData = await HttpTestHelpers.parseJsonResponse(loginResponse);
+        final updatedToken = loginData['auth_token'] as String;
+
+        // Atualiza com CPF válido
+        final updateRequest = HttpTestHelpers.createRequest(
+          method: 'PUT',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. João',
+            'email': 'joao@terafy.com',
+            'document': '12345678909', // Valid CPF
+            'status': 'active',
+          },
+          token: updatedToken,
+        );
+
+        final response = await handler(updateRequest);
+
+        expect(response.statusCode, 200);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['document'], '12345678909');
+      });
+
+      test('deve rejeitar atualização com documento inválido', () async {
+        // Cria therapist primeiro
+        final createRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/therapists/me',
+          body: {'name': 'Dr. João', 'email': 'joao@terafy.com', 'status': 'active'},
+          token: therapistToken,
+        );
+        await handler(createRequest);
+
+        // Faz login novamente para obter token atualizado
+        final loginRequest = HttpTestHelpers.createRequest(
+          method: 'POST',
+          path: '/auth/login',
+          body: {'email': 'therapist@terafy.com', 'password': 'senha123'},
+        );
+        final loginResponse = await handler(loginRequest);
+        final loginData = await HttpTestHelpers.parseJsonResponse(loginResponse);
+        final updatedToken = loginData['auth_token'] as String;
+
+        // Tenta atualizar com CPF inválido
+        final updateRequest = HttpTestHelpers.createRequest(
+          method: 'PUT',
+          path: '/therapists/me',
+          body: {
+            'name': 'Dr. João',
+            'email': 'joao@terafy.com',
+            'document': '12345678900', // Invalid CPF
+            'status': 'active',
+          },
+          token: updatedToken,
+        );
+
+        final response = await handler(updateRequest);
+
+        expect(response.statusCode, 400);
+        final data = await HttpTestHelpers.parseJsonResponse(response);
+        expect(data['error'], contains('CPF inválido'));
       });
     });
 

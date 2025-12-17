@@ -37,9 +37,7 @@ class SessionHandler extends BaseHandler {
       int? therapistId;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
@@ -47,13 +45,9 @@ class SessionHandler extends BaseHandler {
         if (therapistIdParam == null) {
           return badRequestResponse('Informe o therapistId para criar sessão.');
         }
-        therapistId =
-            int.tryParse(therapistIdParam.toString()) ??
-            (throw FormatException('therapistId inválido'));
+        therapistId = int.tryParse(therapistIdParam.toString()) ?? (throw FormatException('therapistId inválido'));
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem criar sessões.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem criar sessões.');
       }
 
       final session = Session.fromJson({
@@ -63,7 +57,6 @@ class SessionHandler extends BaseHandler {
         'type': data['type'] ?? 'presential',
         'modality': data['modality'] ?? 'individual',
         'status': data['status'] ?? 'scheduled',
-        'paymentStatus': data['paymentStatus'] ?? 'pending',
       });
 
       final created = await _controller.createSession(
@@ -72,7 +65,6 @@ class SessionHandler extends BaseHandler {
         userRole: userRole,
         accountId: accountId,
       );
-
       return successResponse(created.toJson());
     } on SessionException catch (e, stack) {
       AppLogger.error(e, stack);
@@ -82,9 +74,7 @@ class SessionHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao criar sessão: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao criar sessão: ${e.toString()}');
     }
   }
 
@@ -118,9 +108,7 @@ class SessionHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao buscar sessão: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao buscar sessão: ${e.toString()}');
     }
   }
 
@@ -138,22 +126,16 @@ class SessionHandler extends BaseHandler {
       int? therapistId;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
         final therapistIdParam = request.url.queryParameters['therapistId'];
         if (therapistIdParam != null) {
-          therapistId =
-              int.tryParse(therapistIdParam) ??
-              (throw FormatException('therapistId inválido'));
+          therapistId = int.tryParse(therapistIdParam) ?? (throw FormatException('therapistId inválido'));
         }
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem acessar sessões.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem acessar sessões.');
       }
 
       final patientIdParam = request.url.queryParameters['patientId'];
@@ -162,15 +144,9 @@ class SessionHandler extends BaseHandler {
       final startParam = request.url.queryParameters['start'];
       final endParam = request.url.queryParameters['end'];
 
-      int? patientId = patientIdParam != null
-          ? int.tryParse(patientIdParam)
-          : null;
-      int? appointmentId = appointmentIdParam != null
-          ? int.tryParse(appointmentIdParam)
-          : null;
-      DateTime? startDate = startParam != null
-          ? DateTime.tryParse(startParam)
-          : null;
+      int? patientId = patientIdParam != null ? int.tryParse(patientIdParam) : null;
+      int? appointmentId = appointmentIdParam != null ? int.tryParse(appointmentIdParam) : null;
+      DateTime? startDate = startParam != null ? DateTime.tryParse(startParam) : null;
       DateTime? endDate = endParam != null ? DateTime.tryParse(endParam) : null;
 
       final sessions = await _controller.listSessions(
@@ -185,9 +161,7 @@ class SessionHandler extends BaseHandler {
         accountId: therapistId ?? accountId,
       );
 
-      return successResponse(
-        sessions.map((session) => session.toJson()).toList(),
-      );
+      return successResponse(sessions.map((session) => session.toJson()).toList());
     } on SessionException catch (e) {
       AppLogger.error(e, StackTrace.current);
       return errorResponse(e.message, statusCode: e.statusCode);
@@ -196,9 +170,7 @@ class SessionHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao listar sessões: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao listar sessões: ${e.toString()}');
     }
   }
 
@@ -228,22 +200,16 @@ class SessionHandler extends BaseHandler {
       int? therapistId;
       if (userRole == 'therapist') {
         if (accountId == null) {
-          return badRequestResponse(
-            'Conta de terapeuta não vinculada. Complete o perfil primeiro.',
-          );
+          return badRequestResponse('Conta de terapeuta não vinculada. Complete o perfil primeiro.');
         }
         therapistId = accountId;
       } else if (userRole == 'admin') {
         final therapistIdParam = data['therapistId'] ?? data['therapist_id'];
         if (therapistIdParam != null) {
-          therapistId =
-              int.tryParse(therapistIdParam.toString()) ??
-              (throw FormatException('therapistId inválido'));
+          therapistId = int.tryParse(therapistIdParam.toString()) ?? (throw FormatException('therapistId inválido'));
         }
       } else {
-        return forbiddenResponse(
-          'Somente terapeutas ou administradores podem atualizar sessões.',
-        );
+        return forbiddenResponse('Somente terapeutas ou administradores podem atualizar sessões.');
       }
 
       final session = Session.fromJson({
@@ -253,7 +219,6 @@ class SessionHandler extends BaseHandler {
         'type': data['type'] ?? 'presential',
         'modality': data['modality'] ?? 'individual',
         'status': data['status'] ?? 'scheduled',
-        'paymentStatus': data['paymentStatus'] ?? 'pending',
       });
 
       final updated = await _controller.updateSession(
@@ -271,9 +236,7 @@ class SessionHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao atualizar sessão: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao atualizar sessão: ${e.toString()}');
     }
   }
 
@@ -293,12 +256,7 @@ class SessionHandler extends BaseHandler {
         return unauthorizedResponse('Autenticação necessária');
       }
 
-      await _controller.deleteSession(
-        sessionId: sessionId,
-        userId: userId,
-        userRole: userRole,
-        accountId: accountId,
-      );
+      await _controller.deleteSession(sessionId: sessionId, userId: userId, userRole: userRole, accountId: accountId);
 
       return successResponse({'message': 'Sessão removida com sucesso'});
     } on SessionException catch (e) {
@@ -307,9 +265,7 @@ class SessionHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao remover sessão: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao remover sessão: ${e.toString()}');
     }
   }
 
@@ -348,9 +304,7 @@ class SessionHandler extends BaseHandler {
       return badRequestResponse(e.message);
     } catch (e, stack) {
       AppLogger.error(e, stack);
-      return internalServerErrorResponse(
-        'Erro ao calcular próximo número de sessão: ${e.toString()}',
-      );
+      return internalServerErrorResponse('Erro ao calcular próximo número de sessão: ${e.toString()}');
     }
   }
 }

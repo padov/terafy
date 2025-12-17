@@ -6,6 +6,7 @@ class HomeSummary {
     required this.todayConfirmedSessions,
     required this.monthlyCompletionRate,
     required this.monthlySessions,
+    required this.monthlyRevenue,
     required this.listOfTodaySessions,
     this.pendingSessions = const [],
   });
@@ -16,6 +17,7 @@ class HomeSummary {
   final int todayConfirmedSessions;
   final double monthlyCompletionRate;
   final int monthlySessions;
+  final double monthlyRevenue;
   final List<HomeAgendaItem> listOfTodaySessions;
   final List<PendingSession> pendingSessions;
 
@@ -26,6 +28,7 @@ class HomeSummary {
     int? todayConfirmedSessions,
     double? monthlyCompletionRate,
     int? monthlySessions,
+    double? monthlyRevenue,
     List<HomeAgendaItem>? listOfTodaySessions,
     List<PendingSession>? pendingSessions,
   }) {
@@ -36,6 +39,7 @@ class HomeSummary {
       todayConfirmedSessions: todayConfirmedSessions ?? this.todayConfirmedSessions,
       monthlyCompletionRate: monthlyCompletionRate ?? this.monthlyCompletionRate,
       monthlySessions: monthlySessions ?? this.monthlySessions,
+      monthlyRevenue: monthlyRevenue ?? this.monthlyRevenue,
       listOfTodaySessions: listOfTodaySessions ?? this.listOfTodaySessions,
       pendingSessions: pendingSessions ?? this.pendingSessions,
     );
@@ -49,6 +53,7 @@ class HomeSummary {
       'todayConfirmedSessions': todayConfirmedSessions,
       'monthlyCompletionRate': monthlyCompletionRate,
       'monthlySessions': monthlySessions,
+      'monthlyRevenue': monthlyRevenue,
       'listOfTodaySessions': listOfTodaySessions.map((item) => item.toJson()).toList(),
       'pendingSessions': pendingSessions.map((item) => item.toJson()).toList(),
     };
@@ -60,8 +65,9 @@ class HomeSummary {
       therapistId: json['therapistId'] as int,
       todayPendingSessions: json['todayPendingSessions'] as int,
       todayConfirmedSessions: json['todayConfirmedSessions'] as int,
-      monthlyCompletionRate: json['monthlyCompletionRate'] as double,
+      monthlyCompletionRate: (json['monthlyCompletionRate'] as num).toDouble(),
       monthlySessions: json['monthlySessions'] as int,
+      monthlyRevenue: (json['monthlyRevenue'] as num?)?.toDouble() ?? 0.0,
       listOfTodaySessions:
           (json['listOfTodaySessions'] as List<dynamic>?)
               ?.map((item) => HomeAgendaItem.fromJson(item as Map<String, dynamic>))

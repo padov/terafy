@@ -36,3 +36,8 @@ reset-db: ## Drop and recreate database (run all migrations from scratch).
 create-test-user: ## Create a test user in the database.
 	@echo "Creating test user..."
 	@cd server && dart run bin/create_test_user.dart
+
+.PHONY: prepare-test-db
+prepare-test-db: ## Prepare test database with therapists and patients.
+	@echo "Preparing test database..."
+	@cd server && dart run bin/prepare_test_database.dart

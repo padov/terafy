@@ -9,3 +9,6 @@ dependencies:
   logging: ^1.2.0
   ansi_styles: ^0.3.2+1
   stack_trace: ^1.11.1
+
+dev_dependencies:
+  test: ^1.25.0

@@ -8,7 +8,6 @@ class FinancialTransactionMapper {
       id: transaction.id?.toString() ?? '',
       therapistId: transaction.therapistId.toString(),
       patientId: transaction.patientId.toString(),
-      sessionId: transaction.sessionId?.toString(),
       amount: transaction.amount,
       status: _mapStatusFromString(transaction.status),
       method: _mapPaymentMethodFromString(transaction.paymentMethod),
@@ -28,18 +27,15 @@ class FinancialTransactionMapper {
       id: int.tryParse(payment.id),
       therapistId: int.tryParse(payment.therapistId) ?? 0,
       patientId: int.tryParse(payment.patientId) ?? 0,
-      sessionId: payment.sessionId != null
-          ? int.tryParse(payment.sessionId!)
-          : null,
       transactionDate: payment.dueDate,
-      type: 'recebimento', // Default, pode ser ajustado
+      type: 'income', // Default, pode ser ajustado
       amount: payment.amount,
       paymentMethod: mapPaymentMethodToString(payment.method),
       status: _mapStatusToString(payment.status),
       dueDate: payment.dueDate,
       paidAt: payment.paidAt,
       receiptNumber: payment.receiptNumber,
-      category: 'sessao', // Default
+      category: 'session', // Default
       notes: payment.notes,
       invoiceNumber: payment.invoiceId,
       invoiceIssued: payment.invoiceId != null,
@@ -50,13 +46,13 @@ class FinancialTransactionMapper {
 
   static PaymentStatus _mapStatusFromString(String status) {
     switch (status) {
-      case 'pendente':
+      case 'pending':
         return PaymentStatus.pending;
-      case 'pago':
+      case 'paid':
         return PaymentStatus.paid;
-      case 'atrasado':
+      case 'overdue':
         return PaymentStatus.overdue;
-      case 'cancelado':
+      case 'cancelled':
         return PaymentStatus.cancelled;
       default:
         return PaymentStatus.pending;
@@ -66,32 +62,32 @@ class FinancialTransactionMapper {
   static String _mapStatusToString(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.pending:
-        return 'pendente';
+        return 'pending';
       case PaymentStatus.paid:
-        return 'pago';
+        return 'paid';
       case PaymentStatus.overdue:
-        return 'atrasado';
+        return 'overdue';
       case PaymentStatus.cancelled:
-        return 'cancelado';
+        return 'cancelled';
       case PaymentStatus.refunded:
-        return 'cancelado'; // Mapear refunded para cancelado no backend
+        return 'cancelled'; // Mapear refunded para cancelado no backend
     }
   }
 
   static PaymentMethod? _mapPaymentMethodFromString(String? method) {
     if (method == null) return null;
     switch (method) {
-      case 'dinheiro':
+      case 'cash':
         return PaymentMethod.cash;
       case 'pix':
         return PaymentMethod.pix;
-      case 'cartao_debito':
+      case 'debit_card':
         return PaymentMethod.debitCard;
-      case 'cartao_credito':
+      case 'credit_card':
         return PaymentMethod.creditCard;
-      case 'transferencia':
+      case 'transfer':
         return PaymentMethod.bankTransfer;
-      case 'convenio':
+      case 'insurance':
         return PaymentMethod.healthInsurance;
       default:
         return PaymentMethod.other;
@@ -102,19 +98,19 @@ class FinancialTransactionMapper {
     if (method == null) return 'pix'; // Default
     switch (method) {
       case PaymentMethod.cash:
-        return 'dinheiro';
+        return 'cash';
       case PaymentMethod.pix:
         return 'pix';
       case PaymentMethod.debitCard:
-        return 'cartao_debito';
+        return 'debit_card';
       case PaymentMethod.creditCard:
-        return 'cartao_credito';
+        return 'credit_card';
       case PaymentMethod.bankTransfer:
-        return 'transferencia';
+        return 'transfer';
       case PaymentMethod.healthInsurance:
-        return 'convenio';
+        return 'insurance';
       case PaymentMethod.other:
-        return 'pix'; // Default para other
+        return 'others'; // Default para other
     }
   }
 }

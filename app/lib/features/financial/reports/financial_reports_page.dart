@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/common/app_colors.dart';
-import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc_models.dart';
 import 'package:terafy/features/financial/reports/widgets/revenue_chart.dart';
@@ -16,8 +15,7 @@ class FinancialReportsPage extends StatefulWidget {
   State<FinancialReportsPage> createState() => _FinancialReportsPageState();
 }
 
-class _FinancialReportsPageState extends State<FinancialReportsPage>
-    with SingleTickerProviderStateMixin {
+class _FinancialReportsPageState extends State<FinancialReportsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   DateTime _selectedDate = DateTime.now();
   String _period = 'month'; // 'month' ou 'year'
@@ -47,19 +45,14 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
       endDate = DateTime(_selectedDate.year, 12, 31);
     }
 
-    context.read<FinancialBloc>().add(
-      LoadFinancialSummary(startDate: startDate, endDate: endDate),
-    );
+    context.read<FinancialBloc>().add(LoadFinancialSummary(startDate: startDate, endDate: endDate));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Relatórios Financeiros',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: const Text('Relatórios Financeiros', style: TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -78,29 +71,9 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
         children: [
           _buildPeriodSelector(),
           Expanded(
-            child: BlocProvider(
-              create: (context) {
-                final container = DependencyContainer();
-                return FinancialBloc(
-                  getTransactionsUseCase: container.getTransactionsUseCase,
-                  getTransactionUseCase: container.getTransactionUseCase,
-                  createTransactionUseCase: container.createTransactionUseCase,
-                  updateTransactionUseCase: container.updateTransactionUseCase,
-                  deleteTransactionUseCase: container.deleteTransactionUseCase,
-                  getFinancialSummaryUseCase:
-                      container.getFinancialSummaryUseCase,
-                  getCurrentTherapistUseCase:
-                      container.getCurrentTherapistUseCase,
-                );
-              },
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildRevenueTab(),
-                  _buildStatusTab(),
-                  _buildComparisonTab(),
-                ],
-              ),
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildRevenueTab(), _buildStatusTab(), _buildComparisonTab()],
             ),
           ),
         ],
@@ -113,13 +86,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))],
       ),
       child: Column(
         children: [
@@ -141,10 +108,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
                 onPressed: () {
                   setState(() {
                     if (_period == 'month') {
-                      _selectedDate = DateTime(
-                        _selectedDate.year,
-                        _selectedDate.month - 1,
-                      );
+                      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1);
                     } else {
                       _selectedDate = DateTime(_selectedDate.year - 1);
                     }
@@ -157,21 +121,14 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
               const SizedBox(width: 16),
               Text(
                 _getPeriodLabel(),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.offBlack,
-                ),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
               ),
               const SizedBox(width: 16),
               IconButton(
                 onPressed: () {
                   setState(() {
                     if (_period == 'month') {
-                      _selectedDate = DateTime(
-                        _selectedDate.year,
-                        _selectedDate.month + 1,
-                      );
+                      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1);
                     } else {
                       _selectedDate = DateTime(_selectedDate.year + 1);
                     }
@@ -229,28 +186,20 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state is FinancialSummaryLoaded) {
+        if (state is FinancialData && state.summary != null) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSummaryCards(state.summary),
+                _buildSummaryCards(state.summary!),
                 const SizedBox(height: 24),
                 const Text(
                   'Receita por Dia',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.offBlack,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                 ),
                 const SizedBox(height: 16),
-                RevenueChart(
-                  summary: state.summary,
-                  period: _period,
-                  selectedDate: _selectedDate,
-                ),
+                RevenueChart(summary: state.summary!, period: _period, selectedDate: _selectedDate),
               ],
             ),
           );
@@ -268,7 +217,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state is FinancialSummaryLoaded) {
+        if (state is FinancialData && state.summary != null) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -276,16 +225,12 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
               children: [
                 const Text(
                   'Distribuição por Status',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.offBlack,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                 ),
                 const SizedBox(height: 16),
-                PaymentStatusChart(summary: state.summary),
+                PaymentStatusChart(summary: state.summary!),
                 const SizedBox(height: 24),
-                _buildStatusList(state.summary),
+                _buildStatusList(state.summary!),
               ],
             ),
           );
@@ -303,7 +248,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state is FinancialSummaryLoaded) {
+        if (state is FinancialData && state.summary != null) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -311,11 +256,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
               children: [
                 const Text(
                   'Comparativo Mensal',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.offBlack,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                 ),
                 const SizedBox(height: 16),
                 MonthlyComparisonChart(year: _selectedDate.year),
@@ -332,10 +273,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
   }
 
   Widget _buildSummaryCards(dynamic summary) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    );
+    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     return Column(
       children: [
@@ -364,22 +302,13 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
         Row(
           children: [
             Expanded(
-              child: _buildMiniCard(
-                'Atrasado',
-                currencyFormat.format(summary.totalOverdue),
-                Colors.red,
-                Icons.warning,
-              ),
+              child: _buildMiniCard('Atrasado', currencyFormat.format(summary.totalOverdue), Colors.red, Icons.warning),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildMiniCard(
                 'Total',
-                currencyFormat.format(
-                  summary.totalReceived +
-                      summary.totalPending +
-                      summary.totalOverdue,
-                ),
+                currencyFormat.format(summary.totalReceived + summary.totalPending + summary.totalOverdue),
                 AppColors.primary,
                 Icons.attach_money,
               ),
@@ -390,12 +319,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
     );
   }
 
-  Widget _buildMiniCard(
-    String label,
-    String value,
-    Color color,
-    IconData icon,
-  ) {
+  Widget _buildMiniCard(String label, String value, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -412,22 +336,14 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
               const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[700], fontWeight: FontWeight.w500),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -437,12 +353,8 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
   }
 
   Widget _buildStatusList(dynamic summary) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    );
-    final total =
-        summary.totalReceived + summary.totalPending + summary.totalOverdue;
+    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final total = summary.totalReceived + summary.totalPending + summary.totalOverdue;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -478,12 +390,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
     );
   }
 
-  Widget _buildStatusRow(
-    String label,
-    String value,
-    Color color,
-    double percentage,
-  ) {
+  Widget _buildStatusRow(String label, String value, Color color, double percentage) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -492,19 +399,11 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
           children: [
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.offBlack,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppColors.offBlack, fontWeight: FontWeight.w500),
             ),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color),
             ),
           ],
         ),
@@ -525,11 +424,7 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
             const SizedBox(width: 8),
             Text(
               '${(percentage * 100).toStringAsFixed(1)}%',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -545,6 +440,14 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.lightBorderColor),
       ),
+      child: const Center(
+        child: Text(
+          'Insights indisponíveis.\nAguardando implementação de dados históricos.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
+        ),
+      ),
+      /*
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -554,63 +457,35 @@ class _FinancialReportsPageState extends State<FinancialReportsPage>
               SizedBox(width: 8),
               Text(
                 'Insights',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.offBlack,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.offBlack),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildInsightItem(
-            Icons.trending_up,
-            'Melhor Mês',
-            'Março - R\$ 4.200,00',
-            Colors.green,
-          ),
+          _buildInsightItem(Icons.trending_up, 'Melhor Mês', 'Março - R\$ 4.200,00', Colors.green),
           const SizedBox(height: 8),
-          _buildInsightItem(
-            Icons.trending_down,
-            'Pior Mês',
-            'Janeiro - R\$ 1.800,00',
-            Colors.red,
-          ),
+          _buildInsightItem(Icons.trending_down, 'Pior Mês', 'Janeiro - R\$ 1.800,00', Colors.red),
           const SizedBox(height: 8),
-          _buildInsightItem(
-            Icons.show_chart,
-            'Média Mensal',
-            'R\$ 3.000,00',
-            AppColors.primary,
-          ),
+          _buildInsightItem(Icons.show_chart, 'Média Mensal', 'R\$ 3.000,00', AppColors.primary),
         ],
       ),
+      */
     );
   }
 
-  Widget _buildInsightItem(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
+  /*
+  Widget _buildInsightItem(IconData icon, String label, String value, Color color) {
     return Row(
       children: [
         Icon(icon, color: color, size: 18),
         const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-        ),
+        Text('$label: ', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color),
         ),
       ],
     );
   }
+  */
 }

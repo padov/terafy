@@ -25,7 +25,7 @@ class Payment extends Equatable {
   final String id;
   final String therapistId;
   final String patientId;
-  final String? sessionId; // Vinculado a uma sessão
+
   final double amount;
   final PaymentStatus status;
   final PaymentMethod? method;
@@ -41,7 +41,7 @@ class Payment extends Equatable {
     required this.id,
     required this.therapistId,
     required this.patientId,
-    this.sessionId,
+
     required this.amount,
     required this.status,
     this.method,
@@ -59,7 +59,7 @@ class Payment extends Equatable {
     id,
     therapistId,
     patientId,
-    sessionId,
+
     amount,
     status,
     method,
@@ -100,7 +100,7 @@ class Payment extends Equatable {
     String? id,
     String? therapistId,
     String? patientId,
-    String? sessionId,
+
     double? amount,
     PaymentStatus? status,
     PaymentMethod? method,
@@ -116,7 +116,7 @@ class Payment extends Equatable {
       id: id ?? this.id,
       therapistId: therapistId ?? this.therapistId,
       patientId: patientId ?? this.patientId,
-      sessionId: sessionId ?? this.sessionId,
+
       amount: amount ?? this.amount,
       status: status ?? this.status,
       method: method ?? this.method,
@@ -135,7 +135,7 @@ class Payment extends Equatable {
       'id': id,
       'therapistId': therapistId,
       'patientId': patientId,
-      'sessionId': sessionId,
+
       'amount': amount,
       'status': status.name,
       'method': method?.name,
@@ -154,16 +154,12 @@ class Payment extends Equatable {
       id: json['id'] as String,
       therapistId: json['therapistId'] as String,
       patientId: json['patientId'] as String,
-      sessionId: json['sessionId'] as String?,
+
       amount: (json['amount'] as num).toDouble(),
       status: PaymentStatus.values.firstWhere((e) => e.name == json['status']),
-      method: json['method'] != null
-          ? PaymentMethod.values.firstWhere((e) => e.name == json['method'])
-          : null,
+      method: json['method'] != null ? PaymentMethod.values.firstWhere((e) => e.name == json['method']) : null,
       dueDate: DateTime.parse(json['dueDate'] as String),
-      paidAt: json['paidAt'] != null
-          ? DateTime.parse(json['paidAt'] as String)
-          : null,
+      paidAt: json['paidAt'] != null ? DateTime.parse(json['paidAt'] as String) : null,
       notes: json['notes'] as String?,
       receiptNumber: json['receiptNumber'] as String?,
       invoiceId: json['invoiceId'] as String?,
@@ -174,12 +170,28 @@ class Payment extends Equatable {
 }
 
 /// Resumo financeiro
+/// Distribuição por método de pagamento
+class PaymentMethodDistribution extends Equatable {
+  final String method;
+  final int count;
+  final double amount;
+
+  const PaymentMethodDistribution({required this.method, required this.count, required this.amount});
+
+  @override
+  List<Object> get props => [method, count, amount];
+}
+
+/// Resumo financeiro
 class FinancialSummary extends Equatable {
   final double totalReceived;
   final double totalPending;
   final double totalOverdue;
+  final double totalExpense; // New
   final int sessionsCompleted;
   final int sessionsPending;
+  final double overduePercentage; // New
+  final List<PaymentMethodDistribution> paymentMethodDistribution; // New
   final DateTime startDate;
   final DateTime endDate;
 
@@ -187,8 +199,11 @@ class FinancialSummary extends Equatable {
     required this.totalReceived,
     required this.totalPending,
     required this.totalOverdue,
+    this.totalExpense = 0.0,
     required this.sessionsCompleted,
     required this.sessionsPending,
+    this.overduePercentage = 0.0,
+    this.paymentMethodDistribution = const [],
     required this.startDate,
     required this.endDate,
   });
@@ -198,8 +213,11 @@ class FinancialSummary extends Equatable {
     totalReceived,
     totalPending,
     totalOverdue,
+    totalExpense,
     sessionsCompleted,
     sessionsPending,
+    overduePercentage,
+    paymentMethodDistribution,
     startDate,
     endDate,
   ];

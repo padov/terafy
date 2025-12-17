@@ -53,12 +53,14 @@ class UpdateProfessionalData extends EditProfileEvent {
   final List<String> professionalRegistrations;
   final String presentation;
   final String address;
+  final double? defaultSessionPrice;
 
   const UpdateProfessionalData({
     required this.specialties,
     required this.professionalRegistrations,
     required this.presentation,
     required this.address,
+    this.defaultSessionPrice,
   });
 
   @override
@@ -67,6 +69,7 @@ class UpdateProfessionalData extends EditProfileEvent {
     professionalRegistrations,
     presentation,
     address,
+    defaultSessionPrice,
   ];
 }
 
@@ -153,6 +156,7 @@ class EditProfileData extends Equatable {
   final List<String>? professionalRegistrations;
   final String? presentation;
   final String? address;
+  final double? defaultSessionPrice;
 
   const EditProfileData({
     this.name,
@@ -165,6 +169,7 @@ class EditProfileData extends Equatable {
     this.professionalRegistrations,
     this.presentation,
     this.address,
+    this.defaultSessionPrice,
   });
 
   EditProfileData copyWith({
@@ -178,6 +183,7 @@ class EditProfileData extends Equatable {
     List<String>? professionalRegistrations,
     String? presentation,
     String? address,
+    double? defaultSessionPrice,
   }) {
     return EditProfileData(
       name: name ?? this.name,
@@ -191,6 +197,7 @@ class EditProfileData extends Equatable {
           professionalRegistrations ?? this.professionalRegistrations,
       presentation: presentation ?? this.presentation,
       address: address ?? this.address,
+      defaultSessionPrice: defaultSessionPrice ?? this.defaultSessionPrice,
     );
   }
 
@@ -206,5 +213,6 @@ class EditProfileData extends Equatable {
     professionalRegistrations,
     presentation,
     address,
+    defaultSessionPrice,
   ];
 }

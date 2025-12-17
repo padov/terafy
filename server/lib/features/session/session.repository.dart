@@ -73,7 +73,7 @@ class SessionRepository {
           cancellation_reason,
           cancellation_time,
           charged_amount,
-          payment_status,
+          transaction_id,
           patient_mood,
           topics_discussed,
           session_notes,
@@ -110,7 +110,7 @@ class SessionRepository {
           @cancellation_reason,
           @cancellation_time,
           @charged_amount,
-          @payment_status::payment_status,
+          @transaction_id,
           @patient_mood,
           CAST(@topics_discussed AS JSONB),
           @session_notes,
@@ -148,7 +148,7 @@ class SessionRepository {
                   cancellation_reason,
                   cancellation_time,
                   charged_amount,
-                  payment_status::text AS payment_status,
+                  transaction_id,
                   patient_mood,
                   topics_discussed,
                   session_notes,
@@ -200,47 +200,47 @@ class SessionRepository {
 
       final result = await conn.execute(
         Sql.named('''
-        SELECT id,
-               patient_id,
-               therapist_id,
-               appointment_id,
-               scheduled_start_time,
-               scheduled_end_time,
-               duration_minutes,
-               session_number,
-               type::text AS type,
-               modality::text AS modality,
-               location,
-               online_room_link,
-               status::text AS status,
-               cancellation_reason,
-               cancellation_time,
-               charged_amount,
-               payment_status::text AS payment_status,
-               patient_mood,
-               topics_discussed,
-               session_notes,
-               observed_behavior,
-               interventions_used,
-               resources_used,
-               homework,
-               patient_reactions,
-               progress_observed,
-               difficulties_identified,
-               next_steps,
-               next_session_goals,
-               needs_referral,
-               current_risk::text AS current_risk,
-               important_observations,
-               presence_confirmation_time,
-               reminder_sent,
-               reminder_sent_time,
-               patient_rating,
-               attachments,
-               created_at,
-               updated_at
-        FROM sessions
-        WHERE id = @id
+        SELECT s.id,
+               s.patient_id,
+               s.therapist_id,
+               s.appointment_id,
+               s.scheduled_start_time,
+               s.scheduled_end_time,
+               s.duration_minutes,
+               s.session_number,
+               s.type::text AS type,
+               s.modality::text AS modality,
+               s.location,
+               s.online_room_link,
+               s.status::text AS status,
+               s.cancellation_reason,
+               s.cancellation_time,
+               s.charged_amount,
+               s.transaction_id,
+               s.patient_mood,
+               s.topics_discussed,
+               s.session_notes,
+               s.observed_behavior,
+               s.interventions_used,
+               s.resources_used,
+               s.homework,
+               s.patient_reactions,
+               s.progress_observed,
+               s.difficulties_identified,
+               s.next_steps,
+               s.next_session_goals,
+               s.needs_referral,
+               s.current_risk::text AS current_risk,
+               s.important_observations,
+               s.presence_confirmation_time,
+               s.reminder_sent,
+               s.reminder_sent_time,
+               s.patient_rating,
+               s.attachments,
+               s.created_at,
+               s.updated_at
+        FROM sessions s
+        WHERE s.id = @id
       '''),
         parameters: {'id': sessionId},
       );
@@ -279,68 +279,70 @@ class SessionRepository {
       }
 
       final buffer = StringBuffer('''
-      SELECT id,
-             patient_id,
-             therapist_id,
-             appointment_id,
-             scheduled_start_time,
-             scheduled_end_time,
-             duration_minutes,
-             session_number,
-             type::text AS type,
-             modality::text AS modality,
-             location,
-             online_room_link,
-             status::text AS status,
-             cancellation_reason,
-             cancellation_time,
-             charged_amount,
-             payment_status::text AS payment_status,
-             patient_mood,
-             topics_discussed,
-             session_notes,
-             observed_behavior,
-             interventions_used,
-             resources_used,
-             homework,
-             patient_reactions,
-             progress_observed,
-             difficulties_identified,
-             next_steps,
-             next_session_goals,
-             needs_referral,
-             current_risk::text AS current_risk,
-             important_observations,
-             presence_confirmation_time,
-             reminder_sent,
-             reminder_sent_time,
-             patient_rating,
-             attachments,
-             created_at,
-             updated_at
-      FROM sessions
+      SELECT s.id,
+             s.patient_id,
+             s.therapist_id,
+             s.appointment_id,
+             s.scheduled_start_time,
+             s.scheduled_end_time,
+             s.duration_minutes,
+             s.session_number,
+             s.type::text AS type,
+             s.modality::text AS modality,
+             s.location,
+             s.online_room_link,
+             s.status::text AS status,
+             s.cancellation_reason,
+             s.cancellation_time,
+             s.charged_amount,
+             s.transaction_id,
+             s.patient_mood,
+             s.topics_discussed,
+             s.session_notes,
+             s.observed_behavior,
+             s.interventions_used,
+             s.resources_used,
+             s.homework,
+             s.patient_reactions,
+             s.progress_observed,
+             s.difficulties_identified,
+             s.next_steps,
+             s.next_session_goals,
+             s.needs_referral,
+             s.current_risk::text AS current_risk,
+             s.important_observations,
+             s.presence_confirmation_time,
+             s.reminder_sent,
+             s.reminder_sent_time,
+             s.patient_rating,
+             s.attachments,
+             s.created_at,
+             s.updated_at,
+             t.status::text AS payment_status
+      FROM sessions s
+      LEFT JOIN financial_transactions t ON s.transaction_id = t.id
       WHERE 1=1
     ''');
 
       final parameters = <String, dynamic>{};
 
       if (patientId != null) {
-        buffer.write(' AND patient_id = @patient_id');
+        buffer.write(' AND s.patient_id = @patient_id');
         parameters['patient_id'] = patientId;
       }
 
       if (therapistId != null) {
-        buffer.write(' AND therapist_id = @therapist_id');
+        buffer.write(' AND s.therapist_id = @therapist_id');
         parameters['therapist_id'] = therapistId;
       }
 
       if (appointmentId != null) {
-        buffer.write(' AND appointment_id = @appointment_id');
+        buffer.write(' AND s.appointment_id = @appointment_id');
         parameters['appointment_id'] = appointmentId;
       }
 
       if (statuses != null && statuses.isNotEmpty) {
-        buffer.write(' AND status::text IN (');
+        buffer.write(' AND s.status::text IN (');
         for (var i = 0; i < statuses.length; i++) {
           if (i > 0) buffer.write(', ');
           buffer.write('@status_$i');
@@ -350,16 +352,16 @@ class SessionRepository {
       }
 
       if (startDate != null) {
-        buffer.write(' AND scheduled_start_time >= @start_date');
+        buffer.write(' AND s.scheduled_start_time >= @start_date');
         parameters['start_date'] = startDate;
       }
 
       if (endDate != null) {
-        buffer.write(' AND scheduled_start_time <= @end_date');
+        buffer.write(' AND s.scheduled_start_time <= @end_date');
         parameters['end_date'] = endDate;
       }
 
-      buffer.write(' ORDER BY scheduled_start_time DESC');
+      buffer.write(' ORDER BY s.scheduled_start_time DESC');
 
       final result = await conn.execute(Sql.named(buffer.toString()), parameters: parameters);
 
@@ -432,7 +434,7 @@ class SessionRepository {
             cancellation_reason = @cancellation_reason,
             cancellation_time = @cancellation_time,
             charged_amount = @charged_amount,
-            payment_status = @payment_status::payment_status,
+            transaction_id = @transaction_id,
             patient_mood = @patient_mood,
             topics_discussed = CAST(@topics_discussed AS JSONB),
             session_notes = @session_notes,
@@ -471,7 +473,7 @@ class SessionRepository {
                   cancellation_reason,
                   cancellation_time,
                   charged_amount,
-                  payment_status::text AS payment_status,
+                  transaction_id,
                   patient_mood,
                   topics_discussed,
                   session_notes,

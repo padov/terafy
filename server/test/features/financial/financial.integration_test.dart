@@ -128,13 +128,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 150.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
             'notes': 'Sessão de terapia',
           },
           token: therapistToken,
@@ -185,13 +185,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 0.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pendente',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'pending',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -218,13 +218,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 150.0,
             'patientId': 1,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pendente',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'pending',
+            'category': 'session',
           },
           token: tokenSemPerfil,
         );
@@ -240,13 +240,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 150.0,
             'patientId': 1,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pendente',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'pending',
+            'category': 'session',
           },
           token: adminToken,
         );
@@ -305,13 +305,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -358,13 +358,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -402,13 +402,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -416,7 +416,7 @@ void main() {
 
         final request = HttpTestHelpers.createRequest(
           method: 'GET',
-          path: '/financial?status=pago',
+          path: '/financial?status=paid',
           token: therapistToken,
         );
 
@@ -473,14 +473,14 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'therapistId': therapistId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: adminToken,
         );
@@ -528,13 +528,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -597,14 +597,14 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'therapistId': therapistId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: adminToken,
         );
@@ -645,13 +645,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pendente',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'pending',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -662,21 +662,21 @@ void main() {
         final request = HttpTestHelpers.createRequest(
           method: 'PUT',
           path: '/financial/$transactionId',
-          body: {'status': 'pago', 'paidAt': DateTime.now().toIso8601String()},
+          body: {'status': 'paid', 'paidAt': DateTime.now().toIso8601String()},
           token: therapistToken,
         );
 
         final response = await handler(request);
         expect(response.statusCode, 200);
         final data = await HttpTestHelpers.parseJsonResponse(response);
-        expect(data['status'], 'pago');
+        expect(data['status'], 'paid');
       });
 
       test('deve retornar 404 quando ID inválido (não corresponde ao padrão da rota)', () async {
         final request = HttpTestHelpers.createRequest(
           method: 'PUT',
           path: '/financial/abc',
-          body: {'status': 'pago'},
+          body: {'status': 'paid'},
           token: therapistToken,
         );
 
@@ -689,7 +689,7 @@ void main() {
         final request = HttpTestHelpers.createRequest(
           method: 'PUT',
           path: '/financial/99999',
-          body: {'status': 'pago'},
+          body: {'status': 'paid'},
           token: therapistToken,
         );
 
@@ -698,7 +698,7 @@ void main() {
       });
 
       test('deve retornar 401 sem autenticação', () async {
-        final request = HttpTestHelpers.createRequest(method: 'PUT', path: '/financial/1', body: {'status': 'pago'});
+        final request = HttpTestHelpers.createRequest(method: 'PUT', path: '/financial/1', body: {'status': 'paid'});
 
         final response = await handler(request);
         expect(response.statusCode, 401);
@@ -725,13 +725,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pendente',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'pending',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -810,13 +810,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 150.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -826,13 +826,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 200.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'cartao_credito',
-            'status': 'pendente',
-            'category': 'sessao',
+            'paymentMethod': 'credit_card',
+            'status': 'pending',
+            'category': 'session',
           },
           token: therapistToken,
         );
@@ -873,13 +873,13 @@ void main() {
           method: 'POST',
           path: '/financial',
           body: {
-            'type': 'recebimento',
+            'type': 'income',
             'amount': 150.0,
             'patientId': patientId,
             'transactionDate': DateTime.now().toIso8601String(),
-            'paymentMethod': 'dinheiro',
-            'status': 'pago',
-            'category': 'sessao',
+            'paymentMethod': 'cash',
+            'status': 'paid',
+            'category': 'session',
           },
           token: therapistToken,
         );

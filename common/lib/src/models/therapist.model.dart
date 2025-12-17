@@ -18,6 +18,7 @@ class Therapist {
   final Map<String, dynamic>? calendarSettings;
   final Map<String, dynamic>? notificationPreferences;
   final Map<String, dynamic>? bankDetails;
+  final double? defaultSessionPrice;
   final String status; // 'active', 'suspended', 'canceled'
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -40,6 +41,7 @@ class Therapist {
     this.calendarSettings,
     this.notificationPreferences,
     this.bankDetails,
+    this.defaultSessionPrice,
     this.status = 'active',
     this.createdAt,
     this.updatedAt,
@@ -64,6 +66,7 @@ class Therapist {
       'calendar_settings': calendarSettings,
       'notification_preferences': notificationPreferences,
       'bank_details': bankDetails,
+      'default_session_price': defaultSessionPrice,
       'status': status,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
@@ -104,29 +107,33 @@ class Therapist {
       document: map['document'] as String?,
       email: map['email'] as String,
       phone: map['phone'] as String?,
-      birthDate: map['birth_date'] != null
-          ? DateTime.parse(map['birth_date'].toString())
-          : null,
+      birthDate: map['birth_date'] != null ? DateTime.parse(map['birth_date'].toString()) : null,
       profilePictureUrl: map['profile_picture_url'] as String?,
       professionalRegistryType: map['professional_registry_type'] as String?,
       professionalRegistryNumber: map['professional_registry_number'] as String?,
-      specialties: map['specialties'] != null
-          ? List<String>.from(map['specialties'] as List)
-          : null,
+      specialties: map['specialties'] != null ? List<String>.from(map['specialties'] as List) : null,
       education: map['education'] as String?,
       professionalPresentation: map['professional_presentation'] as String?,
       officeAddress: map['office_address'] as String?,
       calendarSettings: _parseJsonField(map['calendar_settings']),
       notificationPreferences: _parseJsonField(map['notification_preferences']),
       bankDetails: _parseJsonField(map['bank_details']),
+      defaultSessionPrice: _parseDouble(map['default_session_price']),
       status: _parseEnumField(map['status'], defaultValue: 'active'),
-      createdAt: map['created_at'] != null
-          ? DateTime.parse(map['created_at'].toString())
-          : null,
-      updatedAt: map['updated_at'] != null
-          ? DateTime.parse(map['updated_at'].toString())
-          : null,
+      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'].toString()) : null,
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'].toString()) : null,
     );
   }
-}
 
+  // Helper para parsear campos numéricos que podem vir como String ou num
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
+  }
+}

@@ -29,10 +29,7 @@ class PaymentDetailsPage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Detalhes do Pagamento',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
+          title: const Text('Detalhes do Pagamento', style: TextStyle(fontWeight: FontWeight.w600)),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
@@ -40,19 +37,13 @@ class PaymentDetailsPage extends StatelessWidget {
           listener: (context, state) {
             if (state is PaymentMarkedAsPaid) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pagamento marcado como pago!'),
-                  backgroundColor: Colors.green,
-                ),
+                const SnackBar(content: Text('Pagamento marcado como pago!'), backgroundColor: Colors.green),
               );
               Navigator.of(context).pop();
             } else if (state is PaymentCancelled) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pagamento cancelado'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Pagamento cancelado'), backgroundColor: Colors.orange));
               Navigator.of(context).pop();
             }
           },
@@ -66,22 +57,11 @@ class PaymentDetailsPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
-                    Text(
-                      state.message,
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(state.message, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Voltar'),
-                    ),
+                    ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Voltar')),
                   ],
                 ),
               );
@@ -99,10 +79,7 @@ class PaymentDetailsPage extends StatelessWidget {
   }
 
   Widget _buildDetails(BuildContext context, Payment payment) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    );
+    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final dateFormat = DateFormat('dd/MM/yyyy');
 
     return Column(
@@ -123,28 +100,12 @@ class PaymentDetailsPage extends StatelessWidget {
                 children: [
                   _buildInfoRow('Status', _getStatusLabel(payment.status)),
                   _buildInfoRow('Valor', currencyFormat.format(payment.amount)),
-                  _buildInfoRow(
-                    'Vencimento',
-                    dateFormat.format(payment.dueDate),
-                  ),
+                  _buildInfoRow('Vencimento', dateFormat.format(payment.dueDate)),
                   if (payment.isOverdue)
-                    _buildInfoRow(
-                      'Dias em atraso',
-                      '${payment.daysOverdue} dias',
-                      valueColor: Colors.red,
-                    ),
-                  if (payment.paidAt != null)
-                    _buildInfoRow(
-                      'Pago em',
-                      dateFormat.format(payment.paidAt!),
-                    ),
-                  if (payment.method != null)
-                    _buildInfoRow(
-                      'Método',
-                      _getPaymentMethodLabel(payment.method!),
-                    ),
-                  if (payment.receiptNumber != null)
-                    _buildInfoRow('Nº Recibo', payment.receiptNumber!),
+                    _buildInfoRow('Dias em atraso', '${payment.daysOverdue} dias', valueColor: Colors.red),
+                  if (payment.paidAt != null) _buildInfoRow('Pago em', dateFormat.format(payment.paidAt!)),
+                  if (payment.method != null) _buildInfoRow('Método', _getPaymentMethodLabel(payment.method!)),
+                  if (payment.receiptNumber != null) _buildInfoRow('Nº Recibo', payment.receiptNumber!),
                 ],
               ),
 
@@ -162,40 +123,12 @@ class PaymentDetailsPage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Sessão vinculada
-              if (payment.sessionId != null)
-                _buildInfoCard(
-                  icon: Icons.assignment,
-                  title: 'Sessão Vinculada',
-                  children: [
-                    _buildInfoRow('ID da Sessão', payment.sessionId!),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Ver detalhes da sessão'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        // TODO: Navegar para detalhes da sessão
-                      },
-                    ),
-                  ],
-                ),
-
-              if (payment.sessionId != null) const SizedBox(height: 16),
-
               // Notas
               if (payment.notes != null)
                 _buildInfoCard(
                   icon: Icons.notes,
                   title: 'Observações',
-                  children: [
-                    Text(
-                      payment.notes!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.offBlack,
-                      ),
-                    ),
-                  ],
+                  children: [Text(payment.notes!, style: const TextStyle(fontSize: 14, color: AppColors.offBlack))],
                 ),
 
               const SizedBox(height: 80),
@@ -226,19 +159,11 @@ class PaymentDetailsPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _getStatusIcon(payment.status),
-                color: colors['border'],
-                size: 20,
-              ),
+              Icon(_getStatusIcon(payment.status), color: colors['border'], size: 20),
               const SizedBox(width: 8),
               Text(
                 _getStatusLabel(payment.status),
-                style: TextStyle(
-                  color: colors['text'],
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
+                style: TextStyle(color: colors['text'], fontWeight: FontWeight.w600, fontSize: 15),
               ),
             ],
           ),
@@ -249,21 +174,13 @@ class PaymentDetailsPage extends StatelessWidget {
         // Valor
         Text(
           currencyFormat.format(payment.amount),
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
-            color: AppColors.offBlack,
-          ),
+          style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: AppColors.offBlack),
         ),
       ],
     );
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget _buildInfoCard({required IconData icon, required String title, required List<Widget> children}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -280,11 +197,7 @@ class PaymentDetailsPage extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.offBlack,
-                ),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.offBlack),
               ),
             ],
           ),
@@ -305,11 +218,7 @@ class PaymentDetailsPage extends StatelessWidget {
           Flexible(
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: valueColor ?? AppColors.offBlack,
-              ),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: valueColor ?? AppColors.offBlack),
               textAlign: TextAlign.right,
             ),
           ),
@@ -323,21 +232,14 @@ class PaymentDetailsPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Marcar como pago
-            if (payment.status == PaymentStatus.pending ||
-                payment.status == PaymentStatus.overdue) ...[
+            if (payment.status == PaymentStatus.pending || payment.status == PaymentStatus.overdue) ...[
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -351,11 +253,7 @@ class PaymentDetailsPage extends StatelessWidget {
                   icon: const Icon(Icons.check_circle, color: Colors.white),
                   label: const Text(
                     'Marcar como Pago',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                 ),
               ),
@@ -389,6 +287,8 @@ class PaymentDetailsPage extends StatelessWidget {
     PaymentMethod? selectedMethod = PaymentMethod.pix;
     DateTime selectedDate = DateTime.now();
     final receiptController = TextEditingController();
+    // Capture the bloc from the context that has access to it
+    final bloc = context.read<FinancialBloc>();
 
     showDialog(
       context: context,
@@ -404,17 +304,9 @@ class PaymentDetailsPage extends StatelessWidget {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<PaymentMethod>(
                   initialValue: selectedMethod,
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                  ),
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                   items: PaymentMethod.values.map((method) {
-                    return DropdownMenuItem(
-                      value: method,
-                      child: Text(_getPaymentMethodLabel(method)),
-                    );
+                    return DropdownMenuItem(value: method, child: Text(_getPaymentMethodLabel(method)));
                   }).toList(),
                   onChanged: (value) {
                     setState(() => selectedMethod = value);
@@ -428,9 +320,7 @@ class PaymentDetailsPage extends StatelessWidget {
                     final date = await showDatePicker(
                       context: context,
                       initialDate: selectedDate,
-                      firstDate: payment.dueDate.subtract(
-                        const Duration(days: 365),
-                      ),
+                      firstDate: payment.dueDate.subtract(const Duration(days: 365)),
                       lastDate: DateTime.now().add(const Duration(days: 1)),
                     );
                     if (date != null) {
@@ -438,10 +328,7 @@ class PaymentDetailsPage extends StatelessWidget {
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     decoration: BoxDecoration(
                       border: Border.all(color: AppColors.lightBorderColor),
                       borderRadius: BorderRadius.circular(8),
@@ -458,40 +345,29 @@ class PaymentDetailsPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 TextField(
                   controller: receiptController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nº do Recibo (opcional)',
-                    hintText: 'Ex: REC-001',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Nº do Recibo (opcional)', hintText: 'Ex: REC-001'),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
             ElevatedButton(
               onPressed: selectedMethod == null
                   ? null
                   : () {
-                      context.read<FinancialBloc>().add(
+                      bloc.add(
                         MarkPaymentAsPaid(
                           paymentId: payment.id,
                           method: selectedMethod!,
                           paidAt: selectedDate,
-                          receiptNumber: receiptController.text.trim().isEmpty
-                              ? null
-                              : receiptController.text.trim(),
+                          receiptNumber: receiptController.text.trim().isEmpty ? null : receiptController.text.trim(),
                         ),
                       );
                       Navigator.of(dialogContext).pop();
                     },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text(
-                'Confirmar',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -501,6 +377,7 @@ class PaymentDetailsPage extends StatelessWidget {
 
   void _showCancelDialog(BuildContext context, Payment payment) {
     final reasonController = TextEditingController();
+    final bloc = context.read<FinancialBloc>();
 
     showDialog(
       context: context,
@@ -522,27 +399,19 @@ class PaymentDetailsPage extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Voltar'),
-          ),
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Voltar')),
           ElevatedButton(
             onPressed: () {
-              context.read<FinancialBloc>().add(
+              bloc.add(
                 CancelPayment(
                   paymentId: payment.id,
-                  reason: reasonController.text.trim().isEmpty
-                      ? null
-                      : reasonController.text.trim(),
+                  reason: reasonController.text.trim().isEmpty ? null : reasonController.text.trim(),
                 ),
               );
               Navigator.of(dialogContext).pop();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text(
-              'Cancelar Pagamento',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Cancelar Pagamento', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -586,35 +455,15 @@ class PaymentDetailsPage extends StatelessWidget {
   Map<String, Color> _getStatusColors(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.pending:
-        return {
-          'background': Colors.orange.withOpacity(0.1),
-          'border': Colors.orange,
-          'text': Colors.orange.shade700,
-        };
+        return {'background': Colors.orange.withOpacity(0.1), 'border': Colors.orange, 'text': Colors.orange.shade700};
       case PaymentStatus.paid:
-        return {
-          'background': Colors.green.withOpacity(0.1),
-          'border': Colors.green,
-          'text': Colors.green.shade700,
-        };
+        return {'background': Colors.green.withOpacity(0.1), 'border': Colors.green, 'text': Colors.green.shade700};
       case PaymentStatus.overdue:
-        return {
-          'background': Colors.red.withOpacity(0.1),
-          'border': Colors.red,
-          'text': Colors.red.shade700,
-        };
+        return {'background': Colors.red.withOpacity(0.1), 'border': Colors.red, 'text': Colors.red.shade700};
       case PaymentStatus.cancelled:
-        return {
-          'background': Colors.grey.withOpacity(0.1),
-          'border': Colors.grey,
-          'text': Colors.grey.shade700,
-        };
+        return {'background': Colors.grey.withOpacity(0.1), 'border': Colors.grey, 'text': Colors.grey.shade700};
       case PaymentStatus.refunded:
-        return {
-          'background': Colors.blue.withOpacity(0.1),
-          'border': Colors.blue,
-          'text': Colors.blue.shade700,
-        };
+        return {'background': Colors.blue.withOpacity(0.1), 'border': Colors.blue, 'text': Colors.blue.shade700};
     }
   }
 

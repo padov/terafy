@@ -48,9 +48,14 @@ class TestServerSetup {
     final financialRepository = FinancialRepository(dbConnection);
     final sessionController = SessionController(sessionRepository, scheduleRepository, financialRepository);
     final sessionHandler = SessionHandler(sessionController);
-    final financialController = FinancialController(financialRepository, sessionRepository);
+    final financialController = FinancialController(financialRepository);
     final financialHandler = FinancialHandler(financialController);
-    final homeController = HomeController(scheduleRepository, sessionRepository, patientRepository);
+    final homeController = HomeController(
+      scheduleRepository,
+      sessionRepository,
+      patientRepository,
+      financialRepository,
+    );
     final homeHandler = HomeHandler(homeController);
     final anamnesisRepository = AnamnesisRepository(dbConnection);
     final anamnesisController = AnamnesisController(anamnesisRepository);

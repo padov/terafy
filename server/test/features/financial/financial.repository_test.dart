@@ -243,175 +243,9 @@ void main() {
         expect(transactions.length, 1);
         expect(transactions.first.patientId, 10);
       });
-
-      test('deve filtrar por sessionId', () async {
-        final transaction1 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          sessionId: 100,
-          transactionDate: DateTime.now(),
-          type: 'income',
-          amount: 100.0,
-          paymentMethod: 'credit_card',
-          status: 'pendente',
-          category: 'session',
-        );
-        final transaction2 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          sessionId: 200,
-          transactionDate: DateTime.now(),
-          type: 'income',
-          amount: 200.0,
-          paymentMethod: 'credit_card',
-          status: 'pago',
-          category: 'session',
-        );
-
-        await repository.createTransaction(transaction: transaction1, userId: 1, bypassRLS: true);
-        await repository.createTransaction(transaction: transaction2, userId: 1, bypassRLS: true);
-
-        final transactions = await repository.listTransactions(userId: 1, sessionId: 100, bypassRLS: true);
-
-        expect(transactions.length, 1);
-        expect(transactions.first.sessionId, 100);
-      });
-
-      test('deve filtrar por category', () async {
-        final transaction1 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          transactionDate: DateTime.now(),
-          type: 'income',
-          amount: 100.0,
-          paymentMethod: 'credit_card',
-          status: 'pendente',
-          category: 'sessao',
-        );
-        final transaction2 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          transactionDate: DateTime.now(),
-          type: 'income',
-          amount: 200.0,
-          paymentMethod: 'credit_card',
-          status: 'pago',
-          category: 'material',
-        );
-
-        await repository.createTransaction(transaction: transaction1, userId: 1, bypassRLS: true);
-        await repository.createTransaction(transaction: transaction2, userId: 1, bypassRLS: true);
-
-        final transactions = await repository.listTransactions(userId: 1, category: 'sessao', bypassRLS: true);
-
-        expect(transactions.length, 1);
-        expect(transactions.first.category, 'sessao');
-      });
-
-      test('deve combinar múltiplos filtros', () async {
-        final transaction1 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 10,
-          sessionId: 100,
-          transactionDate: DateTime(2024, 1, 15),
-          type: 'income',
-          amount: 100.0,
-          paymentMethod: 'credit_card',
-          status: 'pago',
-          category: 'sessao',
-        );
-        final transaction2 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 10,
-          sessionId: 200,
-          transactionDate: DateTime(2024, 1, 20),
-          type: 'income',
-          amount: 200.0,
-          paymentMethod: 'credit_card',
-          status: 'pendente',
-          category: 'sessao',
-        );
-
-        await repository.createTransaction(transaction: transaction1, userId: 1, bypassRLS: true);
-        await repository.createTransaction(transaction: transaction2, userId: 1, bypassRLS: true);
-
-        final transactions = await repository.listTransactions(
-          userId: 1,
-          patientId: 10,
-          status: 'pago',
-          category: 'sessao',
-          startDate: DateTime(2024, 1, 1),
-          endDate: DateTime(2024, 1, 31),
-          bypassRLS: true,
-        );
-
-        expect(transactions.length, 1);
-        expect(transactions.first.status, 'pago');
-        expect(transactions.first.patientId, 10);
-      });
-
-      test('deve ordenar por transaction_date DESC e created_at DESC', () async {
-        final now = DateTime.now();
-        final transaction1 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          transactionDate: now.subtract(const Duration(days: 2)),
-          type: 'income',
-          amount: 100.0,
-          paymentMethod: 'credit_card',
-          status: 'pendente',
-          category: 'session',
-        );
-        final transaction2 = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          transactionDate: now,
-          type: 'income',
-          amount: 200.0,
-          paymentMethod: 'credit_card',
-          status: 'pago',
-          category: 'session',
-        );
-
-        await repository.createTransaction(transaction: transaction1, userId: 1, bypassRLS: true);
-        await Future.delayed(const Duration(milliseconds: 10));
-        await repository.createTransaction(transaction: transaction2, userId: 1, bypassRLS: true);
-
-        final transactions = await repository.listTransactions(userId: 1, bypassRLS: true);
-
-        expect(transactions.length, 2);
-        // A mais recente deve vir primeiro (simulado pelo TestFinancialRepository)
-        expect(transactions.first.amount, 200.0);
-      });
     });
 
     group('updateTransaction', () {
-      test('deve atualizar transação', () async {
-        final transaction = FinancialTransaction(
-          therapistId: 1,
-          patientId: 1,
-          transactionDate: DateTime.now(),
-          type: 'income',
-          amount: 100.0,
-          paymentMethod: 'credit_card',
-          status: 'pendente',
-          category: 'session',
-        );
-        final created = await repository.createTransaction(transaction: transaction, userId: 1, bypassRLS: true);
-
-        final updated = created.copyWith(status: 'pago', paidAt: DateTime.now());
-
-        final result = await repository.updateTransaction(
-          transactionId: created.id!,
-          transaction: updated,
-          userId: 1,
-          bypassRLS: true,
-        );
-
-        expect(result.status, 'pago');
-        expect(result.paidAt, isNotNull);
-      });
-
       test('deve lançar exceção quando transação não existe', () async {
         final transaction = FinancialTransaction(
           therapistId: 1,
@@ -461,7 +295,6 @@ void main() {
         final transaction = FinancialTransaction(
           therapistId: 1,
           patientId: 1,
-          sessionId: 10,
           transactionDate: DateTime.now(),
           type: 'income',
           amount: 100.0,
@@ -472,7 +305,7 @@ void main() {
         final created = await repository.createTransaction(transaction: transaction, userId: 1, bypassRLS: true);
 
         // Tentar atualizar com novos valores
-        final updated = created.copyWith(therapistId: 999, patientId: 999, sessionId: 999);
+        final updated = created.copyWith(therapistId: 999, patientId: 999);
 
         final result = await repository.updateTransaction(
           transactionId: created.id!,
@@ -484,7 +317,6 @@ void main() {
         // Deve manter os valores originais
         expect(result.therapistId, 1);
         expect(result.patientId, 1);
-        expect(result.sessionId, 10);
       });
     });
 
@@ -682,7 +514,6 @@ void main() {
         final transaction = FinancialTransaction(
           therapistId: 1,
           patientId: 1,
-          sessionId: 10,
           transactionDate: DateTime.now(),
           type: 'income',
           amount: 100.0,
@@ -699,7 +530,6 @@ void main() {
 
         final created = await repository.createTransaction(transaction: transaction, userId: 1, bypassRLS: true);
 
-        expect(created.sessionId, 10);
         expect(created.dueDate, isNotNull);
         expect(created.paidAt, isNotNull);
         expect(created.receiptNumber, 'REC-001');

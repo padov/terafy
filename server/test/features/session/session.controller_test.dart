@@ -24,7 +24,7 @@ void main() {
         type: 'individual',
         modality: 'presencial',
         status: 'agendada',
-        paymentStatus: 'pendente',
+        transactionId: null,
       ),
     );
     registerFallbackValue(
@@ -56,7 +56,7 @@ void main() {
     type: 'individual',
     modality: 'presencial',
     status: 'agendada',
-    paymentStatus: 'pendente',
+    transactionId: null,
     createdAt: DateTime.now(),
     updatedAt: DateTime.now(),
   );
@@ -167,16 +167,6 @@ void main() {
           bypassRLS: false,
         ),
       ).thenAnswer((_) async => updated);
-
-      when(
-        () => scheduleRepository.getAppointmentById(
-          appointmentId: any(named: 'appointmentId'),
-          userId: any(named: 'userId'),
-          userRole: any(named: 'userRole'),
-          accountId: any(named: 'accountId'),
-          bypassRLS: any(named: 'bypassRLS'),
-        ),
-      ).thenAnswer((_) async => null);
 
       final result = await controller.updateSession(
         sessionId: 1,
@@ -387,13 +377,7 @@ void main() {
       ).thenAnswer((_) async => completedSession);
 
       when(
-        () => financialRepository.listTransactions(
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-          sessionId: 1,
-        ),
+        () => financialRepository.listTransactions(userId: 1, userRole: 'therapist', accountId: 1, bypassRLS: false),
       ).thenAnswer((_) async => []);
 
       when(
@@ -409,7 +393,6 @@ void main() {
           id: 1,
           therapistId: 1,
           patientId: 1,
-          sessionId: 1,
           transactionDate: DateTime.now(),
           type: 'recebimento',
           amount: 150.0,
@@ -466,20 +449,13 @@ void main() {
       ).thenAnswer((_) async => completedSession);
 
       when(
-        () => financialRepository.listTransactions(
-          userId: 1,
-          userRole: 'therapist',
-          accountId: 1,
-          bypassRLS: false,
-          sessionId: 1,
-        ),
+        () => financialRepository.listTransactions(userId: 1, userRole: 'therapist', accountId: 1, bypassRLS: false),
       ).thenAnswer(
         (_) async => [
           FinancialTransaction(
             id: 1,
             therapistId: 1,
             patientId: 1,
-            sessionId: 1,
             transactionDate: DateTime.now(),
             type: 'recebimento',
             amount: 150.0,
@@ -545,7 +521,6 @@ void main() {
           userRole: any(named: 'userRole'),
           accountId: any(named: 'accountId'),
           bypassRLS: any(named: 'bypassRLS'),
-          sessionId: any(named: 'sessionId'),
         ),
       );
     });

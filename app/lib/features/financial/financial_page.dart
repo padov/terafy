@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +7,7 @@ import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc_models.dart';
 import 'package:terafy/features/financial/models/payment.dart';
+import 'package:terafy/features/financial/reports/financial_reports_page.dart';
 import 'package:terafy/routes/app_routes.dart';
 
 class FinancialPage extends StatelessWidget {
@@ -30,7 +32,7 @@ class FinancialPage extends StatelessWidget {
             getCurrentTherapistUseCase: container.getCurrentTherapistUseCase,
           )
           ..add(LoadFinancialSummary(startDate: startDate, endDate: endDate))
-          ..add(const LoadPayments());
+          ..add(LoadPayments(startDate: startDate, endDate: endDate));
       },
       child: const _FinancialPageContent(),
     );
@@ -44,15 +46,19 @@ class _FinancialPageContent extends StatefulWidget {
   State<_FinancialPageContent> createState() => _FinancialPageContentState();
 }
 
-class _FinancialPageContentState extends State<_FinancialPageContent>
-    with SingleTickerProviderStateMixin {
+class _FinancialPageContentState extends State<_FinancialPageContent> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   PaymentStatus? _selectedStatusFilter;
+  DateTime _paymentsPeriodStart = DateTime.now();
+  DateTime _paymentsPeriodEnd = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    final now = DateTime.now();
+    _paymentsPeriodStart = DateTime(now.year, now.month, 1);
+    _paymentsPeriodEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
   }
 
   @override
@@ -66,10 +72,7 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Financeiro',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: const Text('Financeiro', style: TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -90,24 +93,7 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildDashboardTab(), _buildPaymentsTab()],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navegar para criar pagamento
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Criar pagamento em desenvolvimento')),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Novo Pagamento',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ),
+      body: TabBarView(controller: _tabController, children: [_buildDashboardTab(), _buildPaymentsTab()]),
     );
   }
 
@@ -118,8 +104,8 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state is FinancialSummaryLoaded) {
-          return _buildDashboard(context, state.summary);
+        if (state is FinancialData && state.summary != null) {
+          return _buildDashboard(context, state.summary!);
         }
 
         return const Center(child: Text('Nenhum dado disponível'));
@@ -128,32 +114,29 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
   }
 
   Widget _buildDashboard(BuildContext context, FinancialSummary summary) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    );
+    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     return RefreshIndicator(
       onRefresh: () async {
-        context.read<FinancialBloc>().add(
-          LoadFinancialSummary(
-            startDate: summary.startDate,
-            endDate: summary.endDate,
-          ),
-        );
+        context.read<FinancialBloc>().add(LoadFinancialSummary(startDate: summary.startDate, endDate: summary.endDate));
       },
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Período
-          Text(
-            'Período: ${DateFormat('dd/MM/yyyy').format(summary.startDate)} - ${DateFormat('dd/MM/yyyy').format(summary.endDate)}',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
+          _buildPeriodSelector(
+            startDate: summary.startDate,
+            endDate: summary.endDate,
+            onPrevious: () {
+              final newStartDate = DateTime(summary.startDate.year, summary.startDate.month - 1, 1);
+              final newEndDate = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+              context.read<FinancialBloc>().add(LoadFinancialSummary(startDate: newStartDate, endDate: newEndDate));
+            },
+            onNext: () {
+              final newStartDate = DateTime(summary.startDate.year, summary.startDate.month + 1, 1);
+              final newEndDate = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+              context.read<FinancialBloc>().add(LoadFinancialSummary(startDate: newStartDate, endDate: newEndDate));
+            },
           ),
 
           const SizedBox(height: 16),
@@ -211,6 +194,11 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
 
           const SizedBox(height: 24),
 
+          // Gráficos
+          _buildCharts(context, summary),
+
+          const SizedBox(height: 24),
+
           // Estatísticas de sessões
           Container(
             padding: const EdgeInsets.all(20),
@@ -224,31 +212,15 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
               children: [
                 const Text(
                   'Sessões',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.offBlack,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem(
-                      'Realizadas',
-                      summary.sessionsCompleted.toString(),
-                      Colors.green,
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: AppColors.lightBorderColor,
-                    ),
-                    _buildStatItem(
-                      'Pendentes',
-                      summary.sessionsPending.toString(),
-                      Colors.orange,
-                    ),
+                    _buildStatItem('Realizadas', summary.sessionsCompleted.toString(), Colors.green),
+                    Container(width: 1, height: 40, color: AppColors.lightBorderColor),
+                    _buildStatItem('Pendentes', summary.sessionsPending.toString(), Colors.orange),
                   ],
                 ),
               ],
@@ -260,17 +232,212 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
           // Botão para ver relatórios
           OutlinedButton.icon(
             onPressed: () {
-              Navigator.of(context).pushNamed(AppRouter.financialReportsRoute);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      BlocProvider.value(value: context.read<FinancialBloc>(), child: const FinancialReportsPage()),
+                ),
+              );
             },
             icon: const Icon(Icons.bar_chart),
             label: const Text('Ver Relatórios Detalhados'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
+            style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildPeriodSelector({
+    required DateTime startDate,
+    required DateTime endDate,
+    required VoidCallback onPrevious,
+    required VoidCallback onNext,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 16),
+          onPressed: onPrevious,
+          color: Colors.grey[600],
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          'Período: ${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}',
+          style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(width: 16),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, size: 16),
+          onPressed: onNext,
+          color: Colors.grey[600],
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCharts(BuildContext context, FinancialSummary summary) {
+    return Column(
+      children: [
+        // Gráfico de Inadimplência
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.lightBorderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Inadimplência',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 0,
+                    centerSpaceRadius: 40,
+                    sections: [
+                      PieChartSectionData(
+                        color: Colors.red,
+                        value: summary.overduePercentage,
+                        title: '${summary.overduePercentage.toStringAsFixed(1)}%',
+                        radius: 50,
+                        titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      PieChartSectionData(
+                        color: Colors.green,
+                        value: 100 - summary.overduePercentage,
+                        title: '',
+                        radius: 50,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildChartLegend(color: Colors.green, label: 'Em dia'),
+                  const SizedBox(width: 24),
+                  _buildChartLegend(color: Colors.red, label: 'Atrasado'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        // Gráfico de Métodos de Pagamento
+        if (summary.paymentMethodDistribution.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.lightBorderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Métodos de Pagamento',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.offBlack),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections: summary.paymentMethodDistribution.map((item) {
+                        final index = summary.paymentMethodDistribution.indexOf(item);
+                        final colors = [
+                          Colors.blue,
+                          Colors.purple,
+                          Colors.orange,
+                          Colors.teal,
+                          Colors.indigo,
+                          Colors.pink,
+                        ];
+                        final color = colors[index % colors.length];
+                        return PieChartSectionData(color: color, value: item.amount, title: '', radius: 50);
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: summary.paymentMethodDistribution.map((item) {
+                    final index = summary.paymentMethodDistribution.indexOf(item);
+                    final colors = [Colors.blue, Colors.purple, Colors.orange, Colors.teal, Colors.indigo, Colors.pink];
+                    return _buildChartLegend(
+                      color: colors[index % colors.length],
+                      label:
+                          '${_getPaymentMethodLabelFromString(item.method)} (${NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(item.amount)})',
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildChartLegend({required Color color, required String label}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey[700]),
+        ),
+      ],
+    );
+  }
+
+  String _getPaymentMethodLabelFromString(String method) {
+    switch (method) {
+      case 'cash':
+        return 'Dinheiro';
+      case 'creditCard':
+      case 'credit_card':
+        return 'Crédito';
+      case 'debitCard':
+      case 'debit_card':
+        return 'Débito';
+      case 'pix':
+        return 'PIX';
+      case 'bankTransfer':
+      case 'transfer':
+        return 'Transferência';
+      case 'healthInsurance':
+      case 'insurance':
+        return 'Convênio';
+      default:
+        return 'Outro';
+    }
   }
 
   Widget _buildSummaryCard({
@@ -294,20 +461,12 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
           const SizedBox(height: 8),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.offBlack,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.offBlack),
           ),
         ],
       ),
@@ -319,20 +478,12 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
       children: [
         Text(
           value,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
+          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: color),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -345,35 +496,86 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state is PaymentsLoaded) {
-          if (state.payments.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.payment, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Nenhum pagamento encontrado',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            );
-          }
+        if (state is FinancialData && state.payments != null) {
+          return Column(
+            children: [
+              // Period Selector (Conditional)
+              if (_selectedStatusFilter == null || _selectedStatusFilter == PaymentStatus.paid) ...[
+                const SizedBox(height: 16),
+                _buildPeriodSelector(
+                  startDate: _paymentsPeriodStart,
+                  endDate: _paymentsPeriodEnd,
+                  onPrevious: () {
+                    setState(() {
+                      final newStartDate = DateTime(_paymentsPeriodStart.year, _paymentsPeriodStart.month - 1, 1);
+                      _paymentsPeriodStart = newStartDate;
+                      _paymentsPeriodEnd = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+                    });
+                    context.read<FinancialBloc>().add(
+                      LoadPayments(
+                        statusFilter: _selectedStatusFilter,
+                        startDate: _paymentsPeriodStart,
+                        endDate: _paymentsPeriodEnd,
+                      ),
+                    );
+                  },
+                  onNext: () {
+                    setState(() {
+                      final newStartDate = DateTime(_paymentsPeriodStart.year, _paymentsPeriodStart.month + 1, 1);
+                      _paymentsPeriodStart = newStartDate;
+                      _paymentsPeriodEnd = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+                    });
+                    context.read<FinancialBloc>().add(
+                      LoadPayments(
+                        statusFilter: _selectedStatusFilter,
+                        startDate: _paymentsPeriodStart,
+                        endDate: _paymentsPeriodEnd,
+                      ),
+                    );
+                  },
+                ),
+              ],
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<FinancialBloc>().add(const LoadPayments());
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.payments.length,
-              itemBuilder: (context, index) {
-                final payment = state.payments[index];
-                return _buildPaymentCard(context, payment);
-              },
-            ),
+              if (state.payments!.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.payment, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text('Nenhum pagamento encontrado', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      // Se filter is pending/overdue, ignore date
+                      final useDateFilter =
+                          _selectedStatusFilter == null || _selectedStatusFilter == PaymentStatus.paid;
+
+                      context.read<FinancialBloc>().add(
+                        LoadPayments(
+                          statusFilter: _selectedStatusFilter,
+                          startDate: useDateFilter ? _paymentsPeriodStart : null,
+                          endDate: useDateFilter ? _paymentsPeriodEnd : null,
+                        ),
+                      );
+                    },
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: state.payments!.length,
+                      itemBuilder: (context, index) {
+                        final payment = state.payments![index];
+                        return _buildPaymentCard(context, payment);
+                      },
+                    ),
+                  ),
+                ),
+            ],
           );
         }
 
@@ -383,10 +585,7 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
   }
 
   Widget _buildPaymentCard(BuildContext context, Payment payment) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    );
+    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final dateFormat = DateFormat('dd/MM/yyyy');
     final colors = _getStatusColors(payment.status);
 
@@ -398,10 +597,23 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
         border: Border.all(color: AppColors.lightBorderColor),
       ),
       child: InkWell(
-        onTap: () {
-          Navigator.of(
-            context,
-          ).pushNamed(AppRouter.paymentDetailsRoute, arguments: payment.id);
+        onTap: () async {
+          await Navigator.of(context).pushNamed(AppRouter.paymentDetailsRoute, arguments: payment.id);
+
+          if (context.mounted) {
+            final bloc = context.read<FinancialBloc>();
+
+            // Se filter is pending/overdue, ignore date
+            final useDateFilter = _selectedStatusFilter == null || _selectedStatusFilter == PaymentStatus.paid;
+
+            bloc.add(
+              LoadPayments(
+                statusFilter: _selectedStatusFilter,
+                startDate: useDateFilter ? _paymentsPeriodStart : null,
+                endDate: useDateFilter ? _paymentsPeriodEnd : null,
+              ),
+            );
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -415,18 +627,11 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
                   // Valor
                   Text(
                     currencyFormat.format(payment.amount),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.offBlack,
-                    ),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.offBlack),
                   ),
                   // Status badge
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: colors['background'],
                       borderRadius: BorderRadius.circular(20),
@@ -435,19 +640,11 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _getStatusIcon(payment.status),
-                          size: 14,
-                          color: colors['border'],
-                        ),
+                        Icon(_getStatusIcon(payment.status), size: 14, color: colors['border']),
                         const SizedBox(width: 4),
                         Text(
                           _getStatusLabel(payment.status),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: colors['text'],
-                          ),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors['text']),
                         ),
                       ],
                     ),
@@ -460,11 +657,7 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
               // Paciente ID (temporário)
               Text(
                 'Paciente: ${payment.patientId}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.offBlack,
-                ),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
               ),
 
               const SizedBox(height: 8),
@@ -482,11 +675,7 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
                     const SizedBox(width: 8),
                     Text(
                       '(${payment.daysOverdue} dias)',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: const TextStyle(fontSize: 13, color: Colors.red, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ],
@@ -516,111 +705,76 @@ class _FinancialPageContentState extends State<_FinancialPageContent>
   void _showFilterDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Filtrar Pagamentos'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Todos'),
-              leading: Radio<PaymentStatus?>(
-                value: null,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(
-                    LoadPayments(statusFilter: value),
-                  );
-                },
+      builder: (dialogContext) {
+        void applyFilter(PaymentStatus? value) {
+          setState(() => _selectedStatusFilter = value);
+          Navigator.of(dialogContext).pop();
+          if (value == null || value == PaymentStatus.paid) {
+            context.read<FinancialBloc>().add(
+              LoadPayments(statusFilter: value, startDate: _paymentsPeriodStart, endDate: _paymentsPeriodEnd),
+            );
+          } else {
+            context.read<FinancialBloc>().add(LoadPayments(statusFilter: value));
+          }
+        }
+
+        return AlertDialog(
+          title: const Text('Filtrar Pagamentos'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Todos'),
+                onTap: () => applyFilter(null),
+                leading: Radio<PaymentStatus?>(value: null, groupValue: _selectedStatusFilter, onChanged: applyFilter),
               ),
-            ),
-            ListTile(
-              title: const Text('Pagos'),
-              leading: Radio<PaymentStatus?>(
-                value: PaymentStatus.paid,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(
-                    LoadPayments(statusFilter: value),
-                  );
-                },
+              ListTile(
+                title: const Text('Pagos'),
+                onTap: () => applyFilter(PaymentStatus.paid),
+                leading: Radio<PaymentStatus?>(
+                  value: PaymentStatus.paid,
+                  groupValue: _selectedStatusFilter,
+                  onChanged: applyFilter,
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Pendentes'),
-              leading: Radio<PaymentStatus?>(
-                value: PaymentStatus.pending,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(
-                    LoadPayments(statusFilter: value),
-                  );
-                },
+              ListTile(
+                title: const Text('Pendentes'),
+                onTap: () => applyFilter(PaymentStatus.pending),
+                leading: Radio<PaymentStatus?>(
+                  value: PaymentStatus.pending,
+                  groupValue: _selectedStatusFilter,
+                  onChanged: applyFilter,
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Atrasados'),
-              leading: Radio<PaymentStatus?>(
-                value: PaymentStatus.overdue,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(
-                    LoadPayments(statusFilter: value),
-                  );
-                },
+              ListTile(
+                title: const Text('Atrasados'),
+                onTap: () => applyFilter(PaymentStatus.overdue),
+                leading: Radio<PaymentStatus?>(
+                  value: PaymentStatus.overdue,
+                  groupValue: _selectedStatusFilter,
+                  onChanged: applyFilter,
+                ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Fechar'),
+            ],
           ),
-        ],
-      ),
+          actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Fechar'))],
+        );
+      },
     );
   }
 
   Map<String, Color> _getStatusColors(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.pending:
-        return {
-          'background': Colors.orange.withOpacity(0.1),
-          'border': Colors.orange,
-          'text': Colors.orange.shade700,
-        };
+        return {'background': Colors.orange.withOpacity(0.1), 'border': Colors.orange, 'text': Colors.orange.shade700};
       case PaymentStatus.paid:
-        return {
-          'background': Colors.green.withOpacity(0.1),
-          'border': Colors.green,
-          'text': Colors.green.shade700,
-        };
+        return {'background': Colors.green.withOpacity(0.1), 'border': Colors.green, 'text': Colors.green.shade700};
       case PaymentStatus.overdue:
-        return {
-          'background': Colors.red.withOpacity(0.1),
-          'border': Colors.red,
-          'text': Colors.red.shade700,
-        };
+        return {'background': Colors.red.withOpacity(0.1), 'border': Colors.red, 'text': Colors.red.shade700};
       case PaymentStatus.cancelled:
-        return {
-          'background': Colors.grey.withOpacity(0.1),
-          'border': Colors.grey,
-          'text': Colors.grey.shade700,
-        };
+        return {'background': Colors.grey.withOpacity(0.1), 'border': Colors.grey, 'text': Colors.grey.shade700};
       case PaymentStatus.refunded:
-        return {
-          'background': Colors.blue.withOpacity(0.1),
-          'border': Colors.blue,
-          'text': Colors.blue.shade700,
-        };
+        return {'background': Colors.blue.withOpacity(0.1), 'border': Colors.blue, 'text': Colors.blue.shade700};
     }
   }
 

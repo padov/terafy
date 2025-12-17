@@ -22,11 +22,7 @@ abstract class BaseHandler {
   /// }
   /// ```
   Response errorResponse(String message, {int statusCode = 400}) {
-    return Response(
-      statusCode,
-      body: jsonEncode({'error': message}),
-      headers: {'Content-Type': 'application/json'},
-    );
+    return Response(statusCode, body: jsonEncode({'error': message}), headers: {'Content-Type': 'application/json'});
   }
 
   /// Cria uma resposta de sucesso padronizada
@@ -36,11 +32,7 @@ abstract class BaseHandler {
   ///
   /// Retorna uma Response com formato JSON padronizado
   Response successResponse(dynamic data, {int statusCode = 200}) {
-    return Response(
-      statusCode,
-      body: jsonEncode(data),
-      headers: {'Content-Type': 'application/json'},
-    );
+    return Response(statusCode, body: jsonEncode(data), headers: {'Content-Type': 'application/json'});
   }
 
   /// Cria uma resposta de sucesso para criação de recursos (201 Created)
@@ -75,10 +67,7 @@ abstract class BaseHandler {
   ///
   /// [message] - Mensagem de erro (padrão: "Erro interno do servidor")
   Response internalServerErrorResponse([String? message]) {
-    return errorResponse(
-      message ?? 'Erro interno do servidor',
-      statusCode: 500,
-    );
+    return errorResponse(message ?? 'Erro interno do servidor', statusCode: 500);
   }
 
   /// Cria uma resposta de requisição inválida (400)

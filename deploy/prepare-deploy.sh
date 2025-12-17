@@ -138,7 +138,6 @@ mkdir -p "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR/migrations"
 mkdir -p "$DEPLOY_DIR/functions"
 mkdir -p "$DEPLOY_DIR/policies"
-mkdir -p "$DEPLOY_DIR/triggers"
 mkdir -p "$DEPLOY_DIR/web/app"
 mkdir -p "$DEPLOY_DIR/web/www"
 
@@ -155,21 +154,14 @@ cp -r "$PROJECT_ROOT/server/db/migrations"/* "$DEPLOY_DIR/migrations/"
 MIGRATION_COUNT=$(ls -1 "$DEPLOY_DIR/migrations"/*.sql 2>/dev/null | wc -l | tr -d ' ')
 echo "  ✅ Migrations: $MIGRATION_COUNT arquivos"
 
-# 3. Functions (se existir)
+# 3. Functions (se existir - inclui triggers)
 if [ -d "$PROJECT_ROOT/server/db/functions" ] && [ "$(ls -A "$PROJECT_ROOT/server/db/functions" 2>/dev/null)" ]; then
     cp -r "$PROJECT_ROOT/server/db/functions"/* "$DEPLOY_DIR/functions/"
     FUNCTION_COUNT=$(ls -1 "$DEPLOY_DIR/functions"/*.sql 2>/dev/null | wc -l | tr -d ' ')
-    echo "  ✅ Functions: $FUNCTION_COUNT arquivos"
+    echo "  ✅ Functions (inclui triggers): $FUNCTION_COUNT arquivos"
 fi
 
-# 4. Triggers (se existir)
-if [ -d "$PROJECT_ROOT/server/db/triggers" ] && [ "$(ls -A "$PROJECT_ROOT/server/db/triggers" 2>/dev/null)" ]; then
-    cp -r "$PROJECT_ROOT/server/db/triggers"/* "$DEPLOY_DIR/triggers/"
-    TRIGGER_COUNT=$(ls -1 "$DEPLOY_DIR/triggers"/*.sql 2>/dev/null | wc -l | tr -d ' ')
-    echo "  ✅ Triggers: $TRIGGER_COUNT arquivos"
-fi
-
-# 5. Policies (se existir)
+# 4. Policies (se existir)
 if [ -d "$PROJECT_ROOT/server/db/policies" ] && [ "$(ls -A "$PROJECT_ROOT/server/db/policies" 2>/dev/null)" ]; then
     cp -r "$PROJECT_ROOT/server/db/policies"/* "$DEPLOY_DIR/policies/"
     POLICY_COUNT=$(ls -1 "$DEPLOY_DIR/policies"/*.sql 2>/dev/null | wc -l | tr -d ' ')
@@ -246,8 +238,7 @@ Esta pasta contém tudo necessário para rodar o servidor Terafy na VM.
 
 - `server` - Binário compilado do servidor
 - `migrations/` - Arquivos SQL de migrations
-- `functions/` - Arquivos SQL de functions do PostgreSQL
-- `triggers/` - Arquivos SQL de triggers do PostgreSQL
+- `functions/` - Arquivos SQL de functions e triggers do PostgreSQL
 - `policies/` - Arquivos SQL de policies (RLS) do PostgreSQL
 - `docker-compose.yml` - Configuração Docker Compose
 - `Dockerfile` - Dockerfile para runtime
@@ -351,7 +342,6 @@ chmod +x "$DEPLOY_DIR/server" 2>/dev/null || true
 chmod +x "$DEPLOY_DIR/update-binario.sh" 2>/dev/null || true
 find "$DEPLOY_DIR/migrations" -type f -exec chmod 644 {} \; 2>/dev/null || true
 find "$DEPLOY_DIR/functions" -type f -exec chmod 644 {} \; 2>/dev/null || true
-find "$DEPLOY_DIR/triggers" -type f -exec chmod 644 {} \; 2>/dev/null || true
 find "$DEPLOY_DIR/policies" -type f -exec chmod 644 {} \; 2>/dev/null || true
 
 cd "$NEW_DEPLOY_DIR"

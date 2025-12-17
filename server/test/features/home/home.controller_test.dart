@@ -4,6 +4,7 @@ import 'package:server/features/home/home.controller.dart';
 import 'package:server/features/schedule/schedule.repository.dart';
 import 'package:server/features/session/session.repository.dart';
 import 'package:server/features/patient/patient.repository.dart';
+import 'package:server/features/financial/financial.repository.dart';
 import 'package:test/test.dart';
 
 class _MockScheduleRepository extends Mock implements ScheduleRepository {}
@@ -11,6 +12,8 @@ class _MockScheduleRepository extends Mock implements ScheduleRepository {}
 class _MockSessionRepository extends Mock implements SessionRepository {}
 
 class _MockPatientRepository extends Mock implements PatientRepository {}
+
+class _MockFinancialRepository extends Mock implements FinancialRepository {}
 
 void main() {
   setUpAll(() {
@@ -33,7 +36,7 @@ void main() {
         type: 'individual',
         modality: 'presencial',
         status: 'agendada',
-        paymentStatus: 'pendente',
+        transactionId: null,
       ),
     );
   });
@@ -41,6 +44,7 @@ void main() {
   late _MockScheduleRepository scheduleRepository;
   late _MockSessionRepository sessionRepository;
   late _MockPatientRepository patientRepository;
+  late _MockFinancialRepository financialRepository;
   late HomeController controller;
 
   final sampleAppointment = Appointment(
@@ -66,7 +70,7 @@ void main() {
     type: 'individual',
     modality: 'presencial',
     status: 'agendada',
-    paymentStatus: 'pendente',
+    transactionId: null,
     createdAt: DateTime.now(),
     updatedAt: DateTime.now(),
   );
@@ -75,7 +79,8 @@ void main() {
     scheduleRepository = _MockScheduleRepository();
     sessionRepository = _MockSessionRepository();
     patientRepository = _MockPatientRepository();
-    controller = HomeController(scheduleRepository, sessionRepository, patientRepository);
+    financialRepository = _MockFinancialRepository();
+    controller = HomeController(scheduleRepository, sessionRepository, patientRepository, financialRepository);
   });
 
   group('HomeController - getSummary', () {
@@ -117,11 +122,24 @@ void main() {
         ),
       );
 
+      when(
+        () => financialRepository.getFinancialSummary(
+          therapistId: 1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => {'totalPaidAmount': 1000.0});
+
       final result = await controller.getSummary(therapistId: 1, userId: 1, userRole: 'therapist', accountId: 1);
 
       expect(result, isNotNull);
       expect(result.therapistId, 1);
       expect(result.listOfTodaySessions, isNotEmpty);
+      expect(result.monthlyRevenue, 1000.0);
     });
 
     test('deve calcular estatísticas corretamente', () async {
@@ -162,6 +180,18 @@ void main() {
           bypassRLS: false,
         ),
       ).thenAnswer((_) async => []);
+
+      when(
+        () => financialRepository.getFinancialSummary(
+          therapistId: 1,
+          userId: 1,
+          userRole: 'therapist',
+          accountId: 1,
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+          bypassRLS: false,
+        ),
+      ).thenAnswer((_) async => {'totalPaidAmount': 2000.0});
 
       final result = await controller.getSummary(therapistId: 1, userId: 1, userRole: 'therapist', accountId: 1);
 

@@ -34,6 +34,7 @@ class TherapistRepository {
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
           calendar_settings, notification_preferences, bank_details,
+          default_session_price,
           status::text as status,
           created_at, updated_at
         FROM therapists 
@@ -82,6 +83,7 @@ class TherapistRepository {
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
           calendar_settings, notification_preferences, bank_details,
+          default_session_price,
           status::text as status,
           created_at, updated_at
         FROM therapists 
@@ -119,17 +121,18 @@ class TherapistRepository {
           name, nickname, document, email, phone, birth_date, profile_picture_url,
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
-          calendar_settings, notification_preferences, bank_details, status
+          calendar_settings, notification_preferences, bank_details, default_session_price, status
         ) VALUES (
           @name, @nickname, @document, @email, @phone, @birth_date, @profile_picture_url,
           @professional_registry_type, @professional_registry_number,
           @specialties, @education, @professional_presentation, @office_address,
-          @calendar_settings, @notification_preferences, @bank_details, @status
+          @calendar_settings, @notification_preferences, @bank_details, @default_session_price, @status
         ) RETURNING 
           id, name, nickname, document, email, phone, birth_date, profile_picture_url,
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
           calendar_settings, notification_preferences, bank_details,
+          default_session_price,
           status::text as status,
           created_at, updated_at;
       '''),
@@ -152,6 +155,7 @@ class TherapistRepository {
               ? jsonEncode(therapist.notificationPreferences)
               : null,
           'bank_details': therapist.bankDetails != null ? jsonEncode(therapist.bankDetails) : null,
+          'default_session_price': therapist.defaultSessionPrice,
           'status': therapist.status,
         },
       );
@@ -211,6 +215,7 @@ class TherapistRepository {
           calendar_settings = @calendar_settings,
           notification_preferences = @notification_preferences,
           bank_details = @bank_details,
+          default_session_price = @default_session_price,
           status = @status,
           updated_at = NOW()
         WHERE id = @id
@@ -219,6 +224,7 @@ class TherapistRepository {
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
           calendar_settings, notification_preferences, bank_details,
+          default_session_price,
           status::text as status,
           created_at, updated_at;
       '''),
@@ -242,6 +248,7 @@ class TherapistRepository {
               ? jsonEncode(therapist.notificationPreferences)
               : null,
           'bank_details': therapist.bankDetails != null ? jsonEncode(therapist.bankDetails) : null,
+          'default_session_price': therapist.defaultSessionPrice,
           'status': therapist.status,
         },
       );
@@ -293,6 +300,7 @@ class TherapistRepository {
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
           calendar_settings, notification_preferences, bank_details,
+          default_session_price,
           status::text as status,
           created_at, updated_at;
       '''),
@@ -319,6 +327,7 @@ class TherapistRepository {
           t.professional_registry_type, t.professional_registry_number,
           t.specialties, t.education, t.professional_presentation, t.office_address,
           t.calendar_settings, t.notification_preferences, t.bank_details,
+          t.default_session_price,
           t.status::text as status,
           t.created_at, t.updated_at,
           ps.plan_id,

@@ -434,11 +434,10 @@ class MigrationManager {
     }
   }
 
-  /// Recria todas as functions, triggers e policies após migrations
+  /// Recria todas as functions e policies após migrations
   ///
   /// Executa todos os arquivos SQL das pastas:
-  /// - functions/ (ordem alfabética)
-  /// - triggers/ (ordem alfabética)
+  /// - functions/ (ordem alfabética, inclui triggers)
   /// - policies/ (ordem alfabética)
   ///
   /// Antes de recriar, apaga todas as existentes para garantir limpeza completa
@@ -473,19 +472,16 @@ class MigrationManager {
       await _dropAllFunctionsTriggersPolicies(conn);
 
       // Depois, recria tudo
-      // 1. Recriar Functions
+      // 1. Recriar Functions (inclui triggers)
       await _recreateFromDirectory(conn, Directory('${baseDir.path}/functions'), 'functions');
 
-      // 2. Recriar Triggers
-      await _recreateFromDirectory(conn, Directory('${baseDir.path}/triggers'), 'triggers');
-
-      // 3. Recriar Policies
+      // 2. Recriar Policies
       await _recreateFromDirectory(conn, Directory('${baseDir.path}/policies'), 'policies');
 
-      AppLogger.info('✅ Recriação de functions/triggers/policies concluída!');
+      AppLogger.info('✅ Recriação de functions/policies concluída!');
     } catch (e) {
       // Log mas não falha a migration - pode ser que ainda não existam as pastas
-      AppLogger.warning('⚠️  Não foi possível recriar functions/triggers/policies: $e');
+      AppLogger.warning('⚠️  Não foi possível recriar functions/policies: $e');
       AppLogger.warning('   (Isso é normal se as pastas ainda não foram criadas)');
     }
   }
