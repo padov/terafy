@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:common/common.dart';
 
 // Events
 abstract class ScheduleSettingsEvent extends Equatable {

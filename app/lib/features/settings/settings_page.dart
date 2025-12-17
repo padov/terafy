@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:common/common.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/features/schedule/schedule_settings_page.dart';
 

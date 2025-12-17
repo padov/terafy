@@ -748,26 +748,6 @@ class _SessionDetailsContent extends StatelessWidget {
     }
   }
 
-  IconData _getStatusIcon(SessionStatus status) {
-    switch (status) {
-      case SessionStatus.scheduled:
-        return Icons.event;
-      case SessionStatus.confirmed:
-        return Icons.check_circle;
-      case SessionStatus.inProgress:
-        return Icons.play_circle_filled;
-      case SessionStatus.completed:
-        return Icons.done_all;
-      case SessionStatus.draft:
-        return Icons.edit_note;
-      case SessionStatus.cancelledByTherapist:
-      case SessionStatus.cancelledByPatient:
-        return Icons.cancel;
-      case SessionStatus.noShow:
-        return Icons.person_off;
-    }
-  }
-
   String _getStatusText(SessionStatus status) {
     switch (status) {
       case SessionStatus.scheduled:
@@ -817,29 +797,8 @@ class _SessionDetailsContent extends StatelessWidget {
     }
   }
 
-  void _handleMenuAction(BuildContext context, String action, Session session) {
-    switch (action) {
-      case 'confirm':
-        _confirmSession(context, session);
-        break;
-      case 'cancel':
-        _showCancelDialog(context, session);
-        break;
-      case 'no_show':
-        _markAsNoShow(context, session);
-        break;
-      case 'complete':
-        _markAsCompleted(context, session);
-        break;
-    }
-  }
-
   void _confirmSession(BuildContext context, Session session) {
     context.read<SessionsBloc>().add(ConfirmSession(session.id));
-  }
-
-  void _markAsCompleted(BuildContext context, Session session) {
-    context.read<SessionsBloc>().add(MarkAsCompleted(session.id));
   }
 
   void _markAsCompletedAndRegister(BuildContext context, Session session) async {

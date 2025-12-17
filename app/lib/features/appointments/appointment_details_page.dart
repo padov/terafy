@@ -9,7 +9,6 @@ import 'package:terafy/features/appointments/models/appointment.dart';
 import 'package:terafy/features/appointments/new_appointment_page.dart';
 import 'package:terafy/features/schedule/bloc/schedule_settings_bloc.dart';
 import 'package:terafy/routes/app_routes.dart';
-import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
 
 class AppointmentDetailsPage extends StatefulWidget {
   final String appointmentId;

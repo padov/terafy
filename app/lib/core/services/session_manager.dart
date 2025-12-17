@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:common/common.dart';
 import 'package:terafy/core/domain/entities/auth_result.dart';
 import 'package:terafy/core/domain/usecases/auth/get_current_user_usecase.dart';
