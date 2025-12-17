@@ -16,7 +16,7 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
   final GetTransactionUseCase _getTransactionUseCase;
   final CreateTransactionUseCase _createTransactionUseCase;
   final UpdateTransactionUseCase _updateTransactionUseCase;
-  final DeleteTransactionUseCase _deleteTransactionUseCase;
+  // final DeleteTransactionUseCase _deleteTransactionUseCase;
   final GetFinancialSummaryUseCase _getFinancialSummaryUseCase;
   final GetCurrentTherapistUseCase _getCurrentTherapistUseCase;
 
@@ -35,7 +35,7 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
        _getTransactionUseCase = getTransactionUseCase,
        _createTransactionUseCase = createTransactionUseCase,
        _updateTransactionUseCase = updateTransactionUseCase,
-       _deleteTransactionUseCase = deleteTransactionUseCase,
+       //  _deleteTransactionUseCase = deleteTransactionUseCase,
        _getFinancialSummaryUseCase = getFinancialSummaryUseCase,
        _getCurrentTherapistUseCase = getCurrentTherapistUseCase,
        super(const FinancialInitial()) {

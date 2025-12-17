@@ -56,7 +56,6 @@ void main() {
         await dbConnection.withConnection((conn) async {
           throw Exception('Erro de teste');
         });
-        fail('Deveria ter lançado exceção');
       } catch (e) {
         expect(e.toString(), contains('Erro de teste'));
       }

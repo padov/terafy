@@ -1024,10 +1024,7 @@ class _NewAppointmentContentState extends State<_NewAppointmentContent> {
           if (!mounted) return;
 
           final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-          final conflictDates = conflicts
-              .take(3)
-              .map((c) => dateFormat.format((c['start']! as DateTime).toLocal()))
-              .join('\n');
+          final conflictDates = conflicts.take(3).map((c) => dateFormat.format(c['start']!.toLocal())).join('\n');
           final more = conflicts.length > 3 ? '\n...e mais ${conflicts.length - 3}' : '';
 
           showDialog(
