@@ -197,30 +197,6 @@ String _mapStatusToString(ui.SessionStatus status) {
   }
 }
 
-ui.PaymentStatus _mapPaymentStatusFromString(String status) {
-  switch (status) {
-    case 'pending':
-      return ui.PaymentStatus.pending;
-    case 'paid':
-      return ui.PaymentStatus.paid;
-    case 'exempt':
-      return ui.PaymentStatus.exempt;
-    default:
-      return ui.PaymentStatus.pending;
-  }
-}
-
-String _mapPaymentStatusToString(ui.PaymentStatus status) {
-  switch (status) {
-    case ui.PaymentStatus.pending:
-      return 'pending';
-    case ui.PaymentStatus.paid:
-      return 'paid';
-    case ui.PaymentStatus.exempt:
-      return 'exempt';
-  }
-}
-
 String _mapRiskLevelToString(ui.RiskLevel risk) {
   switch (risk) {
     case ui.RiskLevel.low:

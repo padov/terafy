@@ -12,8 +12,8 @@ class SettingsPage extends StatelessWidget {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Configurações', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.offBlack,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),

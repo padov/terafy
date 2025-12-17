@@ -117,7 +117,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final stats = DailyStats(
       todayPatients: summary.todayConfirmedSessions,
       pendingAppointments: summary.todayPendingSessions,
-      monthlyRevenue: 0.0,
+      monthlyRevenue: summary.monthlyRevenue,
       completionRate: (summary.monthlyCompletionRate * 100).round(),
     );
 

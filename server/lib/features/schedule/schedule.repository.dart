@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:common/common.dart';
 import 'package:postgres/postgres.dart';
 import 'package:server/core/database/db_connection.dart';
@@ -67,6 +68,17 @@ class ScheduleRepository {
       }
 
       final data = settings.toDatabaseMap();
+
+      // Encode JSON fields
+      if (data['working_hours'] != null && data['working_hours'] is! String) {
+        data['working_hours'] = jsonEncode(data['working_hours']);
+      }
+      if (data['custom_blocks'] != null && data['custom_blocks'] is! String) {
+        data['custom_blocks'] = jsonEncode(data['custom_blocks']);
+      }
+      if (data['cancellation_policy'] != null && data['cancellation_policy'] is! String) {
+        data['cancellation_policy'] = jsonEncode(data['cancellation_policy']);
+      }
 
       final result = await conn.execute(
         Sql.named('''
@@ -285,6 +297,14 @@ class ScheduleRepository {
       // Remove session_id da criação - ele só é definido quando uma sessão é criada
       data.remove('session_id');
 
+      // Encode JSON fields
+      if (data['recurrence_rule'] != null && data['recurrence_rule'] is! String) {
+        data['recurrence_rule'] = jsonEncode(data['recurrence_rule']);
+      }
+      if (data['reminders'] != null && data['reminders'] is! String) {
+        data['reminders'] = jsonEncode(data['reminders']);
+      }
+
       final result = await conn.execute(
         Sql.named('''
         INSERT INTO appointments (
@@ -397,6 +417,14 @@ class ScheduleRepository {
       final data = appointment.toDatabaseMap();
       // Remove therapist_id pois não deve ser atualizado (é uma chave estrangeira)
       data.remove('therapist_id');
+
+      // Encode JSON fields
+      if (data['recurrence_rule'] != null && data['recurrence_rule'] is! String) {
+        data['recurrence_rule'] = jsonEncode(data['recurrence_rule']);
+      }
+      if (data['reminders'] != null && data['reminders'] is! String) {
+        data['reminders'] = jsonEncode(data['reminders']);
+      }
 
       final result = await conn.execute(
         Sql.named('''

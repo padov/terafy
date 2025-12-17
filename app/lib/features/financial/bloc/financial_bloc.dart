@@ -61,10 +61,8 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
   }
 
   Future<void> _onLoadFinancialSummary(LoadFinancialSummary event, Emitter<FinancialState> emit) async {
-    FinancialData? currentData;
-    if (state is FinancialData) {
-      currentData = state as FinancialData;
-    } else {
+    // Only emit loading if we don't have data yet
+    if (state is! FinancialData) {
       emit(const FinancialLoading());
     }
 
@@ -105,28 +103,26 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
         endDate: event.endDate,
       );
 
-      emit(
-        FinancialData(
-          summary: summary,
-          payments: currentData?.payments,
-          summaryStartDate: event.startDate,
-          summaryEndDate: event.endDate,
-          paymentsStartDate: currentData?.paymentsStartDate,
-          paymentsEndDate: currentData?.paymentsEndDate,
-          statusFilter: currentData?.statusFilter,
-          patientIdFilter: currentData?.patientIdFilter,
-        ),
-      );
+      // Get latest state to ensure we don't overwrite payments loaded concurrently
+      if (state is FinancialData) {
+        emit(
+          (state as FinancialData).copyWith(
+            summary: summary,
+            summaryStartDate: event.startDate,
+            summaryEndDate: event.endDate,
+          ),
+        );
+      } else {
+        emit(FinancialData(summary: summary, summaryStartDate: event.startDate, summaryEndDate: event.endDate));
+      }
     } catch (e) {
       emit(FinancialError('Erro ao carregar resumo: ${e.toString()}'));
     }
   }
 
   Future<void> _onLoadPayments(LoadPayments event, Emitter<FinancialState> emit) async {
-    FinancialData? currentData;
-    if (state is FinancialData) {
-      currentData = state as FinancialData;
-    } else {
+    // Only emit loading if we don't have data yet
+    if (state is! FinancialData) {
       emit(const FinancialLoading());
     }
 
@@ -141,19 +137,19 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
       if (event.statusFilter != null) {
         switch (event.statusFilter!) {
           case PaymentStatus.pending:
-            statusFilter = 'pendente';
+            statusFilter = 'pending';
             break;
           case PaymentStatus.paid:
-            statusFilter = 'pago';
+            statusFilter = 'paid';
             break;
           case PaymentStatus.overdue:
-            statusFilter = 'atrasado';
+            statusFilter = 'overdue';
             break;
           case PaymentStatus.cancelled:
-            statusFilter = 'cancelado';
+            statusFilter = 'cancelled';
             break;
           case PaymentStatus.refunded:
-            statusFilter = 'cancelado'; // Mapear refunded para cancelado
+            statusFilter = 'cancelled'; // Mapear refunded para cancelado
             break;
         }
       }
@@ -176,18 +172,28 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
       // Ordenar por data de vencimento (mais recentes primeiro)
       payments.sort((a, b) => b.dueDate.compareTo(a.dueDate));
 
-      emit(
-        FinancialData(
-          summary: currentData?.summary,
-          payments: payments,
-          summaryStartDate: currentData?.summaryStartDate,
-          summaryEndDate: currentData?.summaryEndDate,
-          paymentsStartDate: event.startDate,
-          paymentsEndDate: event.endDate,
-          statusFilter: event.statusFilter,
-          patientIdFilter: event.patientIdFilter,
-        ),
-      );
+      // Get latest state
+      if (state is FinancialData) {
+        emit(
+          (state as FinancialData).copyWith(
+            payments: payments,
+            paymentsStartDate: event.startDate,
+            paymentsEndDate: event.endDate,
+            statusFilter: event.statusFilter,
+            patientIdFilter: event.patientIdFilter,
+          ),
+        );
+      } else {
+        emit(
+          FinancialData(
+            payments: payments,
+            paymentsStartDate: event.startDate,
+            paymentsEndDate: event.endDate,
+            statusFilter: event.statusFilter,
+            patientIdFilter: event.patientIdFilter,
+          ),
+        );
+      }
     } catch (e) {
       emit(FinancialError('Erro ao carregar pagamentos: ${e.toString()}'));
     }
@@ -267,7 +273,7 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
       }
 
       final updatedTransaction = currentTransaction.copyWith(
-        status: 'pago',
+        status: 'paid',
         paymentMethod: FinancialTransactionMapper.mapPaymentMethodToString(event.method),
         paidAt: event.paidAt.toUtc(),
         receiptNumber: event.receiptNumber,
@@ -301,7 +307,7 @@ class FinancialBloc extends Bloc<FinancialEvent, FinancialState> {
       }
 
       final updatedTransaction = currentTransaction.copyWith(
-        status: 'cancelado',
+        status: 'cancelled',
         notes: event.reason != null
             ? '${currentTransaction.notes ?? ''}\nMotivo: ${event.reason}'
             : currentTransaction.notes,

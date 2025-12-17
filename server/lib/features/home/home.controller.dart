@@ -2,6 +2,7 @@ import 'package:common/common.dart';
 import 'package:server/features/schedule/schedule.repository.dart';
 import 'package:server/features/session/session.repository.dart';
 import 'package:server/features/patient/patient.repository.dart';
+import 'package:server/features/financial/financial.repository.dart';
 
 class HomeException implements Exception {
   HomeException(this.message, [this.statusCode = 500]);
@@ -18,13 +19,16 @@ class HomeController {
     ScheduleRepository scheduleRepository,
     SessionRepository sessionRepository,
     PatientRepository patientRepository,
+    FinancialRepository financialRepository,
   ) : _scheduleRepository = scheduleRepository,
       _sessionRepository = sessionRepository,
-      _patientRepository = patientRepository;
+      _patientRepository = patientRepository,
+      _financialRepository = financialRepository;
 
   final ScheduleRepository _scheduleRepository;
   final SessionRepository _sessionRepository;
   final PatientRepository _patientRepository;
+  final FinancialRepository _financialRepository;
 
   Future<HomeSummary> getSummary({
     required int therapistId,
@@ -163,6 +167,22 @@ class HomeController {
               .toList()
             ..sort((a, b) => b.scheduledStartTime.compareTo(a.scheduledStartTime));
 
+      double monthlyRevenue = 0.0;
+      try {
+        final financialSummary = await _financialRepository.getFinancialSummary(
+          therapistId: therapistId,
+          userId: userId,
+          userRole: userRole,
+          accountId: accountId,
+          startDate: monthStart,
+          endDate: monthEnd,
+          bypassRLS: userRole == 'admin',
+        );
+        monthlyRevenue = (financialSummary['totalPaidAmount'] as num?)?.toDouble() ?? 0.0;
+      } catch (e) {
+        AppLogger.warning('Erro ao buscar receita mensal: $e');
+      }
+
       return HomeSummary(
         referenceDate: dayStart,
         therapistId: therapistId,
@@ -170,6 +190,7 @@ class HomeController {
         todayConfirmedSessions: todayConfirmedSessions,
         monthlyCompletionRate: monthlyCompletionRate,
         monthlySessions: monthlySessions,
+        monthlyRevenue: monthlyRevenue,
         listOfTodaySessions: todayAgenda,
         pendingSessions: pendingSessions,
       );

@@ -182,29 +182,29 @@ class HomeHeader extends StatelessWidget {
             ),
 
             // Notification bell
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
-                  onPressed: onNotificationTap,
-                ),
-                if (notificationCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                      child: Text(
-                        notificationCount > 9 ? '9+' : notificationCount.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            // Stack(
+            //   children: [
+            //     IconButton(
+            //       icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 28),
+            //       onPressed: onNotificationTap,
+            //     ),
+            //     if (notificationCount > 0)
+            //       Positioned(
+            //         right: 8,
+            //         top: 8,
+            //         child: Container(
+            //           padding: const EdgeInsets.all(4),
+            //           decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+            //           constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+            //           child: Text(
+            //             notificationCount > 9 ? '9+' : notificationCount.toString(),
+            //             style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            //             textAlign: TextAlign.center,
+            //           ),
+            //         ),
+            //       ),
+            //   ],
+            // ),
           ],
         ),
       ),

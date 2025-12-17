@@ -74,33 +74,33 @@ class _SchedulePageContent extends StatelessWidget {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Agenda', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.offBlack,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         toolbarHeight: 48,
-        actions: [
-          // Filtros
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // TODO: Implementar filtros
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Filtros em desenvolvimento'), duration: Duration(seconds: 2)),
-              );
-            },
-          ),
-          // Buscar
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implementar busca
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Busca em desenvolvimento'), duration: Duration(seconds: 2)));
-            },
-          ),
-        ],
+        // actions: [
+        //   // Filtros
+        //   IconButton(
+        //     icon: const Icon(Icons.filter_list),
+        //     onPressed: () {
+        //       // TODO: Implementar filtros
+        //       ScaffoldMessenger.of(context).showSnackBar(
+        //         const SnackBar(content: Text('Filtros em desenvolvimento'), duration: Duration(seconds: 2)),
+        //       );
+        //     },
+        //   ),
+        //   // Buscar
+        //   IconButton(
+        //     icon: const Icon(Icons.search),
+        //     onPressed: () {
+        //       // TODO: Implementar busca
+        //       ScaffoldMessenger.of(
+        //         context,
+        //       ).showSnackBar(const SnackBar(content: Text('Busca em desenvolvimento'), duration: Duration(seconds: 2)));
+        //     },
+        //   ),
+        // ],
       ),
       body: BlocConsumer<AppointmentBloc, AppointmentState>(
         listener: (context, state) {

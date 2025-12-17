@@ -10,6 +10,9 @@ import 'package:terafy/features/home/widgets/pending_sessions.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/routes/app_routes.dart';
 import 'package:terafy/features/settings/settings_page.dart';
+import 'package:terafy/features/patients/patients_list_page.dart';
+import 'package:terafy/features/schedule/schedule_page.dart';
+import 'package:terafy/features/financial/financial_page.dart';
 
 class HomePage extends StatelessWidget {
   final HomeBloc? bloc;
@@ -111,6 +114,12 @@ class _HomePageContentState extends State<_HomePageContent> with RouteAware {
     // Different content based on bottom nav index
     if (state.currentNavIndex == 0) {
       return _buildHomeContent(context, data);
+    } else if (state.currentNavIndex == 1) {
+      return const SchedulePage();
+    } else if (state.currentNavIndex == 2) {
+      return const PatientsListPage();
+    } else if (state.currentNavIndex == 3) {
+      return const FinancialPage();
     } else if (state.currentNavIndex == 4) {
       return const SettingsPage();
     } else {
@@ -255,18 +264,7 @@ class _HomePageContentState extends State<_HomePageContent> with RouteAware {
     return BottomNavigationBar(
       currentIndex: state.currentNavIndex,
       onTap: (index) {
-        if (index == 1) {
-          // Navigate to Schedule page
-          Navigator.of(context).pushNamed(AppRouter.scheduleRoute);
-        } else if (index == 2) {
-          // Navigate to Patients page
-          Navigator.of(context).pushNamed(AppRouter.patientsRoute);
-        } else if (index == 3) {
-          // Navigate to Financial page
-          Navigator.of(context).pushNamed(AppRouter.financialRoute);
-        } else {
-          context.read<HomeBloc>().add(ChangeBottomNavIndex(index));
-        }
+        context.read<HomeBloc>().add(ChangeBottomNavIndex(index));
       },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: AppColors.primary,

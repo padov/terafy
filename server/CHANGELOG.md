@@ -9,6 +9,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### 🎉 Adicionado
 
+#### Dashboard Financeiro na Home
+
+- Inclusão de resumo financeiro (receita mensal) no endpoint de Home
+- Integração do `HomeController` com `FinancialRepository`
+- Atualização do modelo `HomeSummary` para incluir dados financeiros
+
 #### Integração Financeira Automática
 
 - Migrations para vincular sessões a transações financeiras (`add_transaction_fk_to_sessions`)
@@ -23,6 +29,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### 🔧 Alterado
 
+- **Session Repository**: Refinamento de queries SQL para evitar ambiguidade de colunas em joins
 - **Controllers e Repositories**: Atualização completa de `Financial`, `Session` e `Therapist` para suportar o novo fluxo integrado
 - **Testes**: Atualização de testes de integração e unitários para refletir as novas regras de negócio financeiras
 

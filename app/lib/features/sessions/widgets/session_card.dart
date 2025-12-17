@@ -36,11 +36,7 @@ class SessionCard extends StatelessWidget {
                       color: _getStatusColor().withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      _getStatusIcon(),
-                      color: _getStatusColor(),
-                      size: 20,
-                    ),
+                    child: Icon(_getStatusIcon(), color: _getStatusColor(), size: 20),
                   ),
                   const SizedBox(width: 12),
 
@@ -51,19 +47,12 @@ class SessionCard extends StatelessWidget {
                       children: [
                         Text(
                           _formatDate(session.scheduledStartTime),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.offBlack,
-                          ),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           _formatTime(session.scheduledStartTime),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
+                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                         ),
                       ],
                     ),
@@ -71,21 +60,14 @@ class SessionCard extends StatelessWidget {
 
                   // Número da sessão
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Sessão #${session.sessionNumber}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
                     ),
                   ),
                 ],
@@ -97,109 +79,36 @@ class SessionCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getStatusColor().withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       _getStatusText(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: _getStatusColor(),
-                      ),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _getStatusColor()),
                     ),
                   ),
                   const SizedBox(width: 8),
 
-                  // Indicador de pagamento (apenas para sessões completadas)
-                  if (session.status == SessionStatus.completed)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 14,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Pago',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (session.status == SessionStatus.completed)
-                    const SizedBox(width: 8),
-
                   // Tipo de sessão
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _getTypeIcon(),
-                          size: 14,
-                          color: AppColors.offBlack,
-                        ),
+                        Icon(_getTypeIcon(), size: 14, color: AppColors.offBlack),
                         const SizedBox(width: 4),
                         Text(
                           _getTypeText(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.offBlack,
-                          ),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.offBlack),
                         ),
                       ],
                     ),
                   ),
 
                   const Spacer(),
-
-                  // Pagamento
-                  if (session.status == SessionStatus.completed ||
-                      session.status == SessionStatus.scheduled ||
-                      session.status == SessionStatus.confirmed)
-                    Icon(
-                      session.transactionId == PaymentStatus.paid
-                          ? Icons.check_circle
-                          : session.transactionId == PaymentStatus.pending
-                          ? Icons.schedule
-                          : Icons.cancel,
-                      size: 20,
-                      color: session.transactionId == PaymentStatus.paid
-                          ? Colors.green
-                          : session.transactionId == PaymentStatus.pending
-                          ? Colors.orange
-                          : Colors.grey,
-                    ),
                 ],
               ),
 
@@ -217,20 +126,12 @@ class SessionCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Colors.amber[800],
-                      ),
+                      Icon(Icons.info_outline, size: 16, color: Colors.amber[800]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Evolução em rascunho - Toque para continuar',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.amber[900],
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: TextStyle(fontSize: 12, color: Colors.amber[900], fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -239,20 +140,14 @@ class SessionCard extends StatelessWidget {
               ],
 
               // Temas discutidos (apenas se sessão completa ou rascunho)
-              if ((session.status == SessionStatus.completed ||
-                      session.status == SessionStatus.draft) &&
+              if ((session.status == SessionStatus.completed || session.status == SessionStatus.draft) &&
                   session.topicsDiscussed.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                if (session.status != SessionStatus.draft)
-                  const Divider(color: AppColors.lightBorderColor),
+                if (session.status != SessionStatus.draft) const Divider(color: AppColors.lightBorderColor),
                 const SizedBox(height: 8),
                 Text(
                   'Temas abordados:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.offBlack,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.offBlack),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -260,10 +155,7 @@ class SessionCard extends StatelessWidget {
                   runSpacing: 6,
                   children: session.topicsDiscussed.take(3).map((topic) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -271,11 +163,7 @@ class SessionCard extends StatelessWidget {
                       ),
                       child: Text(
                         topic,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
                       ),
                     );
                   }).toList(),
@@ -285,11 +173,7 @@ class SessionCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       '+${session.topicsDiscussed.length - 3} mais',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                        fontStyle: FontStyle.italic,
-                      ),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600], fontStyle: FontStyle.italic),
                     ),
                   ),
               ],
@@ -307,11 +191,7 @@ class SessionCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         session.cancellationReason ?? 'Sem motivo informado',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.offBlack,
-                          fontStyle: FontStyle.italic,
-                        ),
+                        style: TextStyle(fontSize: 12, color: AppColors.offBlack, fontStyle: FontStyle.italic),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

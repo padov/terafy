@@ -15,7 +15,7 @@ enum SessionStatus {
   noShow,
 }
 
-enum PaymentStatus { pending, paid, exempt }
+enum PaymentStatus { pending, paid, exempt, overdue, cancelled }
 
 enum RiskLevel { low, medium, high }
 

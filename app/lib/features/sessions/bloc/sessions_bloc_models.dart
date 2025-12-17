@@ -1,3 +1,4 @@
+import 'package:terafy/features/financial/models/payment.dart';
 import 'package:terafy/features/sessions/models/session.dart';
 
 // ========== EVENTS ==========
@@ -35,11 +36,7 @@ class CancelSession extends SessionsEvent {
   final String reason;
   final bool cancelledByPatient;
 
-  const CancelSession({
-    required this.sessionId,
-    required this.reason,
-    required this.cancelledByPatient,
-  });
+  const CancelSession({required this.sessionId, required this.reason, required this.cancelledByPatient});
 }
 
 class ConfirmSession extends SessionsEvent {
@@ -58,6 +55,20 @@ class MarkAsNoShow extends SessionsEvent {
   final String sessionId;
 
   const MarkAsNoShow(this.sessionId);
+}
+
+class RegisterSessionPayment extends SessionsEvent {
+  final String sessionId;
+  final double amount;
+  final DateTime paymentDate;
+  final String? receiptNumber;
+
+  const RegisterSessionPayment({
+    required this.sessionId,
+    required this.amount,
+    required this.paymentDate,
+    this.receiptNumber,
+  });
 }
 
 // ========== STATES ==========
@@ -79,8 +90,9 @@ class SessionsLoaded extends SessionsState {
 
 class SessionDetailsLoaded extends SessionsState {
   final Session session;
+  final Payment? payment;
 
-  const SessionDetailsLoaded(this.session);
+  const SessionDetailsLoaded(this.session, {this.payment});
 }
 
 class SessionCreated extends SessionsState {

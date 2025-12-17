@@ -8,6 +8,14 @@ Este documento descreve as principais mudanças e melhorias do aplicativo Terafy
 
 ### ✨ Novidades
 
+#### 📊 Dashboard Financeiro
+
+Acompanhe a saúde financeira do seu consultório direto na tela inicial!
+
+- **Resumo Mensal**: Veja rapidamente sua receita acumulada no mês.
+- **Acesso Rápido**: Toque no card financeiro para acessar relatórios detalhados.
+- **Transparência**: Saiba exatamente quanto você já faturou.
+
 #### 💰 Integração Financeira Automática
 
 Agora suas sessões e finanças estão conectadas!

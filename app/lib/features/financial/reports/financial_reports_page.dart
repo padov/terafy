@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/common/app_colors.dart';
-import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc_models.dart';
 import 'package:terafy/features/financial/reports/widgets/revenue_chart.dart';
@@ -72,23 +71,9 @@ class _FinancialReportsPageState extends State<FinancialReportsPage> with Single
         children: [
           _buildPeriodSelector(),
           Expanded(
-            child: BlocProvider(
-              create: (context) {
-                final container = DependencyContainer();
-                return FinancialBloc(
-                  getTransactionsUseCase: container.getTransactionsUseCase,
-                  getTransactionUseCase: container.getTransactionUseCase,
-                  createTransactionUseCase: container.createTransactionUseCase,
-                  updateTransactionUseCase: container.updateTransactionUseCase,
-                  deleteTransactionUseCase: container.deleteTransactionUseCase,
-                  getFinancialSummaryUseCase: container.getFinancialSummaryUseCase,
-                  getCurrentTherapistUseCase: container.getCurrentTherapistUseCase,
-                );
-              },
-              child: TabBarView(
-                controller: _tabController,
-                children: [_buildRevenueTab(), _buildStatusTab(), _buildComparisonTab()],
-              ),
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildRevenueTab(), _buildStatusTab(), _buildComparisonTab()],
             ),
           ),
         ],
@@ -455,6 +440,14 @@ class _FinancialReportsPageState extends State<FinancialReportsPage> with Single
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.lightBorderColor),
       ),
+      child: const Center(
+        child: Text(
+          'Insights indisponíveis.\nAguardando implementação de dados históricos.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
+        ),
+      ),
+      /*
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -476,9 +469,11 @@ class _FinancialReportsPageState extends State<FinancialReportsPage> with Single
           _buildInsightItem(Icons.show_chart, 'Média Mensal', 'R\$ 3.000,00', AppColors.primary),
         ],
       ),
+      */
     );
   }
 
+  /*
   Widget _buildInsightItem(IconData icon, String label, String value, Color color) {
     return Row(
       children: [
@@ -492,4 +487,5 @@ class _FinancialReportsPageState extends State<FinancialReportsPage> with Single
       ],
     );
   }
+  */
 }

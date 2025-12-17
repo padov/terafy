@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+// import 'package:fl_chart/fl_chart.dart';
 import 'package:terafy/common/app_colors.dart';
 
 class RevenueChart extends StatelessWidget {
@@ -7,12 +7,7 @@ class RevenueChart extends StatelessWidget {
   final String period;
   final DateTime selectedDate;
 
-  const RevenueChart({
-    super.key,
-    required this.summary,
-    required this.period,
-    required this.selectedDate,
-  });
+  const RevenueChart({super.key, required this.summary, required this.period, required this.selectedDate});
 
   @override
   Widget build(BuildContext context) {
@@ -24,88 +19,24 @@ class RevenueChart extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.lightBorderColor),
       ),
+      /*
       child: BarChart(
         BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: _getMaxY(),
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              tooltipRoundedRadius: 8,
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                return BarTooltipItem(
-                  'R\$ ${rod.toY.toStringAsFixed(2)}',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                );
-              },
-            ),
-          ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      _getBottomTitle(value.toInt()),
-                      style: const TextStyle(
-                        color: AppColors.offBlack,
-                        fontSize: 10,
-                      ),
-                    ),
-                  );
-                },
-                reservedSize: 32,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  if (value == 0) return const SizedBox.shrink();
-                  return Text(
-                    'R\$${(value / 1000).toStringAsFixed(0)}k',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 10),
-                  );
-                },
-                reservedSize: 48,
-                interval: _getMaxY() / 4,
-              ),
-            ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-          ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: _getMaxY() / 4,
-            getDrawingHorizontalLine: (value) {
-              return FlLine(color: AppColors.lightBorderColor, strokeWidth: 1);
-            },
-          ),
-          borderData: FlBorderData(
-            show: true,
-            border: const Border(
-              bottom: BorderSide(color: AppColors.lightBorderColor),
-              left: BorderSide(color: AppColors.lightBorderColor),
-            ),
-          ),
-          barGroups: _getBarGroups(),
+          // ... (existing code) ...
+        ),
+      ),
+      */
+      child: const Center(
+        child: Text(
+          'Gráfico indisponível.\nAguardando implementação de dados históricos.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
         ),
       ),
     );
   }
 
+  /*
   List<BarChartGroupData> _getBarGroups() {
     // Mock data - 7 dias da semana ou meses do ano
     if (period == 'month') {
@@ -119,9 +50,7 @@ class RevenueChart extends StatelessWidget {
               toY: revenue,
               color: AppColors.primary,
               width: 20,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(4),
-              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -142,9 +71,7 @@ class RevenueChart extends StatelessWidget {
               toY: revenue,
               color: AppColors.primary,
               width: 16,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(4),
-              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -197,21 +124,9 @@ class RevenueChart extends StatelessWidget {
       return value < days.length ? days[value] : '';
     } else {
       // Meses
-      final months = [
-        'Jan',
-        'Fev',
-        'Mar',
-        'Abr',
-        'Mai',
-        'Jun',
-        'Jul',
-        'Ago',
-        'Set',
-        'Out',
-        'Nov',
-        'Dez',
-      ];
+      final months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       return value < months.length ? months[value] : '';
     }
   }
+  */
 }

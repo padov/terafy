@@ -104,6 +104,7 @@ class Session {
     DateTime? cancellationTime,
     double? chargedAmount,
     int? transactionId,
+    String? paymentStatus,
     String? patientMood,
     List<String>? topicsDiscussed,
     String? sessionNotes,
@@ -232,6 +233,8 @@ class Session {
       'cancellation_time': cancellationTime,
       'charged_amount': chargedAmount,
       'transaction_id': transactionId,
+
+      // payment_status não é salvo na tabela sessions, é apenas leitura via join
       'patient_mood': patientMood,
       'topics_discussed': topicsDiscussed,
       'session_notes': sessionNotes,

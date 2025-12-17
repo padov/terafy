@@ -3,10 +3,10 @@
    =================================== */
 :root {
   /* Primary Colors - Based on Terafy Brand */
-  --primary-blue: #0891B2;
+  --primary-blue: #0891b2;
   --primary-blue-dark: #085878;
-  --primary-blue-light: #14B8A6;
-  --primary-teal: #14B8A6;
+  --primary-blue-light: #14b8a6;
+  --primary-teal: #14b8a6;
   --primary-teal-dark: #0d9488;
 
   /* Accent Colors */
@@ -157,7 +157,7 @@ button {
    =================================== */
 .navbar {
   position: fixed;
-  top: 0;
+  top: 40px;
   left: 0;
   right: 0;
   z-index: 1000;
@@ -168,7 +168,13 @@ button {
 }
 
 .navbar.scrolled {
-  background: linear-gradient(to right, #085878 0%, #0891B2 30%, #14B8A6 60%, #ffffff 100%);
+  background: linear-gradient(
+    to right,
+    #085878 0%,
+    #0891b2 30%,
+    #14b8a6 60%,
+    #ffffff 100%
+  );
   box-shadow: var(--shadow-md);
 }
 
@@ -341,7 +347,7 @@ button {
   align-items: center;
   background: var(--gradient-hero);
   color: var(--white);
-  padding-top: 60px;
+  padding-top: 100px;
   overflow: hidden;
 }
 
@@ -951,10 +957,10 @@ button {
 
   .nav-menu {
     position: fixed;
-    top: 60px;
+    top: 100px;
     left: -100%;
     width: 100%;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 100px);
     background: var(--white);
     flex-direction: column;
     padding: var(--spacing-xl);
@@ -1021,4 +1027,32 @@ button {
     padding: 0.875rem 1.5rem;
     font-size: var(--font-size-base);
   }
+}
+
+/* ===================================
+   Maintenance Banner
+   =================================== */
+.maintenance-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: var(--gray-900);
+  background: linear-gradient(90deg, var(--gray-900), var(--gray-800));
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-sm);
+}
+
+.maintenance-banner span {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }

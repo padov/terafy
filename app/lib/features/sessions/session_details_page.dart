@@ -23,9 +23,10 @@ class SessionDetailsPage extends StatelessWidget {
         getSessionUseCase: container.getSessionUseCase,
         createSessionUseCase: container.createSessionUseCase,
         updateSessionUseCase: container.updateSessionUseCase,
-        deleteSessionUseCase: container.deleteSessionUseCase,
         getAppointmentUseCase: container.getAppointmentUseCase,
         updateAppointmentUseCase: container.updateAppointmentUseCase,
+        getTransactionUseCase: container.getTransactionUseCase,
+        createTransactionUseCase: container.createTransactionUseCase,
       )..add(LoadSessionDetails(sessionId)),
       child: _SessionDetailsContent(patientName: patientName),
     );
@@ -60,6 +61,7 @@ class _SessionDetailsContent extends StatelessWidget {
 
         if (state is SessionDetailsLoaded || state is SessionUpdated) {
           final session = state is SessionDetailsLoaded ? state.session : (state as SessionUpdated).session;
+          final payment = state is SessionDetailsLoaded ? state.payment : null;
 
           return Scaffold(
             backgroundColor: Colors.grey[50],
@@ -69,13 +71,13 @@ class _SessionDetailsContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header com informações principais
-                  _buildHeader(session),
+                  _buildHeader(session, payment),
 
                   // Ações rápidas (para todas exceto canceladas)
                   if (session.status != SessionStatus.cancelledByPatient &&
                       session.status != SessionStatus.cancelledByTherapist &&
                       session.status != SessionStatus.noShow)
-                    _buildQuickActions(context, session),
+                    _buildQuickActions(context, session, payment),
 
                   // Registro clínico (para sessões completadas e rascunhos)
                   if (session.status == SessionStatus.completed || session.status == SessionStatus.draft) ...[
@@ -83,7 +85,7 @@ class _SessionDetailsContent extends StatelessWidget {
                   ],
 
                   // Informações da sessão
-                  _buildInfoSection(session),
+                  _buildInfoSection(session, payment),
 
                   // Informações administrativas
                   _buildAdministrativeSection(session),
@@ -112,51 +114,10 @@ class _SessionDetailsContent extends StatelessWidget {
           Text(patientName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
         ],
       ),
-      actions: [
-        if (session.status != SessionStatus.completed)
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) => _handleMenuAction(context, value, session),
-            itemBuilder: (context) => [
-              if (session.status == SessionStatus.scheduled)
-                const PopupMenuItem(
-                  value: 'confirm',
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle_outline, size: 20),
-                      SizedBox(width: 12),
-                      Text('Confirmar Presença'),
-                    ],
-                  ),
-                ),
-              if (session.status == SessionStatus.confirmed || session.status == SessionStatus.scheduled)
-                const PopupMenuItem(
-                  value: 'cancel',
-                  child: Row(
-                    children: [Icon(Icons.cancel_outlined, size: 20), SizedBox(width: 12), Text('Cancelar Sessão')],
-                  ),
-                ),
-              if (session.status == SessionStatus.confirmed)
-                const PopupMenuItem(
-                  value: 'no_show',
-                  child: Row(
-                    children: [Icon(Icons.person_off_outlined, size: 20), SizedBox(width: 12), Text('Marcar Falta')],
-                  ),
-                ),
-              if (session.status == SessionStatus.confirmed)
-                const PopupMenuItem(
-                  value: 'complete',
-                  child: Row(
-                    children: [Icon(Icons.done_all, size: 20), SizedBox(width: 12), Text('Marcar como Realizada')],
-                  ),
-                ),
-            ],
-          ),
-      ],
     );
   }
 
-  Widget _buildHeader(Session session) {
+  Widget _buildHeader(Session session, financial.Payment? payment) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -165,62 +126,101 @@ class _SessionDetailsContent extends StatelessWidget {
         borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Data e hora
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                Text(
-                  _formatDate(session.scheduledStartTime),
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _formatDate(session.scheduledStartTime),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_formatTime(session.scheduledStartTime)} - ${_formatTime(session.scheduledEndTime ?? session.scheduledStartTime.add(Duration(minutes: session.durationMinutes)))}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${session.durationMinutes} minutos',
+                        style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8)),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_formatTime(session.scheduledStartTime)} - ${_formatTime(session.scheduledEndTime ?? session.scheduledStartTime.add(Duration(minutes: session.durationMinutes)))}',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white.withOpacity(0.9)),
+              ),
+              const SizedBox(width: 16),
+              // Status Badge
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _getStatusText(session.status),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                      const SizedBox(width: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            payment?.status == financial.PaymentStatus.paid ? 'Pago' : 'Não Pago',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            payment?.status == financial.PaymentStatus.paid
+                                ? Icons.check_circle
+                                : Icons.pending_outlined,
+                            color: Colors.white.withOpacity(0.9),
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        // Exibir valor se disponível
+                        payment != null
+                            ? 'R\$ ${payment.amount.toStringAsFixed(2)}'
+                            : (session.chargedAmount != null
+                                  ? 'R\$ ${session.chargedAmount!.toStringAsFixed(2)}'
+                                  : 'Valor n/d'),
+                        style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8)),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${session.durationMinutes} minutos',
-                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Status Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_getStatusIcon(session.status), color: _getStatusColor(session.status), size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  _getStatusText(session.status),
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _getStatusColor(session.status)),
-                ),
-                // Ícone de pagamento para sessões completadas
-                if (session.status == SessionStatus.completed) ...[
-                  const SizedBox(width: 12),
-                  if (session.transactionId != null)
-                    Icon(Icons.check_circle, color: Colors.green, size: 18)
-                  else
-                    Icon(Icons.pending_outlined, color: Colors.orange[300], size: 18),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, Session session) {
+  Widget _buildQuickActions(BuildContext context, Session session, financial.Payment? payment) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -279,8 +279,10 @@ class _SessionDetailsContent extends StatelessWidget {
                   AppColors.primary,
                   () => _navigateToEvolution(context, session),
                 ),
-              // Mostrar botão de registrar pagamento apenas se pagamento estiver pendente
-              if (session.status == SessionStatus.completed && session.transactionId == null)
+              // Mostrar botão de registrar pagamento apenas se transactionId for nulo (não vinculado)
+              // OU se o status do pagamento não for pago
+              if (session.status == SessionStatus.completed &&
+                  (session.transactionId == null || payment?.status != financial.PaymentStatus.paid))
                 _buildActionChip(
                   context,
                   'Registrar Pagamento',
@@ -331,7 +333,7 @@ class _SessionDetailsContent extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoSection(Session session) {
+  Widget _buildInfoSection(Session session, financial.Payment? payment) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -352,9 +354,19 @@ class _SessionDetailsContent extends StatelessWidget {
           _buildInfoRow('Modalidade', _getModalityText(session.modality), Icons.people),
           if (session.location != null) _buildInfoRow('Local', session.location!, Icons.location_on),
           if (session.onlineRoomLink != null) _buildInfoRow('Link Online', session.onlineRoomLink!, Icons.video_call),
-          if (session.chargedAmount != null)
+          if (payment != null)
+            _buildInfoRow('Valor', 'R\$ ${payment.amount.toStringAsFixed(2)}', Icons.attach_money)
+          else if (session.chargedAmount != null)
             _buildInfoRow('Valor', 'R\$ ${session.chargedAmount!.toStringAsFixed(2)}', Icons.attach_money),
-          _buildInfoRow('Pagamento', session.transactionId != null ? 'Vinculado' : 'Pendente', Icons.payment),
+          _buildInfoRow(
+            'Pagamento',
+            payment?.status == financial.PaymentStatus.paid
+                ? 'Pago'
+                : session.transactionId != null
+                ? 'Vinculado (${payment?.status.toString().split('.').last ?? "..."})'
+                : 'Pendente',
+            Icons.payment,
+          ),
         ],
       ),
     );
@@ -704,7 +716,7 @@ class _SessionDetailsContent extends StatelessWidget {
     } else if (difference == -1) {
       return 'Ontem';
     } else {
-      return DateFormat('d \'de\' MMMM \'de\' yyyy', 'pt_BR').format(date);
+      return DateFormat('dd/MM/yyyy', 'pt_BR').format(date);
     }
   }
 
@@ -1033,19 +1045,19 @@ class _SessionDetailsContent extends StatelessWidget {
                   return;
                 }
 
-                // Atualizar paymentStatus da sessão para 'paid'
-                final updatedSession = session.copyWith(
-                  transactionId: null,
-                  chargedAmount: amount,
-                  updatedAt: DateTime.now(),
-                );
-
                 // Fechar diálogo primeiro
                 Navigator.of(dialogContext).pop();
 
                 // Usar o parentContext que foi capturado no início da função
                 // Ele tem acesso ao BlocProvider
-                parentContext.read<SessionsBloc>().add(UpdateSession(updatedSession));
+                parentContext.read<SessionsBloc>().add(
+                  RegisterSessionPayment(
+                    sessionId: session.id,
+                    amount: amount,
+                    paymentDate: selectedDate,
+                    receiptNumber: receiptController.text.isNotEmpty ? receiptController.text : null,
+                  ),
+                );
 
                 ScaffoldMessenger.of(parentContext).showSnackBar(
                   SnackBar(

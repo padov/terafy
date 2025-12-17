@@ -7,6 +7,7 @@ import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc.dart';
 import 'package:terafy/features/financial/bloc/financial_bloc_models.dart';
 import 'package:terafy/features/financial/models/payment.dart';
+import 'package:terafy/features/financial/reports/financial_reports_page.dart';
 import 'package:terafy/routes/app_routes.dart';
 
 class FinancialPage extends StatelessWidget {
@@ -31,7 +32,7 @@ class FinancialPage extends StatelessWidget {
             getCurrentTherapistUseCase: container.getCurrentTherapistUseCase,
           )
           ..add(LoadFinancialSummary(startDate: startDate, endDate: endDate))
-          ..add(const LoadPayments());
+          ..add(LoadPayments(startDate: startDate, endDate: endDate));
       },
       child: const _FinancialPageContent(),
     );
@@ -48,11 +49,16 @@ class _FinancialPageContent extends StatefulWidget {
 class _FinancialPageContentState extends State<_FinancialPageContent> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   PaymentStatus? _selectedStatusFilter;
+  DateTime _paymentsPeriodStart = DateTime.now();
+  DateTime _paymentsPeriodEnd = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    final now = DateTime.now();
+    _paymentsPeriodStart = DateTime(now.year, now.month, 1);
+    _paymentsPeriodEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
   }
 
   @override
@@ -88,17 +94,6 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
         ],
       ),
       body: TabBarView(controller: _tabController, children: [_buildDashboardTab(), _buildPaymentsTab()]),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navegar para criar pagamento
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Criar pagamento em desenvolvimento')));
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
-        label: const Text('Novo Pagamento', style: TextStyle(fontWeight: FontWeight.w600)),
-      ),
     );
   }
 
@@ -129,10 +124,19 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
         padding: const EdgeInsets.all(16),
         children: [
           // Período
-          Text(
-            'Período: ${DateFormat('dd/MM/yyyy').format(summary.startDate)} - ${DateFormat('dd/MM/yyyy').format(summary.endDate)}',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
-            textAlign: TextAlign.center,
+          _buildPeriodSelector(
+            startDate: summary.startDate,
+            endDate: summary.endDate,
+            onPrevious: () {
+              final newStartDate = DateTime(summary.startDate.year, summary.startDate.month - 1, 1);
+              final newEndDate = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+              context.read<FinancialBloc>().add(LoadFinancialSummary(startDate: newStartDate, endDate: newEndDate));
+            },
+            onNext: () {
+              final newStartDate = DateTime(summary.startDate.year, summary.startDate.month + 1, 1);
+              final newEndDate = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+              context.read<FinancialBloc>().add(LoadFinancialSummary(startDate: newStartDate, endDate: newEndDate));
+            },
           ),
 
           const SizedBox(height: 16),
@@ -228,7 +232,12 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
           // Botão para ver relatórios
           OutlinedButton.icon(
             onPressed: () {
-              Navigator.of(context).pushNamed(AppRouter.financialReportsRoute);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      BlocProvider.value(value: context.read<FinancialBloc>(), child: const FinancialReportsPage()),
+                ),
+              );
             },
             icon: const Icon(Icons.bar_chart),
             label: const Text('Ver Relatórios Detalhados'),
@@ -236,6 +245,40 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPeriodSelector({
+    required DateTime startDate,
+    required DateTime endDate,
+    required VoidCallback onPrevious,
+    required VoidCallback onNext,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 16),
+          onPressed: onPrevious,
+          color: Colors.grey[600],
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+        const SizedBox(width: 16),
+        Text(
+          'Período: ${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}',
+          style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(width: 16),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, size: 16),
+          onPressed: onNext,
+          color: Colors.grey[600],
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
+      ],
     );
   }
 
@@ -454,31 +497,85 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
         }
 
         if (state is FinancialData && state.payments != null) {
-          if (state.payments!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.payment, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text('Nenhum pagamento encontrado', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                ],
-              ),
-            );
-          }
+          return Column(
+            children: [
+              // Period Selector (Conditional)
+              if (_selectedStatusFilter == null || _selectedStatusFilter == PaymentStatus.paid) ...[
+                const SizedBox(height: 16),
+                _buildPeriodSelector(
+                  startDate: _paymentsPeriodStart,
+                  endDate: _paymentsPeriodEnd,
+                  onPrevious: () {
+                    setState(() {
+                      final newStartDate = DateTime(_paymentsPeriodStart.year, _paymentsPeriodStart.month - 1, 1);
+                      _paymentsPeriodStart = newStartDate;
+                      _paymentsPeriodEnd = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+                    });
+                    context.read<FinancialBloc>().add(
+                      LoadPayments(
+                        statusFilter: _selectedStatusFilter,
+                        startDate: _paymentsPeriodStart,
+                        endDate: _paymentsPeriodEnd,
+                      ),
+                    );
+                  },
+                  onNext: () {
+                    setState(() {
+                      final newStartDate = DateTime(_paymentsPeriodStart.year, _paymentsPeriodStart.month + 1, 1);
+                      _paymentsPeriodStart = newStartDate;
+                      _paymentsPeriodEnd = DateTime(newStartDate.year, newStartDate.month + 1, 0, 23, 59, 59);
+                    });
+                    context.read<FinancialBloc>().add(
+                      LoadPayments(
+                        statusFilter: _selectedStatusFilter,
+                        startDate: _paymentsPeriodStart,
+                        endDate: _paymentsPeriodEnd,
+                      ),
+                    );
+                  },
+                ),
+              ],
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<FinancialBloc>().add(const LoadPayments());
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.payments!.length,
-              itemBuilder: (context, index) {
-                final payment = state.payments![index];
-                return _buildPaymentCard(context, payment);
-              },
-            ),
+              if (state.payments!.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.payment, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text('Nenhum pagamento encontrado', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      // Se filter is pending/overdue, ignore date
+                      final useDateFilter =
+                          _selectedStatusFilter == null || _selectedStatusFilter == PaymentStatus.paid;
+
+                      context.read<FinancialBloc>().add(
+                        LoadPayments(
+                          statusFilter: _selectedStatusFilter,
+                          startDate: useDateFilter ? _paymentsPeriodStart : null,
+                          endDate: useDateFilter ? _paymentsPeriodEnd : null,
+                        ),
+                      );
+                    },
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: state.payments!.length,
+                      itemBuilder: (context, index) {
+                        final payment = state.payments![index];
+                        return _buildPaymentCard(context, payment);
+                      },
+                    ),
+                  ),
+                ),
+            ],
           );
         }
 
@@ -505,37 +602,17 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
 
           if (context.mounted) {
             final bloc = context.read<FinancialBloc>();
-            final state = bloc.state;
 
-            // Reload based on current state parameters to ensure data is fresh
-            if (state is FinancialData) {
-              if (state.summaryStartDate != null && state.summaryEndDate != null) {
-                bloc.add(LoadFinancialSummary(startDate: state.summaryStartDate!, endDate: state.summaryEndDate!));
-              }
-              // For payments, we use the default LoadPayments which uses bloc's internal filtering logic
-              // or passing explicit filters if they were stored.
-              // LoadPayments in FinancialBloc seems to just take new params?
-              // The event constructor has params.
-              // In _onLoadPayments, we used event params.
-              // In the UI, we just called const LoadPayments().
-              // Let's call pure LoadPayments() again, assuming it defaults correctly or reuse state params if we stored them in UI?
-              // Wait, LoadPayments has optional params.
-              // If we pass nothing, what dates/filters does it use?
-              // The original bloc _onLoadPayments took event.statusFilter.
-              // If event.statusFilter is null, it uses none?
-              // FinancialData stores the current statusFilter.
-              bloc.add(
-                LoadPayments(
-                  statusFilter: state.statusFilter,
-                  startDate: state.paymentsStartDate,
-                  endDate: state.paymentsEndDate,
-                  patientIdFilter: state.patientIdFilter,
-                ),
-              );
-            } else {
-              // Fallback if not FinancialData (unlikely if we just tapped a card)
-              bloc.add(const LoadPayments());
-            }
+            // Se filter is pending/overdue, ignore date
+            final useDateFilter = _selectedStatusFilter == null || _selectedStatusFilter == PaymentStatus.paid;
+
+            bloc.add(
+              LoadPayments(
+                statusFilter: _selectedStatusFilter,
+                startDate: useDateFilter ? _paymentsPeriodStart : null,
+                endDate: useDateFilter ? _paymentsPeriodEnd : null,
+              ),
+            );
           }
         },
         borderRadius: BorderRadius.circular(12),
@@ -628,63 +705,61 @@ class _FinancialPageContentState extends State<_FinancialPageContent> with Singl
   void _showFilterDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Filtrar Pagamentos'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Todos'),
-              leading: Radio<PaymentStatus?>(
-                value: null,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(LoadPayments(statusFilter: value));
-                },
+      builder: (dialogContext) {
+        void applyFilter(PaymentStatus? value) {
+          setState(() => _selectedStatusFilter = value);
+          Navigator.of(dialogContext).pop();
+          if (value == null || value == PaymentStatus.paid) {
+            context.read<FinancialBloc>().add(
+              LoadPayments(statusFilter: value, startDate: _paymentsPeriodStart, endDate: _paymentsPeriodEnd),
+            );
+          } else {
+            context.read<FinancialBloc>().add(LoadPayments(statusFilter: value));
+          }
+        }
+
+        return AlertDialog(
+          title: const Text('Filtrar Pagamentos'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Todos'),
+                onTap: () => applyFilter(null),
+                leading: Radio<PaymentStatus?>(value: null, groupValue: _selectedStatusFilter, onChanged: applyFilter),
               ),
-            ),
-            ListTile(
-              title: const Text('Pagos'),
-              leading: Radio<PaymentStatus?>(
-                value: PaymentStatus.paid,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(LoadPayments(statusFilter: value));
-                },
+              ListTile(
+                title: const Text('Pagos'),
+                onTap: () => applyFilter(PaymentStatus.paid),
+                leading: Radio<PaymentStatus?>(
+                  value: PaymentStatus.paid,
+                  groupValue: _selectedStatusFilter,
+                  onChanged: applyFilter,
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Pendentes'),
-              leading: Radio<PaymentStatus?>(
-                value: PaymentStatus.pending,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(LoadPayments(statusFilter: value));
-                },
+              ListTile(
+                title: const Text('Pendentes'),
+                onTap: () => applyFilter(PaymentStatus.pending),
+                leading: Radio<PaymentStatus?>(
+                  value: PaymentStatus.pending,
+                  groupValue: _selectedStatusFilter,
+                  onChanged: applyFilter,
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Atrasados'),
-              leading: Radio<PaymentStatus?>(
-                value: PaymentStatus.overdue,
-                groupValue: _selectedStatusFilter,
-                onChanged: (value) {
-                  setState(() => _selectedStatusFilter = value);
-                  Navigator.of(dialogContext).pop();
-                  context.read<FinancialBloc>().add(LoadPayments(statusFilter: value));
-                },
+              ListTile(
+                title: const Text('Atrasados'),
+                onTap: () => applyFilter(PaymentStatus.overdue),
+                leading: Radio<PaymentStatus?>(
+                  value: PaymentStatus.overdue,
+                  groupValue: _selectedStatusFilter,
+                  onChanged: applyFilter,
+                ),
               ),
-            ),
-          ],
-        ),
-        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Fechar'))],
-      ),
+            ],
+          ),
+          actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Fechar'))],
+        );
+      },
     );
   }
 

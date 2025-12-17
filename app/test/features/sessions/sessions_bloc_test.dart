@@ -5,10 +5,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:terafy/core/domain/usecases/schedule/get_appointment_usecase.dart';
 import 'package:terafy/core/domain/usecases/schedule/update_appointment_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/create_session_usecase.dart';
-import 'package:terafy/core/domain/usecases/session/delete_session_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/get_session_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/get_sessions_usecase.dart';
 import 'package:terafy/core/domain/usecases/session/update_session_usecase.dart';
+import 'package:terafy/core/domain/usecases/financial/get_transaction_usecase.dart';
+import 'package:terafy/core/domain/usecases/financial/create_transaction_usecase.dart';
 import 'package:terafy/features/sessions/bloc/sessions_bloc.dart';
 import 'package:terafy/features/sessions/bloc/sessions_bloc_models.dart';
 import 'package:terafy/features/sessions/models/session.dart' as ui;
@@ -21,39 +22,57 @@ class _MockCreateSessionUseCase extends Mock implements CreateSessionUseCase {}
 
 class _MockUpdateSessionUseCase extends Mock implements UpdateSessionUseCase {}
 
-class _MockDeleteSessionUseCase extends Mock implements DeleteSessionUseCase {}
-
 class _MockGetAppointmentUseCase extends Mock implements GetAppointmentUseCase {}
 
 class _MockUpdateAppointmentUseCase extends Mock implements UpdateAppointmentUseCase {}
 
+class MockGetTransactionUseCase extends Mock implements GetTransactionUseCase {}
+
+class MockCreateTransactionUseCase extends Mock implements CreateTransactionUseCase {}
+
 void main() {
   group('SessionsBloc', () {
+    late SessionsBloc bloc;
     late _MockGetSessionsUseCase getSessionsUseCase;
     late _MockGetSessionUseCase getSessionUseCase;
     late _MockCreateSessionUseCase createSessionUseCase;
     late _MockUpdateSessionUseCase updateSessionUseCase;
-    late _MockDeleteSessionUseCase deleteSessionUseCase;
     late _MockGetAppointmentUseCase getAppointmentUseCase;
     late _MockUpdateAppointmentUseCase updateAppointmentUseCase;
-    late SessionsBloc bloc;
+    late MockGetTransactionUseCase mockGetTransactionUseCase;
+    late MockCreateTransactionUseCase mockCreateTransactionUseCase;
 
     setUp(() {
+      registerFallbackValue(
+        common.Session(
+          id: 0,
+          patientId: 0,
+          therapistId: 0,
+          scheduledStartTime: DateTime.now(),
+          durationMinutes: 0,
+          sessionNumber: 0,
+          type: '',
+          modality: '',
+          status: '',
+        ),
+      );
       getSessionsUseCase = _MockGetSessionsUseCase();
       getSessionUseCase = _MockGetSessionUseCase();
       createSessionUseCase = _MockCreateSessionUseCase();
       updateSessionUseCase = _MockUpdateSessionUseCase();
-      deleteSessionUseCase = _MockDeleteSessionUseCase();
       getAppointmentUseCase = _MockGetAppointmentUseCase();
       updateAppointmentUseCase = _MockUpdateAppointmentUseCase();
+      mockGetTransactionUseCase = MockGetTransactionUseCase();
+      mockCreateTransactionUseCase = MockCreateTransactionUseCase();
       bloc = SessionsBloc(
         getSessionsUseCase: getSessionsUseCase,
         getSessionUseCase: getSessionUseCase,
         createSessionUseCase: createSessionUseCase,
         updateSessionUseCase: updateSessionUseCase,
-        deleteSessionUseCase: deleteSessionUseCase,
         getAppointmentUseCase: getAppointmentUseCase,
         updateAppointmentUseCase: updateAppointmentUseCase,
+        getTransactionUseCase: mockGetTransactionUseCase,
+        createTransactionUseCase: mockCreateTransactionUseCase,
       );
     });
 
