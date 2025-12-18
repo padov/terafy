@@ -79,6 +79,14 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
+      builder: (context, child) {
+        if (kIsWeb && child != null) {
+          return Center(
+            child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 500), child: child),
+          );
+        }
+        return child ?? const SizedBox.shrink();
+      },
     );
   }
 }

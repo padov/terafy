@@ -12,6 +12,7 @@ import 'package:terafy/core/data/repositories/therapist_repository_impl.dart';
 import 'package:terafy/core/data/repositories/financial_repository_impl.dart';
 import 'package:terafy/core/data/repositories/anamnesis_repository_impl.dart';
 import 'package:terafy/core/data/repositories/anamnesis_template_repository_impl.dart';
+import 'package:terafy/core/data/repositories/ai_analysis_repository_impl.dart';
 import 'package:terafy/core/domain/repositories/auth_repository.dart';
 import 'package:terafy/core/domain/repositories/home_repository.dart';
 import 'package:terafy/core/domain/repositories/patient_repository.dart';
@@ -21,6 +22,7 @@ import 'package:terafy/core/domain/repositories/therapist_repository.dart';
 import 'package:terafy/core/domain/repositories/financial_repository.dart';
 import 'package:terafy/core/domain/repositories/anamnesis_repository.dart';
 import 'package:terafy/core/domain/repositories/anamnesis_template_repository.dart';
+import 'package:terafy/core/domain/repositories/ai_analysis_repository.dart';
 import 'package:terafy/core/domain/usecases/auth/get_current_user_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/login_usecase.dart';
 import 'package:terafy/core/domain/usecases/auth/logout_usecase.dart';
@@ -81,6 +83,7 @@ class DependencyContainer {
   late final HomeRepository homeRepository;
   late final AnamnesisRepository anamnesisRepository;
   late final AnamnesisTemplateRepository anamnesisTemplateRepository;
+  late final AiAnalysisRepository aiAnalysisRepository;
   late final LoginUseCase loginUseCase;
   late final RegisterUserUseCase registerUserUseCase;
   late final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -203,6 +206,7 @@ class DependencyContainer {
     homeRepository = HomeRepositoryImpl(httpClient: httpClient);
     anamnesisRepository = AnamnesisRepositoryImpl(httpClient: httpClient);
     anamnesisTemplateRepository = AnamnesisTemplateRepositoryImpl(httpClient: httpClient);
+    aiAnalysisRepository = AiAnalysisRepositoryImpl(httpClient: httpClient);
 
     // Use Cases
     loginUseCase = LoginUseCase(authRepository);

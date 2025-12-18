@@ -29,6 +29,14 @@ class EnvConfig {
     _loaded = true;
   }
 
+  /// Obtém a instância do DotEnv
+  static DotEnv get env {
+    if (!_loaded || _env == null) {
+      throw StateError('EnvConfig não foi carregado. Chame EnvConfig.load() primeiro.');
+    }
+    return _env!;
+  }
+
   /// Obtém uma variável de ambiente
   /// Primeiro tenta do arquivo .env, depois das variáveis de ambiente do sistema
   static String? get(String key) {

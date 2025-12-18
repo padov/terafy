@@ -22,6 +22,8 @@ class Therapist {
   final String status; // 'active', 'suspended', 'canceled'
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? experienceTime;
+  final Map<String, dynamic>? aiConfig;
 
   Therapist({
     this.id,
@@ -45,6 +47,8 @@ class Therapist {
     this.status = 'active',
     this.createdAt,
     this.updatedAt,
+    this.experienceTime,
+    this.aiConfig,
   });
 
   Map<String, dynamic> toJson() {
@@ -70,6 +74,8 @@ class Therapist {
       'status': status,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      'experience_time': experienceTime,
+      'ai_config': aiConfig,
     };
   }
 
@@ -99,6 +105,58 @@ class Therapist {
     }
   }
 
+  Therapist copyWith({
+    int? id,
+    String? name,
+    String? nickname,
+    String? document,
+    String? email,
+    String? phone,
+    DateTime? birthDate,
+    String? profilePictureUrl,
+    String? professionalRegistryType,
+    String? professionalRegistryNumber,
+    List<String>? specialties,
+    String? education,
+    String? professionalPresentation,
+    String? officeAddress,
+    Map<String, dynamic>? calendarSettings,
+    Map<String, dynamic>? notificationPreferences,
+    Map<String, dynamic>? bankDetails,
+    double? defaultSessionPrice,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? experienceTime,
+    Map<String, dynamic>? aiConfig,
+  }) {
+    return Therapist(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      nickname: nickname ?? this.nickname,
+      document: document ?? this.document,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      birthDate: birthDate ?? this.birthDate,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
+      professionalRegistryType: professionalRegistryType ?? this.professionalRegistryType,
+      professionalRegistryNumber: professionalRegistryNumber ?? this.professionalRegistryNumber,
+      specialties: specialties ?? this.specialties,
+      education: education ?? this.education,
+      professionalPresentation: professionalPresentation ?? this.professionalPresentation,
+      officeAddress: officeAddress ?? this.officeAddress,
+      calendarSettings: calendarSettings ?? this.calendarSettings,
+      notificationPreferences: notificationPreferences ?? this.notificationPreferences,
+      bankDetails: bankDetails ?? this.bankDetails,
+      defaultSessionPrice: defaultSessionPrice ?? this.defaultSessionPrice,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      experienceTime: experienceTime ?? this.experienceTime,
+      aiConfig: aiConfig ?? this.aiConfig,
+    );
+  }
+
   factory Therapist.fromMap(Map<String, dynamic> map) {
     return Therapist(
       id: map['id'] as int?,
@@ -122,6 +180,8 @@ class Therapist {
       status: _parseEnumField(map['status'], defaultValue: 'active'),
       createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'].toString()) : null,
       updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'].toString()) : null,
+      experienceTime: map['experience_time'] as String?,
+      aiConfig: _parseJsonField(map['ai_config']),
     );
   }
 

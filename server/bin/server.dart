@@ -31,6 +31,9 @@ import 'package:server/features/user/user.repository.dart';
 import 'package:server/features/anamnesis/anamnesis.controller.dart';
 import 'package:server/features/anamnesis/anamnesis.handler.dart';
 import 'package:server/features/anamnesis/anamnesis.repository.dart';
+import 'package:server/features/ai/handlers/ai_handler.dart';
+import 'package:server/features/ai/ai_analysis_repository.dart';
+import 'package:server/core/services/ai/ai_factory.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
 import 'package:path/path.dart' as p;
@@ -189,6 +192,9 @@ void main() async {
   final refreshTokenRepository = RefreshTokenRepository(dbConnection);
   final blacklistRepository = TokenBlacklistRepository(dbConnection);
   final authHandler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
+  final aiService = AIFactory.create(EnvConfig.env);
+  final aiAnalysisRepository = AIAnalysisRepository(dbConnection);
+  final aiHandler = AiHandler(aiService, aiAnalysisRepository);
 
   // --- Configuração do Roteador Principal ---
   final appRouter = Router()
@@ -201,7 +207,8 @@ void main() async {
     ..mount('/sessions', sessionHandler.router.call) // Monta as rotas de sessões
     ..mount('/financial', financialHandler.router.call) // Monta as rotas financeiras
     ..mount('/home', homeHandler.router.call) // Monta as rotas da home
-    ..mount('/anamnesis', anamnesisHandler.router.call); // Monta as rotas de anamnese
+    ..mount('/anamnesis', anamnesisHandler.router.call) // Monta as rotas de anamnese
+    ..mount('/ai', aiHandler.router.call); // Monta as rotas de IA
 
   // --- Criação do Pipeline e Servidor ---
   final handler = Pipeline()
