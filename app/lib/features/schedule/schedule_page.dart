@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:terafy/common/app_colors.dart';
+import 'package:terafy/common/widgets/responsive_view.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/appointments/bloc/appointment_bloc.dart';
 import 'package:terafy/features/appointments/bloc/appointment_bloc_models.dart';
@@ -39,7 +40,12 @@ class SchedulePage extends StatelessWidget {
           )..add(const LoadScheduleSettings()),
         ),
       ],
-      child: const _SchedulePageContent(),
+      child: ResponsiveView(
+        mobile: const _SchedulePageContent(),
+        desktop: const Scaffold(
+          body: Center(child: Text("Desktop View (Example)", style: TextStyle(fontSize: 30))),
+        ),
+      ),
     );
   }
 

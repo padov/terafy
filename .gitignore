@@ -4,3 +4,4 @@ coverage-reports/
 *.lcov.info
 *.lcov
 .DS_Store.scripts/
+.DS_Store

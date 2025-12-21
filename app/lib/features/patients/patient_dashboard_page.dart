@@ -12,6 +12,10 @@ import 'package:terafy/features/patients/bloc/patients_bloc_models.dart';
 import 'package:terafy/features/patients/models/patient.dart';
 import 'package:terafy/features/patients/registration/patient_registration_page.dart';
 import 'package:terafy/routes/app_routes.dart';
+import 'pages/ai_analysis_config_page.dart';
+import 'pages/ai_analysis_detail_page.dart';
+import 'pages/ai_analysis_history_page.dart';
+import 'models/ai_analysis.dart';
 
 class PatientDashboardPage extends StatelessWidget {
   final String patientId;
@@ -143,6 +147,7 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
                       _buildSummaryCards(patient),
                       _buildSessionsHistoryCard(context, patient),
                       _buildAIButton(context, patient, isAnalyzing),
+                      _buildAIAnalysisHistoryCard(context, patient),
                       _buildQuickSummaryCard(context, patient),
                       _buildSectionCard(
                         context,
@@ -591,8 +596,18 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
         child: InkWell(
           onTap: isAnalyzing
               ? null
-              : () {
-                  context.read<PatientsBloc>().add(RequestAIAnalysis(patient.id));
+              : () async {
+                  final shouldRefresh = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AiAnalysisConfigPage(patient: patient)),
+                  );
+
+                  // Refresh dashboard if analysis was created
+                  if (shouldRefresh == true && mounted) {
+                    setState(() {
+                      // Trigger rebuild to refresh FutureBuilder
+                    });
+                  }
                 },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
@@ -638,6 +653,220 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
         ),
       ),
     );
+  }
+
+  Widget _buildAIAnalysisHistoryCard(BuildContext context, Patient patient) {
+    final patientIdInt = int.tryParse(patient.id);
+    if (patientIdInt == null) return SizedBox.shrink();
+
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: DependencyContainer().aiAnalysisRepository.fetchAnalyses(patientIdInt),
+      builder: (context, snapshot) {
+        // Loading state - show nothing while loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox.shrink();
+        }
+
+        // Error state or no data - hide the card
+        if (snapshot.hasError || snapshot.data == null || snapshot.data!.isEmpty) {
+          return SizedBox.shrink();
+        }
+
+        // Parse analyses
+        final analyses = snapshot.data!.map((data) => AiAnalysis.fromJson(data)).toList();
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.history, color: AppColors.primary, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Histórico de Análises IA',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AiAnalysisHistoryPage(patient: patient)),
+                        );
+                      },
+                      child: Text('Ver todas'),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: Colors.grey[200]),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: analyses.length > 3 ? 3 : analyses.length,
+                separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[100]),
+                itemBuilder: (context, index) {
+                  // Filter to show only completed and non-archived analyses
+                  final completedAnalyses = analyses.where((a) => a.status == 'completed' && !a.archived).toList();
+                  if (index >= completedAnalyses.length) return SizedBox.shrink();
+
+                  final analysis = completedAnalyses[index];
+                  return _buildAnalysisListItem(context, analysis);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnalysisListItem(BuildContext context, AiAnalysis analysis) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => AiAnalysisDetailPage(analysis: analysis)));
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _getAnalysisTypeColor(analysis.analysisType).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _getAnalysisTypeIcon(analysis.analysisType),
+                  color: _getAnalysisTypeColor(analysis.analysisType),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      analysis.title ?? analysis.typeLabel,
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 12, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatRelativeTime(analysis.createdAt),
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(analysis.status).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            analysis.statusLabel,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: _getStatusColor(analysis.status),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.grey[400]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getAnalysisTypeColor(String type) {
+    switch (type) {
+      case 'session':
+        return Colors.blue;
+      case 'overview':
+        return Colors.purple;
+      case 'evolution':
+        return Colors.green;
+      case 'situation':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getAnalysisTypeIcon(String type) {
+    switch (type) {
+      case 'session':
+        return Icons.event_note;
+      case 'overview':
+        return Icons.dashboard;
+      case 'evolution':
+        return Icons.trending_up;
+      case 'situation':
+        return Icons.warning_amber;
+      default:
+        return Icons.analytics;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return Colors.green;
+      case 'processing':
+        return Colors.orange;
+      case 'error':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 60) {
+      return 'Há ${difference.inMinutes} min';
+    } else if (difference.inHours < 24) {
+      return 'Há ${difference.inHours}h';
+    } else if (difference.inDays < 7) {
+      return 'Há ${difference.inDays}d';
+    } else {
+      return DateFormat('dd/MM').format(dateTime);
+    }
   }
 
   Widget _buildSummaryCards(Patient patient) {

@@ -95,7 +95,7 @@ class _WeekViewState extends State<WeekView> {
 
   double _calculateSlotHeight(int dayCount) {
     if (dayCount <= 0) return _slotHeight;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = (MediaQuery.of(context).size.width < 500) ? MediaQuery.of(context).size.width : 500;
     final availableWidth = math.max(screenWidth - sizeHourHeader, 120);
     return availableWidth / dayCount;
   }

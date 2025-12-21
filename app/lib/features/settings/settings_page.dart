@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/features/schedule/schedule_settings_page.dart';
+import 'package:terafy/features/ai_config/pages/ai_config_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -29,6 +30,15 @@ class SettingsPage extends StatelessWidget {
                 subtitle: 'Defina seus horários de atendimento',
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ScheduleSettingsPage()));
+                },
+              ),
+              _buildSettingsTile(
+                context,
+                icon: Icons.psychology,
+                title: 'Configuração de IA',
+                subtitle: 'Personalize seu perfil terapêutico',
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AiConfigPage()));
                 },
               ),
             ],

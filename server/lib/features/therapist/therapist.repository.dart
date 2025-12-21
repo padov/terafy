@@ -36,6 +36,7 @@ class TherapistRepository {
           calendar_settings, notification_preferences, bank_details,
           default_session_price,
           status::text as status,
+          experience_time, ai_config,
           created_at, updated_at
         FROM therapists 
         ORDER BY created_at DESC;
@@ -85,6 +86,7 @@ class TherapistRepository {
           calendar_settings, notification_preferences, bank_details,
           default_session_price,
           status::text as status,
+          experience_time, ai_config,
           created_at, updated_at
         FROM therapists 
         WHERE id = @id;
@@ -121,12 +123,14 @@ class TherapistRepository {
           name, nickname, document, email, phone, birth_date, profile_picture_url,
           professional_registry_type, professional_registry_number,
           specialties, education, professional_presentation, office_address,
-          calendar_settings, notification_preferences, bank_details, default_session_price, status
+          calendar_settings, notification_preferences, bank_details, default_session_price, status,
+          experience_time, ai_config
         ) VALUES (
           @name, @nickname, @document, @email, @phone, @birth_date, @profile_picture_url,
           @professional_registry_type, @professional_registry_number,
           @specialties, @education, @professional_presentation, @office_address,
-          @calendar_settings, @notification_preferences, @bank_details, @default_session_price, @status
+          @calendar_settings, @notification_preferences, @bank_details, @default_session_price, @status,
+          @experience_time, @ai_config
         ) RETURNING 
           id, name, nickname, document, email, phone, birth_date, profile_picture_url,
           professional_registry_type, professional_registry_number,
@@ -134,6 +138,7 @@ class TherapistRepository {
           calendar_settings, notification_preferences, bank_details,
           default_session_price,
           status::text as status,
+          experience_time, ai_config,
           created_at, updated_at;
       '''),
         parameters: {
@@ -157,6 +162,8 @@ class TherapistRepository {
           'bank_details': therapist.bankDetails != null ? jsonEncode(therapist.bankDetails) : null,
           'default_session_price': therapist.defaultSessionPrice,
           'status': therapist.status,
+          'experience_time': therapist.experienceTime,
+          'ai_config': therapist.aiConfig != null ? jsonEncode(therapist.aiConfig) : null,
         },
       );
 
@@ -217,6 +224,8 @@ class TherapistRepository {
           bank_details = @bank_details,
           default_session_price = @default_session_price,
           status = @status,
+          experience_time = @experience_time,
+          ai_config = @ai_config,
           updated_at = NOW()
         WHERE id = @id
         RETURNING 
@@ -226,6 +235,7 @@ class TherapistRepository {
           calendar_settings, notification_preferences, bank_details,
           default_session_price,
           status::text as status,
+          experience_time, ai_config,
           created_at, updated_at;
       '''),
         parameters: {
@@ -250,6 +260,8 @@ class TherapistRepository {
           'bank_details': therapist.bankDetails != null ? jsonEncode(therapist.bankDetails) : null,
           'default_session_price': therapist.defaultSessionPrice,
           'status': therapist.status,
+          'experience_time': therapist.experienceTime,
+          'ai_config': therapist.aiConfig != null ? jsonEncode(therapist.aiConfig) : null,
         },
       );
 
@@ -302,6 +314,7 @@ class TherapistRepository {
           calendar_settings, notification_preferences, bank_details,
           default_session_price,
           status::text as status,
+          experience_time, ai_config,
           created_at, updated_at;
       '''),
         parameters: {'id': therapistId, 'user_id': userId},
@@ -329,6 +342,7 @@ class TherapistRepository {
           t.calendar_settings, t.notification_preferences, t.bank_details,
           t.default_session_price,
           t.status::text as status,
+          t.experience_time, t.ai_config,
           t.created_at, t.updated_at,
           ps.plan_id,
           p.name as plan_name,
