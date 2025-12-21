@@ -62,54 +62,82 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            return Stepper(
-              type: StepperType.vertical,
-              currentStep: _currentStep,
-              onStepContinue: _onStepContinue,
-              onStepCancel: _onStepCancel,
-              controlsBuilder: (context, details) {
-                final isSaving = state.status == AiConfigStatus.saving;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 24),
+            return Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                  ),
                   child: Row(
                     children: [
+                      Icon(Icons.info_outline, color: AppColors.primary, size: 24),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: isSaving ? null : details.onStepContinue,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : Text(_currentStep == 4 ? 'Concluir' : 'Próximo'),
+                        child: Text(
+                          'Os dados fornecidos neste formulário serão utilizados pela IA para personalizar as análises e sugestões de acordo com seu perfil profissional e abordagem terapêutica.',
+                          style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
                         ),
                       ),
-                      if (_currentStep > 0) ...[
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: isSaving ? null : details.onStepCancel,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: const BorderSide(color: Colors.grey),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text('Voltar', style: TextStyle(color: Colors.grey)),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                );
-              },
-              steps: [_buildStep1(), _buildStep2(), _buildStep3(), _buildStep4(), _buildStep5()],
+                ),
+                Expanded(
+                  child: Stepper(
+                    key: ValueKey(_currentStep),
+                    type: StepperType.vertical,
+                    currentStep: _currentStep,
+                    onStepContinue: _onStepContinue,
+                    onStepCancel: _onStepCancel,
+                    controlsBuilder: (context, details) {
+                      final isSaving = state.status == AiConfigStatus.saving;
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: isSaving ? null : details.onStepContinue,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: isSaving
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      )
+                                    : Text(_currentStep == 4 ? 'Concluir' : 'Próximo'),
+                              ),
+                            ),
+                            if (_currentStep > 0) ...[
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: isSaving ? null : details.onStepCancel,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    side: const BorderSide(color: Colors.grey),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: const Text('Voltar', style: TextStyle(color: Colors.grey)),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                    steps: [_buildStep1(), _buildStep2(), _buildStep3(), _buildStep4(), _buildStep5()],
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -216,11 +244,13 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           _buildSectionHeader('Crenças sobre Saúde Mental'),
           _buildTextArea(
             label: 'Natureza do sofrimento psíquico',
+            hint: 'Como você entende o sofrimento humano?',
             value: _profile.sufferingNature,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(sufferingNature: v)),
           ),
           _buildTextArea(
             label: 'Potencial de mudança',
+            hint: 'Até onde as pessoas podem mudar?',
             value: _profile.changePotential,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(changePotential: v)),
           ),
@@ -232,6 +262,7 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           ),
           _buildTextArea(
             label: 'Visão sobre "Cura"',
+            hint: 'Como você define a cura?',
             value: _profile.cureView,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(cureView: v)),
           ),
@@ -267,6 +298,7 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           ),
           _buildTextArea(
             label: 'Áreas de maior interesse clínico',
+            hint: 'Quais temas/queixas você tem mais experiência ou interesse?',
             value: _profile.interestAreas,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(interestAreas: v)),
           ),
@@ -280,6 +312,7 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           ),
           _buildTextArea(
             label: 'Técnicas Frequentes',
+            hint: 'Quais técnicas você usa com mais frequência?',
             value: _profile.frequentTechniques,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(frequentTechniques: v)),
           ),
@@ -291,6 +324,7 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           ),
           _buildTextArea(
             label: 'Duração Típica',
+            hint: 'Qual sua expectativa de duração?',
             value: _profile.typicalDuration,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(typicalDuration: v)),
           ),
@@ -329,11 +363,13 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           ),
           _buildTextArea(
             label: 'Elementos na Avaliação',
+            hint: 'O que você observa/investiga prioritariamente?',
             value: _profile.evaluationElements,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(evaluationElements: v)),
           ),
           _buildTextArea(
             label: 'Indicadores de Progresso',
+            hint: 'Como você sabe que a terapia está funcionando?',
             value: _profile.progressIndicators,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(progressIndicators: v)),
           ),
@@ -341,21 +377,25 @@ class _AiConfigPageContentState extends State<_AiConfigPageContent> {
           _buildSectionHeader('Manejo de Situações'),
           _buildTextArea(
             label: 'Resistência Terapêutica',
+            hint: 'Como você lida com resistência terapêutica?',
             value: _profile.resistanceHandling,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(resistanceHandling: v)),
           ),
           _buildTextArea(
             label: 'Crises e Emergências',
+            hint: 'Como você lida com crises e emergências?',
             value: _profile.crisisHandling,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(crisisHandling: v)),
           ),
           _buildTextArea(
             label: 'Estagnação no Processo',
+            hint: 'Como você lida com estagnação no processo?',
             value: _profile.stagnationHandling,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(stagnationHandling: v)),
           ),
           _buildTextArea(
             label: 'Término Terapêutico',
+            hint: 'Como você planeja o término do processo terapêutico?',
             value: _profile.terminationHandling,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(terminationHandling: v)),
           ),

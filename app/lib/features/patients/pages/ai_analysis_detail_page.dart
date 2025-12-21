@@ -42,8 +42,8 @@ class _AiAnalysisDetailPageState extends State<AiAnalysisDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildMetadataCard(),
-            SizedBox(height: 20),
-            _buildPromptCard(context),
+            // SizedBox(height: 20),
+            // _buildPromptCard(context),
             SizedBox(height: 20),
             _buildResponseCard(context),
             SizedBox(height: 30),

@@ -104,79 +104,109 @@ class _AiAnalysisConfigPageState extends State<AiAnalysisConfigPage> {
       return;
     }
 
-    // Build prompt
+    // Build prompt in Markdown format
     final sb = StringBuffer();
+    sb.writeln('# Análise Terapêutica - Solicitação de IA');
+    sb.writeln('- não finalize a analise com perguntas de próximos passos ou sugestões');
+    sb.writeln();
 
     // 0. SYSTEM PROMPT
     if (_therapist?.aiConfig != null && _therapist!.aiConfig!.isNotEmpty) {
       try {
         final profile = TherapistProfileModel.fromJson(_therapist!.aiConfig!);
-        sb.writeln('=== CONFIGURAÇÃO DO TERAPEUTA (SYSTEM PROMPT) ===');
+        sb.writeln('## 📋 Configuração do Terapeuta (System Prompt)');
+        sb.writeln();
         sb.writeln(_formatTherapistProfile(profile));
-        sb.writeln('================================================');
+        sb.writeln();
+        sb.writeln('---');
         sb.writeln();
       } catch (e) {
-        sb.writeln('[Erro ao processar configuração do terapeuta: $e]');
+        sb.writeln('> ⚠️ **Aviso**: Erro ao processar configuração do terapeuta: $e');
+        sb.writeln();
       }
     } else {
-      sb.writeln('[Aviso: Nenhuma configuração de IA encontrada para este terapeuta.]');
+      sb.writeln('> ⚠️ **Aviso**: Nenhuma configuração de IA encontrada para este terapeuta.');
       sb.writeln();
     }
 
     // 1. ANAMNESE
-    sb.writeln('ANAMNESE (Contexto permanente para todas as análises):');
+    sb.writeln('## 📝 Anamnese');
+    sb.writeln();
+    sb.writeln('*Contexto permanente do paciente para todas as análises:*');
+    sb.writeln();
     sb.writeln(_formatAnamnesis(_anamnesisData ?? {}));
+    sb.writeln();
     sb.writeln('---');
     sb.writeln();
 
     // 2. DADOS ESPECÍFICOS
     switch (_selectedType) {
       case AiAnalysisType.session:
-        sb.writeln('DADOS DA SESSÃO ESPECÍFICA:');
+        sb.writeln('## 🎯 Dados da Sessão Específica');
+        sb.writeln();
         sb.writeln(_formatSession(_selectedSession!));
         if (_questionController.text.isNotEmpty) {
-          sb.writeln('Questão específica para análise: ${_questionController.text}');
+          sb.writeln();
+          sb.writeln('### 💭 Questão Específica para Análise');
+          sb.writeln();
+          sb.writeln('> ${_questionController.text}');
         }
         break;
 
       case AiAnalysisType.overview:
-        sb.writeln('HISTÓRICO TERAPÊUTICO (Visão Geral):');
-        sb.writeln('Total de sessões: ${widget.patient.totalSessions}');
+        sb.writeln('## 📊 Histórico Terapêutico (Visão Geral)');
+        sb.writeln();
+        sb.writeln('**Total de sessões:** ${widget.patient.totalSessions}');
+        sb.writeln();
         sb.writeln(
-          'Início do tratamento: ${widget.patient.treatmentStartDate != null ? DateFormat("dd/MM/yyyy").format(widget.patient.treatmentStartDate!) : "-"}',
+          '**Início do tratamento:** ${widget.patient.treatmentStartDate != null ? DateFormat("dd/MM/yyyy").format(widget.patient.treatmentStartDate!) : "-"}',
         );
+        sb.writeln();
         final recentSessions = _sessions.take(5).toList();
-        sb.writeln('Resumo das últimas ${recentSessions.length} sessões:');
+        sb.writeln('### Resumo das últimas ${recentSessions.length} sessões:');
+        sb.writeln();
         for (var s in recentSessions) {
           sb.writeln(
-            '- ${DateFormat("dd/MM").format(s.scheduledStartTime)}: ${s.sessionNotes ?? "Sem notas"} (Humor: ${s.patientMood ?? "-"})',
+            '- **${DateFormat("dd/MM").format(s.scheduledStartTime)}**: ${s.sessionNotes ?? "Sem notas"} *(Humor: ${s.patientMood ?? "-"})*',
           );
         }
         if (_questionController.text.isNotEmpty) {
-          sb.writeln('Dúvida/questão específica do terapeuta: ${_questionController.text}');
+          sb.writeln();
+          sb.writeln('### 💭 Dúvida/Questão Específica do Terapeuta');
+          sb.writeln();
+          sb.writeln('> ${_questionController.text}');
         }
         break;
 
       case AiAnalysisType.evolution:
-        sb.writeln('EVOLUÇÃO TEMPORAL:');
+        sb.writeln('## 📈 Evolução Temporal');
+        sb.writeln();
         final sortedSessions = List<Session>.from(_sessions)
           ..sort((a, b) => a.scheduledStartTime.compareTo(b.scheduledStartTime));
         for (var s in sortedSessions) {
-          sb.writeln('- Sessão ${s.sessionNumber} (${DateFormat("dd/MM/yyyy").format(s.scheduledStartTime)}):');
-          sb.writeln('  Notas: ${s.sessionNotes}');
-          sb.writeln('  Humor: ${s.patientMood}');
-          sb.writeln('  Evolução observada: ${s.progressObserved ?? "-"}');
+          sb.writeln('### Sessão ${s.sessionNumber} - ${DateFormat("dd/MM/yyyy").format(s.scheduledStartTime)}');
+          sb.writeln();
+          sb.writeln('- **Notas:** ${s.sessionNotes}');
+          sb.writeln('- **Humor:** ${s.patientMood}');
+          sb.writeln('- **Evolução observada:** ${s.progressObserved ?? "-"}');
+          sb.writeln();
         }
         if (_questionController.text.isNotEmpty) {
-          sb.writeln('Questão específica do terapeuta: ${_questionController.text}');
+          sb.writeln('### 💭 Questão Específica do Terapeuta');
+          sb.writeln();
+          sb.writeln('> ${_questionController.text}');
         }
         break;
 
       case AiAnalysisType.situation:
-        sb.writeln('SITUAÇÃO ESPECÍFICA:');
+        sb.writeln('## ⚠️ Situação Específica');
+        sb.writeln();
         sb.writeln(_situationController.text);
         if (_questionController.text.isNotEmpty) {
-          sb.writeln('Pergunta específica: ${_questionController.text}');
+          sb.writeln();
+          sb.writeln('### 💭 Pergunta Específica');
+          sb.writeln();
+          sb.writeln('> ${_questionController.text}');
         }
         break;
     }
@@ -262,56 +292,64 @@ class _AiAnalysisConfigPageState extends State<AiAnalysisConfigPage> {
   }
 
   String _formatAnamnesis(Map<String, dynamic> data) {
-    if (data.isEmpty) return "Dados de anamnese não disponíveis.";
+    if (data.isEmpty) return "*Dados de anamnese não disponíveis.*";
     final buffer = StringBuffer();
-    data.forEach((key, value) => buffer.writeln('- $key: $value'));
+    data.forEach((key, value) => buffer.writeln('- **$key:** $value'));
     return buffer.toString();
   }
 
   String _formatSession(Session session) {
     return '''
-- Data: ${DateFormat("dd/MM/yyyy HH:mm").format(session.scheduledStartTime)}
-- Número: ${session.sessionNumber}
-- Notas: ${session.sessionNotes ?? "N/A"}
-- Humor: ${session.patientMood ?? "N/A"}
-- Comportamento: ${session.observedBehavior ?? "N/A"}
-- Intervenções: ${session.interventionsUsed.join(", ")}
-- Próximos Passos: ${session.nextSteps ?? "N/A"}
+- **Data:** ${DateFormat("dd/MM/yyyy HH:mm").format(session.scheduledStartTime)}
+- **Número da Sessão:** ${session.sessionNumber}
+- **Notas da Sessão:** ${session.sessionNotes ?? "N/A"}
+- **Humor do Paciente:** ${session.patientMood ?? "N/A"}
+- **Comportamento Observado:** ${session.observedBehavior ?? "N/A"}
+- **Intervenções Utilizadas:** ${session.interventionsUsed.join(", ")}
+- **Próximos Passos:** ${session.nextSteps ?? "N/A"}
 ''';
   }
 
   String _formatTherapistProfile(TherapistProfileModel profile) {
     final buffer = StringBuffer();
-    buffer.writeln('ABORDAGEM TEÓRICA:');
-    if (profile.approaches.isNotEmpty) buffer.writeln('- Abordagens: ${profile.approaches.join(", ")}');
-    if (profile.approachDescription.isNotEmpty) buffer.writeln('- Descrição: ${profile.approachDescription}');
-    if (profile.frequentTechniques.isNotEmpty) buffer.writeln('- Técnicas Frequentes: ${profile.frequentTechniques}');
+    buffer.writeln('### 🎓 Abordagem Teórica');
+    buffer.writeln();
+    if (profile.approaches.isNotEmpty) buffer.writeln('- **Abordagens:** ${profile.approaches.join(", ")}');
+    if (profile.approachDescription.isNotEmpty) buffer.writeln('- **Descrição:** ${profile.approachDescription}');
+    if (profile.frequentTechniques.isNotEmpty)
+      buffer.writeln('- **Técnicas Frequentes:** ${profile.frequentTechniques}');
     buffer.writeln();
 
-    buffer.writeln('ESTILO CLÍNICO E COMUNICAÇÃO:');
-    if (profile.therapeuticPosture.isNotEmpty) buffer.writeln('- Postura: ${profile.therapeuticPosture}');
-    if (profile.communicationTone.isNotEmpty) buffer.writeln('- Tom de Comunicação: ${profile.communicationTone}');
-    if (profile.humorUsage.isNotEmpty) buffer.writeln('- Uso de Humor: ${profile.humorUsage}');
+    buffer.writeln('### 💬 Estilo Clínico e Comunicação');
+    buffer.writeln();
+    if (profile.therapeuticPosture.isNotEmpty)
+      buffer.writeln('- **Postura Terapêutica:** ${profile.therapeuticPosture}');
+    if (profile.communicationTone.isNotEmpty) buffer.writeln('- **Tom de Comunicação:** ${profile.communicationTone}');
+    if (profile.humorUsage.isNotEmpty) buffer.writeln('- **Uso de Humor:** ${profile.humorUsage}');
     if (profile.confrontationStyle.isNotEmpty)
-      buffer.writeln('- Estilo de Confrontação: ${profile.confrontationStyle}');
+      buffer.writeln('- **Estilo de Confrontação:** ${profile.confrontationStyle}');
     buffer.writeln();
 
-    buffer.writeln('VISÃO E VALORES:');
-    if (profile.changeVision.isNotEmpty) buffer.writeln('- Visão de Mudança: ${profile.changeVision}');
-    if (profile.sufferingNature.isNotEmpty) buffer.writeln('- Natureza do Sofrimento: ${profile.sufferingNature}');
+    buffer.writeln('### 🌟 Visão e Valores');
+    buffer.writeln();
+    if (profile.changeVision.isNotEmpty) buffer.writeln('- **Visão de Mudança:** ${profile.changeVision}');
+    if (profile.sufferingNature.isNotEmpty) buffer.writeln('- **Natureza do Sofrimento:** ${profile.sufferingNature}');
     buffer.writeln();
 
     if (profile.untreatableSituations.isNotEmpty || profile.outOfSessionContact.isNotEmpty) {
-      buffer.writeln('RESTRIÇÕES E ÉTICA:');
+      buffer.writeln('### ⚖️ Restrições e Ética');
+      buffer.writeln();
       if (profile.untreatableSituations.isNotEmpty)
-        buffer.writeln('- Situações Não Tratáveis: ${profile.untreatableSituations}');
+        buffer.writeln('- **Situações Não Tratáveis:** ${profile.untreatableSituations}');
       if (profile.outOfSessionContact.isNotEmpty)
-        buffer.writeln('- Contato Fora da Sessão: ${profile.outOfSessionContact}');
+        buffer.writeln('- **Contato Fora da Sessão:** ${profile.outOfSessionContact}');
+      buffer.writeln();
     }
 
     if (profile.aiAnalysisFocus.isNotEmpty) {
+      buffer.writeln('### 🎯 Foco da Análise IA');
       buffer.writeln();
-      buffer.writeln('FOCO DA ANÁLISE IA: ${profile.aiAnalysisFocus}');
+      buffer.writeln('> ${profile.aiAnalysisFocus}');
     }
     return buffer.toString();
   }
@@ -388,7 +426,31 @@ class _AiAnalysisConfigPageState extends State<AiAnalysisConfigPage> {
                     child: _buildParametersForm(),
                   ),
 
-                  SizedBox(height: 40),
+                  SizedBox(height: 24),
+
+                  // AI Disclaimer
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange[300]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.orange[700], size: 24),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'A análise de IA é uma ferramenta de apoio à sua prática clínica. Recomendamos revisar e validar as sugestões com base na sua experiência profissional.',
+                            style: TextStyle(fontSize: 13, color: Colors.orange[900], height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
 
                   SizedBox(
                     height: 50,
