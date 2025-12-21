@@ -4,6 +4,69 @@ Este documento descreve as principais mudanças e melhorias do aplicativo Terafy
 
 ---
 
+## [0.4.0] - Dezembro 2025
+
+### ✨ Novidades
+
+#### 🤖 Análise Inteligente com IA
+
+Potencialize seu trabalho clínico com análises personalizadas geradas por Inteligência Artificial!
+
+- **Perfil Terapêutico Personalizado**
+
+  Configure uma única vez seu perfil profissional para que a IA compreenda sua abordagem terapêutica:
+
+  - Defina sua abordagem principal (TCC, Psicanálise, Gestalt, etc.)
+  - Descreva seus princípios e valores terapêuticos
+  - Configure seu estilo de trabalho e metodologia
+  - Personalize como a IA deve analisar seus casos
+  - A IA se adapta completamente ao seu jeito de trabalhar!
+
+- **Múltiplos Tipos de Análise**
+
+  Escolha o tipo de análise que você precisa:
+
+  - **Análise de Sessão Individual**: Insights sobre uma sessão específica
+  - **Visão Geral do Paciente**: Análise completa do caso e evolução
+  - **Análise de Evolução**: Compare o progresso ao longo do tempo
+  - **Situação Específica**: Orientação para crises ou momentos críticos
+
+- **Análises Contextualizadas**
+
+  A IA sempre considera:
+
+  - Anamnese completa do paciente
+  - Histórico de sessões anteriores
+  - Seu perfil terapêutico personalizado
+  - Padrões identificados ao longo do tratamento
+
+- **Histórico de Análises**
+
+  - Acesse todas as análises anteriores de cada paciente
+  - Acompanhe a evolução das recomendações
+  - Arquive análises antigas para manter organizado
+  - Copie facilmente prompts e respostas para seus registros
+
+- **Integração com Dashboard do Paciente**
+
+  - Acesse a análise por IA diretamente do dashboard de cada paciente
+  - Visualize o histórico completo de análises
+  - Configure e gere novas análises em poucos cliques
+
+#### ⚙️ Configuração de IA nas Configurações
+
+- Nova seção "Configuração de IA" no menu de configurações
+- Configure seu perfil terapêutico de forma intuitiva
+- Edite e atualize suas preferências a qualquer momento
+
+### 🔧 Melhorias
+
+- Interface otimizada para visualização em diferentes tamanhos de tela
+- Melhorias na navegação e organização das páginas
+- Ajustes visuais para melhor experiência do usuário
+
+---
+
 ## [0.3.0] - Dezembro 2025
 
 ### ✨ Novidades
