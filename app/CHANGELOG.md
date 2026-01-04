@@ -1,6 +1,17 @@
-# Histórico de Atualizações
+# Changelog
 
-Este documento descreve as principais mudanças e melhorias do aplicativo Terafy ao longo do tempo.
+## 0.5.0
+
+- Added support for public anamnesis links with hash routing.
+- Implemented "My Templates" page for managing anamnesis templates.
+- Added template editor for creating and modifying templates.
+- Added "Manage Anamnesis" option to Settings.
+- Fixed public invite route handling to prevent authentication issues.
+- Implemented Edit and Delete functionality for Anamnesis records.
+- Added confirmation dialog for deletion.
+- Updated `SettingsPage` to include "Modelos de Anamnese".
+- Added AI features (#13).
+- Added Financial Transactions features (#12).
 
 ---
 
@@ -8,13 +19,11 @@ Este documento descreve as principais mudanças e melhorias do aplicativo Terafy
 
 ### ✨ Novidades
 
-#### 🤖 Análise Inteligente com IA
+#### 🧠 IA para Análise Clínica
 
-Potencialize seu trabalho clínico com análises personalizadas geradas por Inteligência Artificial!
+Agora o Terafy conta com Inteligência Artificial para te ajudar na prática clínica!
 
-- **Perfil Terapêutico Personalizado**
-
-  Configure uma única vez seu perfil profissional para que a IA compreenda sua abordagem terapêutica:
+- **Personalidade da IA Configurável**
 
   - Defina sua abordagem principal (TCC, Psicanálise, Gestalt, etc.)
   - Descreva seus princípios e valores terapêuticos
@@ -167,8 +176,8 @@ Gerencie todos os seus pacientes em um só lugar!
     - Informações de contato
     - Dados profissionais e sociais
     - Informações de saúde
-  - Contato de emergência e responsável legal
-  - Informações de convênio e pagamento
+    - Contato de emergência e responsável legal
+    - Informações de convênio e pagamento
 
 - **Lista de Pacientes**
 
