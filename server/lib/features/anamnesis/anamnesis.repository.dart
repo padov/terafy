@@ -1,6 +1,8 @@
 import 'package:common/common.dart';
 import 'package:postgres/postgres.dart';
 import 'package:server/core/database/db_connection.dart';
+import 'dart:convert';
+import 'dart:math';
 import 'package:server/core/database/rls_context.dart';
 
 class AnamnesisRepository {
@@ -519,6 +521,109 @@ class AnamnesisRepository {
       );
 
       return result.isNotEmpty;
+    });
+  }
+
+  // ========== INVITES ==========
+
+  String _generateToken() {
+    final random = Random.secure();
+    final values = List<int>.generate(32, (i) => random.nextInt(256));
+    return base64Url.encode(values).replaceAll('=', '');
+  }
+
+  Future<String> createInvite({
+    required int therapistId,
+    required int patientId,
+    required int templateId,
+    required DateTime expiresAt,
+  }) async {
+    AppLogger.func();
+    return await _dbConnection.withConnection((conn) async {
+      // Bypass RLS for invite creation as it's a system action triggered by therapist
+      await RLSContext.clearContext(conn);
+
+      final token = _generateToken();
+
+      await conn.execute(
+        Sql.named('''
+          INSERT INTO anamnesis_invites (
+              token, therapist_id, patient_id, template_id, expires_at
+          ) VALUES (
+              @token, @therapist_id, @patient_id, @template_id, @expires_at
+          );
+        '''),
+        parameters: {
+          'token': token,
+          'therapist_id': therapistId,
+          'patient_id': patientId,
+          'template_id': templateId,
+          'expires_at': expiresAt,
+        },
+      );
+      return token;
+    });
+  }
+
+  Future<Map<String, dynamic>?> getInviteByToken(String token) async {
+    AppLogger.func();
+    return await _dbConnection.withConnection((conn) async {
+      await RLSContext.clearContext(conn); // Public access
+
+      final results = await conn.execute(
+        Sql.named('''
+          SELECT 
+            i.id,
+            i.token,
+            i.status,
+            i.expires_at,
+            i.patient_id,
+            i.template_id,
+            i.therapist_id,
+            p.full_name as patient_name,
+            t.name as therapist_name,
+            temp.name as template_name,
+            temp.description as template_description,
+            temp.structure as template_structure
+          FROM anamnesis_invites i
+          JOIN patients p ON i.patient_id = p.id
+          JOIN therapists t ON i.therapist_id = t.id
+          JOIN anamnesis_templates temp ON i.template_id = temp.id
+          WHERE i.token = @token;
+        '''),
+        parameters: {'token': token},
+      );
+
+      if (results.isEmpty) return null;
+
+      final row = results.first.toColumnMap();
+
+      // Check validation
+      final status = row['status'];
+      final expiresAt = row['expires_at'] as DateTime;
+
+      if (status != 'pending') return null; // Already used or expired
+      if (DateTime.now().isAfter(expiresAt)) {
+        // Optionally update status to expired?
+        return null;
+      }
+
+      return row;
+    });
+  }
+
+  Future<void> consumeInvite(int inviteId) async {
+    return await _dbConnection.withConnection((conn) async {
+      await RLSContext.clearContext(conn);
+
+      await conn.execute(
+        Sql.named('''
+          UPDATE anamnesis_invites 
+          SET status = 'used', used_at = NOW() 
+          WHERE id = @id;
+        '''),
+        parameters: {'id': inviteId},
+      );
     });
   }
 }

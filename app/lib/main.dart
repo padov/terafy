@@ -72,7 +72,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Terafy',
       theme: AppTheme.lightTheme,
-      initialRoute: AppRouter.splashRoute,
+      // initialRoute: AppRouter.splashRoute, // Removido para respeitar a URL no web
       onGenerateRoute: AppRouter.generateRoute,
       navigatorKey: navigatorKey, // Adiciona global navigator key
       navigatorObservers: [AppRouter.routeObserver],
@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         if (kIsWeb && child != null) {
           return Center(
-            child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 500), child: child),
+            child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 800), child: child),
           );
         }
         return child ?? const SizedBox.shrink();

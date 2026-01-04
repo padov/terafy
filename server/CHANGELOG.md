@@ -5,6 +5,16 @@ Todas as mudanças notáveis no servidor serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## 0.5.0
+
+- Updated Anamnesis handler to support public invite context generation.
+- Updated `WEB_URL` to point to the correct frontend port for local development.
+- Added database migration for Anamnesis invites table.
+- Added AI features (#13).
+- Added Financial Transactions features (#12).
+
+---
+
 ## [0.3.0] - 2025-12-14
 
 ### 🎉 Adicionado

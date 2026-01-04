@@ -11,47 +11,27 @@ Router configureAnamnesisRoutes(AnamnesisHandler handler) {
   // ========== ANAMNESIS ROUTES ==========
 
   // GET /anamnesis/patient/:patientId - Buscar anamnese por paciente
-  router.get(
-    '/patient/<patientId|[0-9]+>',
-    (Request request, String patientId) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleGetByPatientId(req, patientId),
-      )(request);
-    },
-  );
+  router.get('/patient/<patientId|[0-9]+>', (Request request, String patientId) async {
+    return therapistOrAdmin.call((Request req) => handler.handleGetByPatientId(req, patientId))(request);
+  });
 
   // GET /anamnesis/:id - Buscar anamnese por ID
-  router.get(
-    '/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleGetById(req, id),
-      )(request);
-    },
-  );
+  router.get('/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleGetById(req, id))(request);
+  });
 
   // POST /anamnesis - Criar anamnese
   router.post('/', therapistOrAdmin.call(handler.handleCreate));
 
   // PUT /anamnesis/:id - Atualizar anamnese
-  router.put(
-    '/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleUpdate(req, id),
-      )(request);
-    },
-  );
+  router.put('/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleUpdate(req, id))(request);
+  });
 
   // DELETE /anamnesis/:id - Deletar anamnese
-  router.delete(
-    '/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleDelete(req, id),
-      )(request);
-    },
-  );
+  router.delete('/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleDelete(req, id))(request);
+  });
 
   // ========== TEMPLATE ROUTES ==========
 
@@ -59,41 +39,39 @@ Router configureAnamnesisRoutes(AnamnesisHandler handler) {
   router.get('/templates', therapistOrAdmin.call(handler.handleListTemplates));
 
   // GET /anamnesis/templates/:id - Buscar template por ID
-  router.get(
-    '/templates/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleGetTemplateById(req, id),
-      )(request);
-    },
-  );
+  router.get('/templates/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleGetTemplateById(req, id))(request);
+  });
 
   // POST /anamnesis/templates - Criar template
-  router.post(
-    '/templates',
-    therapistOrAdmin.call(handler.handleCreateTemplate),
-  );
+  router.post('/templates', therapistOrAdmin.call(handler.handleCreateTemplate));
 
   // PUT /anamnesis/templates/:id - Atualizar template
-  router.put(
-    '/templates/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleUpdateTemplate(req, id),
-      )(request);
-    },
-  );
+  router.put('/templates/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleUpdateTemplate(req, id))(request);
+  });
 
   // DELETE /anamnesis/templates/:id - Deletar template
-  router.delete(
-    '/templates/<id|[0-9]+>',
-    (Request request, String id) async {
-      return therapistOrAdmin.call(
-        (Request req) => handler.handleDeleteTemplate(req, id),
-      )(request);
-    },
+  router.delete('/templates/<id|[0-9]+>', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleDeleteTemplate(req, id))(request);
+  });
+
+  // ========== INVITE ROUTES ==========
+
+  // POST /anamnesis/invite - Criar convite (Gerar Token)
+  router.post('/invite', therapistOrAdmin.call(handler.handleCreateInvite));
+
+  // GET /anamnesis/public/invite/:token - Obter contexto do convite (Public)
+  router.get(
+    '/public/invite/<token>',
+    (Request request, String token) => handler.handleGetPublicInviteContext(request, token),
+  );
+
+  // POST /anamnesis/public/invite/:token/submit - Submeter anamnese via convite (Public)
+  router.post(
+    '/public/invite/<token>/submit',
+    (Request request, String token) => handler.handleSubmitPublicInvite(request, token),
   );
 
   return router;
 }
-

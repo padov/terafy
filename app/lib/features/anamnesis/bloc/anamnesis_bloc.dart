@@ -22,6 +22,21 @@ class AnamnesisBloc extends Bloc<AnamnesisEvent, AnamnesisState> {
     on<CompleteAnamnesis>(_onCompleteAnamnesis);
     on<DeleteAnamnesis>(_onDeleteAnamnesis);
     on<ResetAnamnesisState>(_onResetAnamnesisState);
+    on<CreateTemplate>(_onCreateTemplate);
+    on<UpdateTemplate>(_onUpdateTemplate);
+    on<DeleteTemplate>(_onDeleteTemplate);
+    on<CreateInvite>(_onCreateInvite);
+  }
+
+  Future<void> _onCreateInvite(CreateInvite event, Emitter<AnamnesisState> emit) async {
+    emit(const AnamnesisLoading());
+
+    try {
+      final link = await _anamnesisRepository.createInvite(event.patientId, event.templateId);
+      emit(InviteCreated(link: link, message: 'Convite criado com sucesso'));
+    } catch (e) {
+      emit(AnamnesisError('Erro ao criar convite: ${e.toString()}'));
+    }
   }
 
   final AnamnesisRepository _anamnesisRepository;
@@ -31,7 +46,7 @@ class AnamnesisBloc extends Bloc<AnamnesisEvent, AnamnesisState> {
     emit(const AnamnesisLoading());
 
     try {
-      final templates = await _templateRepository.fetchTemplates(category: event.category);
+      final templates = await _templateRepository.fetchTemplates(category: event.category, isSystem: event.isSystem);
 
       emit(TemplatesLoaded(templates: templates));
     } catch (e) {
@@ -192,5 +207,38 @@ class AnamnesisBloc extends Bloc<AnamnesisEvent, AnamnesisState> {
 
   void _onResetAnamnesisState(ResetAnamnesisState event, Emitter<AnamnesisState> emit) {
     emit(const AnamnesisInitial());
+  }
+
+  Future<void> _onCreateTemplate(CreateTemplate event, Emitter<AnamnesisState> emit) async {
+    emit(const AnamnesisLoading());
+
+    try {
+      final created = await _templateRepository.createTemplate(event.template);
+      emit(TemplateOperationSuccess(template: created, message: 'Modelo criado com sucesso'));
+    } catch (e) {
+      emit(AnamnesisError('Erro ao criar modelo: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onUpdateTemplate(UpdateTemplate event, Emitter<AnamnesisState> emit) async {
+    emit(const AnamnesisLoading());
+
+    try {
+      final updated = await _templateRepository.updateTemplate(event.id, event.template);
+      emit(TemplateOperationSuccess(template: updated, message: 'Modelo atualizado com sucesso'));
+    } catch (e) {
+      emit(AnamnesisError('Erro ao atualizar modelo: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onDeleteTemplate(DeleteTemplate event, Emitter<AnamnesisState> emit) async {
+    emit(const AnamnesisLoading());
+
+    try {
+      await _templateRepository.deleteTemplate(event.id);
+      emit(const TemplateOperationSuccess(message: 'Modelo excluído com sucesso'));
+    } catch (e) {
+      emit(AnamnesisError('Erro ao excluir modelo: ${e.toString()}'));
+    }
   }
 }

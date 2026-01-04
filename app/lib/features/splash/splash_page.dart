@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:terafy/routes/app_routes.dart';
 import 'package:terafy/common/app_images.dart';
@@ -45,8 +46,16 @@ class _SplashPageState extends State<SplashPage> {
     final canCheckBiometrics = await _authService.canCheckBiometrics();
 
     // Se não há token ou não há biometria configurada, vai para login
+    // Se não há token ou não há biometria configurada, vai para login
     if (token == null || userIdentifier == null || !canCheckBiometrics) {
       if (mounted) {
+        // [FIX] Verifica se estamos em uma rota pública na WEB antes de redirecionar.
+        if (kIsWeb) {
+          final uri = Uri.base.toString();
+          if (uri.contains('/anamnesis/public/')) {
+            return;
+          }
+        }
         Navigator.of(context).pushReplacementNamed(AppRouter.loginRoute);
       }
       return;

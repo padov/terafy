@@ -7,6 +7,7 @@ import 'package:server/core/handlers/base_handler.dart';
 import 'package:server/core/middleware/auth_middleware.dart';
 import 'package:server/features/anamnesis/anamnesis.controller.dart';
 import 'package:server/features/anamnesis/anamnesis.routes.dart';
+import 'package:server/core/config/env_config.dart';
 
 class AnamnesisHandler extends BaseHandler {
   final AnamnesisController _controller;
@@ -475,6 +476,98 @@ class AnamnesisHandler extends BaseHandler {
     } catch (e, stackTrace) {
       AppLogger.error(e, stackTrace);
       return internalServerErrorResponse('Erro ao remover template: ${e.toString()}');
+    }
+  }
+  // ========== INVITE HANDLERS ==========
+
+  Future<Response> handleCreateInvite(Request request) async {
+    AppLogger.func();
+
+    try {
+      final userId = getUserId(request);
+      final userRole = getUserRole(request);
+      final accountId = getAccountId(request);
+
+      if (userId == null || userRole == null) {
+        return unauthorizedResponse('Autenticação necessária');
+      }
+
+      int? therapistId = accountId; // Default to current thread (if role is therapist)
+
+      if (userRole != 'therapist' && userRole != 'admin') {
+        return forbiddenResponse('Apenas terapeutas podem criar convites');
+      }
+
+      if (userRole == 'therapist' && accountId == null) {
+        return badRequestResponse('Terapeuta não vinculado');
+      }
+
+      final body = await request.readAsString();
+      final data = _parseRequestBody(body);
+      if (data == null) {
+        return badRequestResponse('JSON inválido');
+      }
+
+      final patientId = _readInt(data, ['patientId', 'patient_id']);
+      final templateId = _readInt(data, ['templateId', 'template_id']);
+
+      // Admin override if needed (pass therapistId in body)
+      if (userRole == 'admin') {
+        final requestedTherapistId = _readInt(data, ['therapistId', 'therapist_id']);
+        if (requestedTherapistId != null) therapistId = requestedTherapistId;
+      }
+
+      if (patientId == null || templateId == null || therapistId == null) {
+        return badRequestResponse('patientId, templateId e therapistId são obrigatórios');
+      }
+
+      final token = await _controller.createInvite(
+        therapistId: therapistId,
+        patientId: patientId,
+        templateId: templateId,
+        userId: userId,
+      );
+
+      final publicUrl = '${EnvConfig.getOrDefault("WEB_URL", "http://localhost:8181")}/#/anamnesis/public/$token';
+      //TODO: pegar o padrão do servidor
+
+      return successResponse({'token': token, 'link': publicUrl});
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
+      return internalServerErrorResponse('Erro ao criar convite: ${e.toString()}');
+    }
+  }
+
+  Future<Response> handleGetPublicInviteContext(Request request, String token) async {
+    AppLogger.func();
+    try {
+      final context = await _controller.getPublicInviteContext(token);
+      return successResponse(context);
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
+      return internalServerErrorResponse('Erro ao buscar convite: ${e.toString()}');
+    }
+  }
+
+  Future<Response> handleSubmitPublicInvite(Request request, String token) async {
+    AppLogger.func();
+    try {
+      final body = await request.readAsString();
+      final data = _parseRequestBody(body);
+      if (data == null) return badRequestResponse('JSON inválido');
+
+      final result = await _controller.submitPublicInvite(token, data);
+
+      return createdResponse(result.toJson());
+    } on AnamnesisException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
+      return internalServerErrorResponse('Erro ao submeter anamnese: ${e.toString()}');
     }
   }
 

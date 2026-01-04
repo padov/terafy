@@ -18,6 +18,7 @@ import 'package:terafy/features/sessions/session_details_page.dart';
 import 'package:terafy/features/sessions/new_session_page.dart';
 import 'package:terafy/features/sessions/session_evolution_page.dart';
 import 'package:terafy/features/profile/edit_profile_page.dart';
+import 'package:terafy/features/anamnesis/pages/public_anamnesis_page.dart';
 
 class AppRouter {
   static const String splashRoute = '/';
@@ -46,6 +47,20 @@ class AppRouter {
   static const String editProfileRoute = '/profile/edit';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    // Handle public anamnesis route (Dynamic URL: /anamnesis/public/:token)
+    if (settings.name != null && settings.name!.startsWith('/anamnesis/public/')) {
+      final uri = Uri.parse(settings.name!);
+      final pathSegments = uri.pathSegments;
+      // Expected: anamnesis/public/<token>
+      if (pathSegments.length >= 3) {
+        final token = pathSegments[2];
+        return MaterialPageRoute(
+          builder: (_) => PublicAnamnesisPage(token: token),
+          settings: settings,
+        );
+      }
+    }
+
     switch (settings.name) {
       case splashRoute:
         return MaterialPageRoute(builder: (_) => const SplashPage());

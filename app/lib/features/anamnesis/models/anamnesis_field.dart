@@ -127,17 +127,15 @@ class AnamnesisField extends Equatable {
     List<Map<String, String>>? _parseOptions(dynamic value) {
       if (value == null) return null;
       if (value is List) {
-        return value
-            .map((e) {
-              if (e is Map<String, dynamic>) {
-                return {
-                  'value': e['value']?.toString() ?? '',
-                  'label': e['label']?.toString() ?? e['value']?.toString() ?? '',
-                };
-              }
-              return {'value': e.toString(), 'label': e.toString()};
-            })
-            .toList();
+        return value.map((e) {
+          if (e is Map<String, dynamic>) {
+            return {
+              'value': e['value']?.toString() ?? '',
+              'label': e['label']?.toString() ?? e['value']?.toString() ?? '',
+            };
+          }
+          return {'value': e.toString(), 'label': e.toString()};
+        }).toList();
       }
       return null;
     }
@@ -264,40 +262,109 @@ class AnamnesisField extends Equatable {
     };
   }
 
+  AnamnesisField copyWith({
+    String? id,
+    AnamnesisFieldType? type,
+    String? label,
+    String? description,
+    bool? required,
+    int? order,
+    String? placeholder,
+    dynamic defaultValue,
+    Map<String, dynamic>? validation,
+    Map<String, dynamic>? conditional,
+    List<String>? fillableBy,
+    bool? sensitive,
+    bool? canSkip,
+    String? helpText,
+    int? min,
+    int? max,
+    int? step,
+    bool? showValue,
+    Map<String, String>? labels,
+    List<Map<String, String>>? options,
+    bool? multiple,
+    bool? searchable,
+    String? layout,
+    int? minSelections,
+    int? maxSelections,
+    String? format,
+    String? minDate,
+    String? maxDate,
+    List<String>? accept,
+    int? maxSize,
+    int? rows,
+    String? displayAs,
+  }) {
+    return AnamnesisField(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      label: label ?? this.label,
+      description: description ?? this.description,
+      required: required ?? this.required,
+      order: order ?? this.order,
+      placeholder: placeholder ?? this.placeholder,
+      defaultValue: defaultValue ?? this.defaultValue,
+      validation: validation ?? this.validation,
+      conditional: conditional ?? this.conditional,
+      fillableBy: fillableBy ?? this.fillableBy,
+      sensitive: sensitive ?? this.sensitive,
+      canSkip: canSkip ?? this.canSkip,
+      helpText: helpText ?? this.helpText,
+      min: min ?? this.min,
+      max: max ?? this.max,
+      step: step ?? this.step,
+      showValue: showValue ?? this.showValue,
+      labels: labels ?? this.labels,
+      options: options ?? this.options,
+      multiple: multiple ?? this.multiple,
+      searchable: searchable ?? this.searchable,
+      layout: layout ?? this.layout,
+      minSelections: minSelections ?? this.minSelections,
+      maxSelections: maxSelections ?? this.maxSelections,
+      format: format ?? this.format,
+      minDate: minDate ?? this.minDate,
+      maxDate: maxDate ?? this.maxDate,
+      accept: accept ?? this.accept,
+      maxSize: maxSize ?? this.maxSize,
+      rows: rows ?? this.rows,
+      displayAs: displayAs ?? this.displayAs,
+    );
+  }
+
   @override
   List<Object?> get props => [
-        id,
-        type,
-        label,
-        description,
-        required,
-        order,
-        placeholder,
-        defaultValue,
-        validation,
-        conditional,
-        fillableBy,
-        sensitive,
-        canSkip,
-        helpText,
-        min,
-        max,
-        step,
-        showValue,
-        labels,
-        options,
-        multiple,
-        searchable,
-        layout,
-        minSelections,
-        maxSelections,
-        format,
-        minDate,
-        maxDate,
-        accept,
-        maxSize,
-        rows,
-        displayAs,
-      ];
+    id,
+    type,
+    label,
+    description,
+    required,
+    order,
+    placeholder,
+    defaultValue,
+    validation,
+    conditional,
+    fillableBy,
+    sensitive,
+    canSkip,
+    helpText,
+    min,
+    max,
+    step,
+    showValue,
+    labels,
+    options,
+    multiple,
+    searchable,
+    layout,
+    minSelections,
+    maxSelections,
+    format,
+    minDate,
+    maxDate,
+    accept,
+    maxSize,
+    rows,
+    displayAs,
+  ];
 }
-

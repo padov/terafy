@@ -14,6 +14,16 @@ abstract class AnamnesisRepository {
   Future<Anamnesis> updateAnamnesis(String id, Anamnesis anamnesis);
 
   /// Deleta uma anamnese
+  /// Deleta uma anamnese
   Future<void> deleteAnamnesis(String id);
-}
 
+  /// Cria um convite para preenchimento de anamnese
+  /// Retorna o token do convite
+  Future<String> createInvite(String patientId, String templateId);
+
+  /// Obtém o contexto de um convite a partir do token (Público)
+  Future<Map<String, dynamic>> getPublicInviteContext(String token);
+
+  /// Submete uma anamnese a partir de um convite (Público)
+  Future<void> submitPublicInvite(String token, Map<String, dynamic> data);
+}

@@ -69,8 +69,7 @@ class AnamnesisRepositoryImpl implements AnamnesisRepository {
 
       final response = await httpClient.post('/anamnesis', data: payload);
 
-      final isSuccess =
-          response.statusCode == 201 || response.statusCode == 200;
+      final isSuccess = response.statusCode == 201 || response.statusCode == 200;
       if (!isSuccess || response.data == null) {
         throw Exception('Erro ao criar anamnese');
       }
@@ -122,6 +121,69 @@ class AnamnesisRepositoryImpl implements AnamnesisRepository {
     }
   }
 
+  @override
+  Future<String> createInvite(String patientId, String templateId) async {
+    try {
+      final response = await httpClient.post(
+        '/anamnesis/invite',
+        data: {'patientId': patientId, 'templateId': templateId},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Erro ao criar convite');
+      }
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('link')) {
+          return data['link'].toString();
+        }
+        if (data.containsKey('token')) {
+          return data['token'].toString();
+        }
+      }
+
+      throw Exception('Link não encontrado na resposta');
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e) ?? 'Erro ao criar convite';
+      throw Exception(message);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getPublicInviteContext(String token) async {
+    try {
+      final response = await httpClient.get('/anamnesis/public/invite/$token');
+
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao carregar convite');
+      }
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Resposta inválida do servidor');
+      }
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e) ?? 'Erro ao carregar convite';
+      throw Exception(message);
+    }
+  }
+
+  @override
+  Future<void> submitPublicInvite(String token, Map<String, dynamic> data) async {
+    try {
+      final response = await httpClient.post('/anamnesis/public/invite/$token/submit', data: data);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Erro ao enviar anamnese');
+      }
+    } on DioException catch (e) {
+      final message = _extractErrorMessage(e) ?? 'Erro ao enviar anamnese';
+      throw Exception(message);
+    }
+  }
+
   String? _extractErrorMessage(DioException exception) {
     if (exception.response?.data is Map<String, dynamic>) {
       final map = exception.response!.data as Map<String, dynamic>;
@@ -135,4 +197,3 @@ class AnamnesisRepositoryImpl implements AnamnesisRepository {
     return null;
   }
 }
-

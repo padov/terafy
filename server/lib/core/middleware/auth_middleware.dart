@@ -11,6 +11,7 @@ Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
         '/auth/login',
         '/auth/register',
         '/auth/refresh', // Refresh token é público (usa refresh token para autenticar)
+        '/anamnesis/public',
       ];
       final path = request.url.path;
 
