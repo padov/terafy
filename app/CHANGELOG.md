@@ -1,17 +1,43 @@
 # Changelog
 
-## 0.5.0
+## [0.5.0] - Janeiro 2026
 
-- Added support for public anamnesis links with hash routing.
-- Implemented "My Templates" page for managing anamnesis templates.
-- Added template editor for creating and modifying templates.
-- Added "Manage Anamnesis" option to Settings.
-- Fixed public invite route handling to prevent authentication issues.
-- Implemented Edit and Delete functionality for Anamnesis records.
-- Added confirmation dialog for deletion.
-- Updated `SettingsPage` to include "Modelos de Anamnese".
-- Added AI features (#13).
-- Added Financial Transactions features (#12).
+### ✨ Novidades
+
+#### 🧠 IA no seu Consultório
+
+Sua assistente virtual ficou ainda mais poderosa!
+
+- **Analise Casos Complexos**: Receba insights detalhados sobre seus pacientes baseados em TCC, Psicanálise ou sua abordagem preferida.
+- **Resumo de Sessões**: A IA pode resumir o que foi discutido e sugerir pontos de atenção para o próximo encontro.
+- **Sugestões de Intervenção**: Ideias personalizadas de técnicas para aplicar.
+
+#### 📝 Gestão de Modelos de Anamnese
+
+Chega de formulários rígidos! Agora você tem controle total.
+
+- **Crie Seus Próprios Modelos**: Monte formulários de anamnese personalizados para diferentes tipos de pacientes (Infantil, Adulto, Casal).
+- **Gerencie nas Configurações**: Acesse "Configurações > Modelos de Anamnese" para criar, editar ou excluir seus templates.
+- **Edite Quando Quiser**: Precisa ajustar uma pergunta? Edite seus modelos a qualquer momento.
+
+#### 🔗 Anamnese via Link Público
+
+Facilite a vida do seu paciente antes mesmo da primeira consulta.
+
+- **Links Seguros**: Gere links diretos para que o paciente preencha a anamnese de casa.
+- **Acesso Fácil**: O paciente clica, preenche e você recebe tudo pronto no prontuário. sem precisar de login.
+
+### 🔧 Melhorias
+
+#### Edição e Exclusão Flexíveis
+
+- **Corrija Erros**: Agora você pode editar anamneses já salvas caso precise ajustar alguma informação.
+- **Limpeza**: Exclua anamneses antigas ou criadas por engano (com confirmação de segurança para evitar acidentes).
+
+#### 💰 Controle Financeiro Integrado
+
+- **Transações Automáticas**: Cada sessão registrada já pode gerar um lançamento financeiro pendente.
+- **Visão Clara**: Saiba exatamente o status de pagamento de cada atendimento.
 
 ---
 

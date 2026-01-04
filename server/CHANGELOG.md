@@ -7,11 +7,31 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## 0.5.0
 
-- Updated Anamnesis handler to support public invite context generation.
-- Updated `WEB_URL` to point to the correct frontend port for local development.
-- Added database migration for Anamnesis invites table.
-- Added AI features (#13).
-- Added Financial Transactions features (#12).
+## [0.5.0] - 2026-01-04
+
+### 🎉 Adicionado
+
+#### Funcionalidades de IA (`#13`)
+
+- Integração com serviços de LLM para análise de casos clínicos.
+- Endpoints para análise de sessão individual e visão geral do paciente.
+- Prompt Engineering configurável por terapeuta (abordagem, tom de voz).
+
+#### Transações Financeiras (`#12`)
+
+- Endpoints para controle de fluxo de caixa vinculado a sessões.
+- Integração automátiva: criação de sessão gera transação pendente.
+
+#### Gestão de Anamneses e Templates
+
+- Endpoints para criar, editar, listar e deletar Templates de Anamnese customizados.
+- Geração de `Public Invite Context` para preenchimento de anamnese sem autenticação.
+- Migrations para tabelas de `anamnesis_invites` e suporte a hash routing no frontend.
+
+### 🔧 Alterado
+
+- **AnamnesisHandler**: Atualizado para suportar novos fluxos de edição e deleção segura.
+- **Configuração**: Atualização da constante `WEB_URL` para apontar corretamente para porta do flutter web em dev.
 
 ---
 
