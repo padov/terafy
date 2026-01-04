@@ -30,35 +30,14 @@ class AppTheme {
       filled: true,
       fillColor: const Color(0xFFF5F5F5), // Cinza claro
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      hintStyle: TextStyle(
-        color: Colors.grey[400],
-        fontSize: 14,
-        fontWeight: FontWeight.normal,
-      ),
-      labelStyle: const TextStyle(
-        color: AppColors.offBlack,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
+      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14, fontWeight: FontWeight.normal),
+      labelStyle: const TextStyle(color: AppColors.offBlack, fontSize: 14, fontWeight: FontWeight.w500),
       floatingLabelAlignment: FloatingLabelAlignment.start,
       floatingLabelBehavior: FloatingLabelBehavior.always,
-      floatingLabelStyle: const TextStyle(
-        color: AppColors.offBlack,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
+      floatingLabelStyle: const TextStyle(color: AppColors.offBlack, fontSize: 14, fontWeight: FontWeight.w500),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error, width: 1),
@@ -78,6 +57,8 @@ class AppTheme {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         textStyle: const TextStyle(fontSize: 16),
+        minimumSize: const Size(double.infinity, 50),
+
         foregroundColor: AppColors.primary,
         side: const BorderSide(color: AppColors.primary),
         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -87,18 +68,10 @@ class AppTheme {
     chipTheme: const ChipThemeData(
       backgroundColor: Color(0xFFF3F4F6), // grey[100]
       side: BorderSide(color: AppColors.lightBorderColor),
-      labelStyle: TextStyle(
-        color: AppColors.textColor,
-        fontWeight: FontWeight.w500,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-      ),
+      labelStyle: TextStyle(color: AppColors.textColor, fontWeight: FontWeight.w500),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
     ),
-    dividerTheme: const DividerThemeData(
-      color: AppColors.lightBorderColor,
-      thickness: 1,
-    ),
+    dividerTheme: const DividerThemeData(color: AppColors.lightBorderColor, thickness: 1),
     cardTheme: const CardThemeData(
       elevation: 0,
       color: Color(0xFFFAFAFA), // Cinza muito claro (grey[50])
@@ -109,10 +82,7 @@ class AppTheme {
     ),
     tabBarTheme: const TabBarThemeData(
       labelStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w500,
-      ),
+      unselectedLabelStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
       labelColor: Colors.white,
       unselectedLabelColor: Colors.white70,
     ),
@@ -310,11 +280,7 @@ class AppTheme {
   // ============================================
 
   /// Estilo para números/valores monetários
-  static TextStyle number({
-    double fontSize = 24,
-    FontWeight fontWeight = FontWeight.w700,
-    Color? color,
-  }) {
+  static TextStyle number({double fontSize = 24, FontWeight fontWeight = FontWeight.w700, Color? color}) {
     return GoogleFonts.nunitoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
@@ -328,11 +294,7 @@ class AppTheme {
   }
 
   /// Estilo para data/hora
-  static TextStyle dateTime({
-    double fontSize = 14,
-    FontWeight fontWeight = FontWeight.w500,
-    Color? color,
-  }) {
+  static TextStyle dateTime({double fontSize = 14, FontWeight fontWeight = FontWeight.w500, Color? color}) {
     return GoogleFonts.nunitoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
@@ -356,11 +318,7 @@ class AppTheme {
   }
 
   /// Estilo para badges/pills
-  static TextStyle badge({
-    double fontSize = 11,
-    FontWeight fontWeight = FontWeight.w600,
-    Color? color,
-  }) {
+  static TextStyle badge({double fontSize = 11, FontWeight fontWeight = FontWeight.w600, Color? color}) {
     return GoogleFonts.nunitoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
@@ -383,11 +341,7 @@ class AppTheme {
   }
 
   /// Estilo para links
-  static TextStyle link({
-    double fontSize = 14,
-    FontWeight fontWeight = FontWeight.w500,
-    Color? color,
-  }) {
+  static TextStyle link({double fontSize = 14, FontWeight fontWeight = FontWeight.w500, Color? color}) {
     return GoogleFonts.nunitoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
@@ -400,10 +354,7 @@ class AppTheme {
   }
 
   /// Estilo para texto em erro
-  static TextStyle error({
-    double fontSize = 12,
-    FontWeight fontWeight = FontWeight.w400,
-  }) {
+  static TextStyle error({double fontSize = 12, FontWeight fontWeight = FontWeight.w400}) {
     return GoogleFonts.nunitoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
@@ -414,10 +365,7 @@ class AppTheme {
   }
 
   /// Estilo para texto de sucesso
-  static TextStyle success({
-    double fontSize = 12,
-    FontWeight fontWeight = FontWeight.w500,
-  }) {
+  static TextStyle success({double fontSize = 12, FontWeight fontWeight = FontWeight.w500}) {
     return GoogleFonts.nunitoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,

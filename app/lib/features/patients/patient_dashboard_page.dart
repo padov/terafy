@@ -6,7 +6,7 @@ import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/anamnesis/bloc/anamnesis_bloc.dart';
 import 'package:terafy/features/anamnesis/bloc/anamnesis_bloc_models.dart';
 import 'package:terafy/features/anamnesis/pages/anamnesis_view_page.dart';
-import 'package:terafy/features/anamnesis/pages/anamnesis_form_page.dart';
+import 'package:terafy/features/anamnesis/pages/template_selection_page.dart';
 import 'package:terafy/features/patients/bloc/patients_bloc.dart';
 import 'package:terafy/features/patients/bloc/patients_bloc_models.dart';
 import 'package:terafy/features/patients/models/patient.dart';
@@ -1200,22 +1200,57 @@ class _PatientDashboardContentState extends State<_PatientDashboardContent> {
               children: [
                 const Text('Nenhuma anamnese encontrada', style: TextStyle(fontSize: 14, color: AppColors.offBlack)),
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AnamnesisFormPage(patientId: patient.id, therapistId: patient.therapistId),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  TemplateSelectionPage(patientId: patient.id, therapistId: patient.therapistId),
+                            ),
+                          );
+                          if (result == true) {
+                            // Recarrega anamnese
+                            context.read<AnamnesisBloc>().add(LoadAnamnesisByPatientId(patient.id));
+                          }
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Criar Anamnese'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
                       ),
-                    );
-                    if (result == true) {
-                      // Recarrega anamnese
-                      context.read<AnamnesisBloc>().add(LoadAnamnesisByPatientId(patient.id));
-                    }
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Criar Anamnese'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => TemplateSelectionPage(
+                                patientId: patient.id,
+                                therapistId: patient.therapistId,
+                                isInviteMode: true,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.send),
+                        label: Flexible(child: const Text('Enviar Convite', overflow: TextOverflow.ellipsis)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             );

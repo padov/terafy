@@ -276,4 +276,96 @@ class AnamnesisController {
       throw AnamnesisException('Erro ao remover template: ${e.toString()}', 500);
     }
   }
+
+  // ========== INVITE METHODS ==========
+
+  Future<String> createInvite({
+    required int therapistId,
+    required int patientId,
+    required int templateId,
+    required int userId,
+  }) async {
+    AppLogger.func();
+    try {
+      // Default expiry: 7 days
+      final expiresAt = DateTime.now().add(const Duration(days: 7));
+
+      return await _repository.createInvite(
+        therapistId: therapistId,
+        patientId: patientId,
+        templateId: templateId,
+        expiresAt: expiresAt,
+      );
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      throw AnamnesisException('Erro ao criar convite: ${e.toString()}', 500);
+    }
+  }
+
+  Future<Map<String, dynamic>> getPublicInviteContext(String token) async {
+    AppLogger.func();
+    try {
+      final data = await _repository.getInviteByToken(token);
+      if (data == null) {
+        throw AnamnesisException('Convite inválido ou expirado', 404);
+      }
+
+      // Transform flat DB structure to nested JSON structure expected by frontend
+      return {
+        'patientName': data['patient_name'],
+        'therapistName': data['therapist_name'],
+        'template': {
+          'id': data['template_id'],
+          'name': data['template_name'],
+          'description': data['template_description'],
+          'structure': data['template_structure'], // This is already a Map/JSON from DB
+        },
+      };
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      if (e is AnamnesisException) rethrow;
+      throw AnamnesisException('Erro ao buscar convite: ${e.toString()}', 500);
+    }
+  }
+
+  Future<Anamnesis> submitPublicInvite(String token, Map<String, dynamic> formData) async {
+    AppLogger.func();
+    try {
+      final invite = await _repository.getInviteByToken(token);
+      if (invite == null) {
+        throw AnamnesisException('Convite inválido ou expirado', 404);
+      }
+
+      final patientId = invite['patient_id'] as int;
+      final therapistId = invite['therapist_id'] as int;
+      final templateId = invite['template_id'] as int;
+
+      // Create Anamnesis object
+      final anamnesis = Anamnesis(
+        id: 0, // New
+        patientId: patientId,
+        therapistId: therapistId,
+        templateId: templateId,
+        data: formData,
+        completedAt: DateTime.now(), // Auto-complete when submitted by patient
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final created = await _repository.createAnamnesis(
+        anamnesis,
+        userId: 0, // System/Public context
+        userRole: 'system',
+        bypassRLS: true,
+      );
+
+      await _repository.consumeInvite(invite['id'] as int);
+
+      return created;
+    } catch (e, stack) {
+      AppLogger.error(e, stack);
+      if (e is AnamnesisException) rethrow;
+      throw AnamnesisException('Erro ao submeter anamnese: ${e.toString()}', 500);
+    }
+  }
 }

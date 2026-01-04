@@ -26,9 +26,7 @@ class AnamnesisSection extends Equatable {
     List<AnamnesisField> _parseFields(dynamic value) {
       if (value == null) return [];
       if (value is List) {
-        return value
-            .map((e) => AnamnesisField.fromJson(e as Map<String, dynamic>))
-            .toList();
+        return value.map((e) => AnamnesisField.fromJson(e as Map<String, dynamic>)).toList();
       }
       return [];
     }
@@ -58,16 +56,28 @@ class AnamnesisSection extends Equatable {
     };
   }
 
-  @override
-  List<Object?> get props => [
-        id,
-        title,
-        description,
-        order,
-        collapsible,
-        collapsedByDefault,
-        conditional,
-        fields,
-      ];
-}
+  AnamnesisSection copyWith({
+    String? id,
+    String? title,
+    String? description,
+    int? order,
+    bool? collapsible,
+    bool? collapsedByDefault,
+    Map<String, dynamic>? conditional,
+    List<AnamnesisField>? fields,
+  }) {
+    return AnamnesisSection(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      order: order ?? this.order,
+      collapsible: collapsible ?? this.collapsible,
+      collapsedByDefault: collapsedByDefault ?? this.collapsedByDefault,
+      conditional: conditional ?? this.conditional,
+      fields: fields ?? this.fields,
+    );
+  }
 
+  @override
+  List<Object?> get props => [id, title, description, order, collapsible, collapsedByDefault, conditional, fields];
+}

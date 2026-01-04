@@ -18,24 +18,16 @@ class AuthInterceptor extends Interceptor {
   bool _isRefreshing = false;
   final List<_PendingRequest> _pendingRequests = [];
 
-  AuthInterceptor(
-    this._secureStorage,
-    this._dio, {
-    RefreshTokenUseCase? refreshTokenUseCase,
-    this.onTokenExpired,
-  }) : _refreshTokenUseCase = refreshTokenUseCase;
+  AuthInterceptor(this._secureStorage, this._dio, {RefreshTokenUseCase? refreshTokenUseCase, this.onTokenExpired})
+    : _refreshTokenUseCase = refreshTokenUseCase;
+
+  static const _publicRoutes = ['/auth/login', '/auth/register', '/auth/refresh', '/anamnesis/public/'];
 
   @override
-  void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     AppLogger.func();
     // Adiciona o token apenas se não for uma rota pública
-    final publicRoutes = ['/auth/login', '/auth/register', '/auth/refresh'];
-    final isPublicRoute = publicRoutes.any(
-      (route) => options.path.contains(route),
-    );
+    final isPublicRoute = _publicRoutes.any((route) => options.path.contains(route));
 
     if (!isPublicRoute) {
       final token = await _secureStorage.getToken();
@@ -50,18 +42,13 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     AppLogger.func();
-    // Se o erro for 401 e não for login/refresh, tenta renovar o token
-    if (err.response?.statusCode == 401 &&
-        err.requestOptions.path != '/auth/login' &&
-        err.requestOptions.path != '/auth/refresh') {
+    // Se o erro for 401 e não for login/refresh/public, tenta renovar o token
+    final isPublicRoute = _publicRoutes.any((route) => err.requestOptions.path.contains(route));
+    if (err.response?.statusCode == 401 && !isPublicRoute) {
       // Se já está tentando refresh, adiciona à fila
       if (_isRefreshing) {
-        AppLogger.info(
-          '🔄 Refresh em andamento, adicionando requisição à fila',
-        );
-        _pendingRequests.add(
-          _PendingRequest(options: err.requestOptions, handler: handler),
-        );
+        AppLogger.info('🔄 Refresh em andamento, adicionando requisição à fila');
+        _pendingRequests.add(_PendingRequest(options: err.requestOptions, handler: handler));
         return;
       }
 
@@ -94,8 +81,7 @@ class AuthInterceptor extends Interceptor {
           }
 
           // Atualiza header da requisição original
-          err.requestOptions.headers['Authorization'] =
-              'Bearer ${result.authToken}';
+          err.requestOptions.headers['Authorization'] = 'Bearer ${result.authToken}';
 
           // Retry da requisição original
           AppLogger.info('🔄 Retentando requisição original...');
@@ -125,9 +111,7 @@ class AuthInterceptor extends Interceptor {
   /// Processa requisições pendentes com o novo token
   void _processPendingRequests(String newToken) {
     AppLogger.func();
-    AppLogger.info(
-      '📋 Processando ${_pendingRequests.length} requisições pendentes',
-    );
+    AppLogger.info('📋 Processando ${_pendingRequests.length} requisições pendentes');
 
     for (var pending in _pendingRequests) {
       pending.options.headers['Authorization'] = 'Bearer $newToken';
@@ -152,9 +136,7 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    AppLogger.info(
-      '❌ Cancelando ${_pendingRequests.length} requisições pendentes após falha de refresh',
-    );
+    AppLogger.info('❌ Cancelando ${_pendingRequests.length} requisições pendentes após falha de refresh');
 
     for (var pending in _pendingRequests) {
       pending.handler.reject(error);
@@ -172,11 +154,16 @@ class AuthInterceptor extends Interceptor {
     // Chama callback se fornecido
     onTokenExpired?.call();
 
-    // Redireciona para login
+    // Redireciona para login APENAS se não estiver em uma rota pública
     if (navigatorKey.currentContext != null) {
-      Navigator.of(
-        navigatorKey.currentContext!,
-      ).pushNamedAndRemoveUntil(AppRouter.loginRoute, (route) => false);
+      final currentRouteName = ModalRoute.of(navigatorKey.currentContext!)?.settings.name;
+      final isPublicRoute = currentRouteName != null && _publicRoutes.any((route) => currentRouteName.contains(route));
+
+      if (!isPublicRoute) {
+        Navigator.of(navigatorKey.currentContext!).pushNamedAndRemoveUntil(AppRouter.loginRoute, (route) => false);
+      } else {
+        AppLogger.info('🔒 Logout realizado, mas mantendo na rota pública: $currentRouteName');
+      }
     }
   }
 }

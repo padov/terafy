@@ -14,11 +14,12 @@ abstract class AnamnesisEvent extends Equatable {
 /// Carrega templates disponíveis
 class LoadTemplates extends AnamnesisEvent {
   final String? category;
+  final bool? isSystem;
 
-  const LoadTemplates({this.category});
+  const LoadTemplates({this.category, this.isSystem});
 
   @override
-  List<Object?> get props => [category];
+  List<Object?> get props => [category, isSystem];
 }
 
 /// Carrega anamnese por ID do paciente
@@ -66,10 +67,7 @@ class UpdateAnamnesis extends AnamnesisEvent {
   final String id;
   final Anamnesis anamnesis;
 
-  const UpdateAnamnesis({
-    required this.id,
-    required this.anamnesis,
-  });
+  const UpdateAnamnesis({required this.id, required this.anamnesis});
 
   @override
   List<Object?> get props => [id, anamnesis];
@@ -110,6 +108,50 @@ class ResetAnamnesisState extends AnamnesisEvent {
   const ResetAnamnesisState();
 }
 
+// ========== TEMPLATE EVENTS ==========
+
+/// Cria novo template
+class CreateTemplate extends AnamnesisEvent {
+  final AnamnesisTemplate template;
+
+  const CreateTemplate(this.template);
+
+  @override
+  List<Object?> get props => [template];
+}
+
+/// Atualiza template existente
+class UpdateTemplate extends AnamnesisEvent {
+  final String id;
+  final AnamnesisTemplate template;
+
+  const UpdateTemplate({required this.id, required this.template});
+
+  @override
+  List<Object?> get props => [id, template];
+}
+
+/// Deleta template
+class DeleteTemplate extends AnamnesisEvent {
+  final String id;
+
+  const DeleteTemplate(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
+/// Cria um convite para preenchimento de anamnese
+class CreateInvite extends AnamnesisEvent {
+  final String patientId;
+  final String templateId;
+
+  const CreateInvite({required this.patientId, required this.templateId});
+
+  @override
+  List<Object?> get props => [patientId, templateId];
+}
+
 // ========== STATES ==========
 
 abstract class AnamnesisState extends Equatable {
@@ -131,18 +173,12 @@ class TemplatesLoaded extends AnamnesisState {
   final List<AnamnesisTemplate> templates;
   final AnamnesisTemplate? selectedTemplate;
 
-  const TemplatesLoaded({
-    required this.templates,
-    this.selectedTemplate,
-  });
+  const TemplatesLoaded({required this.templates, this.selectedTemplate});
 
   @override
   List<Object?> get props => [templates, selectedTemplate];
 
-  TemplatesLoaded copyWith({
-    List<AnamnesisTemplate>? templates,
-    AnamnesisTemplate? selectedTemplate,
-  }) {
+  TemplatesLoaded copyWith({List<AnamnesisTemplate>? templates, AnamnesisTemplate? selectedTemplate}) {
     return TemplatesLoaded(
       templates: templates ?? this.templates,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
@@ -154,22 +190,13 @@ class AnamnesisLoaded extends AnamnesisState {
   final Anamnesis anamnesis;
   final AnamnesisTemplate? template;
 
-  const AnamnesisLoaded({
-    required this.anamnesis,
-    this.template,
-  });
+  const AnamnesisLoaded({required this.anamnesis, this.template});
 
   @override
   List<Object?> get props => [anamnesis, template];
 
-  AnamnesisLoaded copyWith({
-    Anamnesis? anamnesis,
-    AnamnesisTemplate? template,
-  }) {
-    return AnamnesisLoaded(
-      anamnesis: anamnesis ?? this.anamnesis,
-      template: template ?? this.template,
-    );
+  AnamnesisLoaded copyWith({Anamnesis? anamnesis, AnamnesisTemplate? template}) {
+    return AnamnesisLoaded(anamnesis: anamnesis ?? this.anamnesis, template: template ?? this.template);
   }
 }
 
@@ -191,14 +218,7 @@ class AnamnesisEditing extends AnamnesisState {
   });
 
   @override
-  List<Object?> get props => [
-        existingAnamnesis,
-        template,
-        data,
-        patientId,
-        therapistId,
-        templateId,
-      ];
+  List<Object?> get props => [existingAnamnesis, template, data, patientId, therapistId, templateId];
 
   AnamnesisEditing copyWith({
     Anamnesis? existingAnamnesis,
@@ -223,13 +243,30 @@ class AnamnesisSuccess extends AnamnesisState {
   final Anamnesis anamnesis;
   final String message;
 
-  const AnamnesisSuccess({
-    required this.anamnesis,
-    this.message = 'Anamnese salva com sucesso',
-  });
+  const AnamnesisSuccess({required this.anamnesis, this.message = 'Anamnese salva com sucesso'});
 
   @override
   List<Object?> get props => [anamnesis, message];
+}
+
+class TemplateOperationSuccess extends AnamnesisState {
+  final AnamnesisTemplate? template;
+  final String message;
+
+  const TemplateOperationSuccess({this.template, required this.message});
+
+  @override
+  List<Object?> get props => [template, message];
+}
+
+class InviteCreated extends AnamnesisState {
+  final String link;
+  final String message;
+
+  const InviteCreated({required this.link, required this.message});
+
+  @override
+  List<Object?> get props => [link, message];
 }
 
 class AnamnesisError extends AnamnesisState {
@@ -240,4 +277,3 @@ class AnamnesisError extends AnamnesisState {
   @override
   List<Object?> get props => [message];
 }
-

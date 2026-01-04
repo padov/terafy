@@ -21,7 +21,21 @@ class AnamnesisViewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = Scaffold(
       appBar: AppBar(title: const Text('Anamnese'), backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-      body: BlocBuilder<AnamnesisBloc, AnamnesisState>(
+      body: BlocConsumer<AnamnesisBloc, AnamnesisState>(
+        listener: (context, state) {
+          if (state is AnamnesisSuccess) {
+            if (state.message.toLowerCase().contains('deletada')) {
+              Navigator.of(context).pop(true);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.green));
+            } else {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.green));
+            }
+          }
+        },
         builder: (context, state) {
           if (state is AnamnesisLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -51,6 +65,10 @@ class AnamnesisViewPage extends StatelessWidget {
 
           if (state is AnamnesisLoaded) {
             return _buildAnamnesisView(context, state.anamnesis, state.template);
+          }
+
+          if (state is AnamnesisSuccess && state.message.toLowerCase().contains('deletada')) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           return const Center(child: Text('Nenhuma anamnese encontrada'));
@@ -121,31 +139,68 @@ class AnamnesisViewPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (anamnesis.completedAt == null)
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () async {
-                            // Navegar para edição
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => AnamnesisFormPage(
-                                  patientId: anamnesis.patientId,
-                                  therapistId: anamnesis.therapistId,
-                                  template: template,
-                                  existingAnamnesis: anamnesis,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            tooltip: 'Editar Anamnese',
+                            onPressed: () async {
+                              // Navegar para edição
+                              final result = await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => AnamnesisFormPage(
+                                    patientId: anamnesis.patientId,
+                                    therapistId: anamnesis.therapistId,
+                                    template: template,
+                                    existingAnamnesis: anamnesis,
+                                  ),
                                 ),
-                              ),
-                            );
-                            // Recarrega anamnese após editar
-                            if (result == true && context.mounted) {
-                              context.read<AnamnesisBloc>().add(
-                                anamnesisId != null
-                                    ? LoadAnamnesisById(anamnesisId!)
-                                    : LoadAnamnesisByPatientId(patientId),
                               );
-                            }
-                          },
-                        ),
+                              // Recarrega anamnese após editar
+                              if (result == true && context.mounted) {
+                                context.read<AnamnesisBloc>().add(
+                                  anamnesisId != null
+                                      ? LoadAnamnesisById(anamnesisId!)
+                                      : LoadAnamnesisByPatientId(patientId),
+                                );
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            tooltip: 'Excluir Anamnese',
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text('Excluir Anamnese'),
+                                  content: const Text(
+                                    'Tem certeza que deseja excluir esta anamnese? Esta ação não pode ser desfeita.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(dialogContext),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(dialogContext); // Fecha dialog
+                                        context.read<AnamnesisBloc>().add(DeleteAnamnesis(anamnesis.id!));
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Excluir'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   if (template?.description != null)
