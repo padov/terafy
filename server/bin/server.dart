@@ -21,6 +21,8 @@ import 'package:server/features/schedule/schedule.repository.dart';
 import 'package:server/features/session/session.controller.dart';
 import 'package:server/features/session/session.handler.dart';
 import 'package:server/features/session/session.repository.dart';
+import 'package:server/features/session/session_ai.controller.dart';
+import 'package:server/core/services/openai_service.dart';
 import 'package:server/features/financial/financial.controller.dart';
 import 'package:server/features/financial/financial.handler.dart';
 import 'package:server/features/financial/financial.repository.dart';
@@ -181,7 +183,13 @@ void main() async {
   final sessionRepository = SessionRepository(dbConnection);
   final financialRepository = FinancialRepository(dbConnection);
   final sessionController = SessionController(sessionRepository, scheduleRepository, financialRepository);
-  final sessionHandler = SessionHandler(sessionController);
+  final sessionAIController = SessionAIController(
+    sessionRepository,
+    patientRepository,
+    therapistRepository,
+    OpenAIService(),
+  );
+  final sessionHandler = SessionHandler(sessionController, sessionAIController);
   final financialController = FinancialController(financialRepository);
   final financialHandler = FinancialHandler(financialController);
   final homeController = HomeController(scheduleRepository, sessionRepository, patientRepository, financialRepository);

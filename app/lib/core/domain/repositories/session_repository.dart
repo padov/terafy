@@ -19,4 +19,6 @@ abstract class SessionRepository {
   Future<void> deleteSession(int sessionId);
 
   Future<int> getNextSessionNumber(int patientId);
+
+  Future<Map<String, dynamic>> analyzeAudio(int sessionId, {String? filePath, List<int>? audioBytes});
 }
