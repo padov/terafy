@@ -8,10 +8,13 @@ import 'package:server/core/middleware/auth_middleware.dart';
 import 'package:server/features/session/session.controller.dart';
 import 'package:server/features/session/session.routes.dart';
 
+import 'package:server/features/session/session_ai.controller.dart';
+
 class SessionHandler extends BaseHandler {
-  SessionHandler(this._controller);
+  SessionHandler(this._controller, this._aiController);
 
   final SessionController _controller;
+  final SessionAIController _aiController;
 
   @override
   Router get router => configureSessionRoutes(this);
@@ -306,5 +309,9 @@ class SessionHandler extends BaseHandler {
       AppLogger.error(e, stack);
       return internalServerErrorResponse('Erro ao calcular próximo número de sessão: ${e.toString()}');
     }
+  }
+
+  Future<Response> handleAnalyzeAudio(Request request, String id) async {
+    return _aiController.handleAnalyzeAudio(request, id);
   }
 }

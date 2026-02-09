@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:terafy/common/app_colors.dart';
@@ -5,6 +8,10 @@ import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/sessions/bloc/sessions_bloc.dart';
 import 'package:terafy/features/sessions/bloc/sessions_bloc_models.dart';
 import 'package:terafy/features/sessions/models/session.dart';
+import 'package:terafy/features/sessions/services/audio_recorder_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+import 'package:terafy/features/sessions/widgets/transcription_review_modal.dart';
 
 class SessionEvolutionPage extends StatelessWidget {
   final String sessionId;
@@ -47,6 +54,13 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent> with
   late TabController _tabController;
   final _formKey = GlobalKey<FormState>();
 
+  // Audio Recording State
+  final _audioRecorder = AudioRecorderService();
+  bool _isRecording = false;
+  bool _isAnalyzing = false;
+  Timer? _recordingTimer;
+  Duration _recordingDuration = Duration.zero;
+
   Session? _currentSession;
 
   // Campos do formulário
@@ -72,10 +86,152 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent> with
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _initRecorder();
 
     if (widget.existingSession != null) {
       _loadExistingData(widget.existingSession!);
     }
+  }
+
+  Future<void> _initRecorder() async {
+    try {
+      await _audioRecorder.init();
+    } catch (e) {
+      print('Erro ao inicializar gravador: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erro ao acessar microfone')));
+    }
+  }
+
+  Future<void> _toggleRecording() async {
+    try {
+      if (_isRecording) {
+        final path = await _audioRecorder.stopRecording();
+        _recordingTimer?.cancel();
+        setState(() {
+          _isRecording = false;
+          _isAnalyzing = true;
+        });
+
+        if (path != null) {
+          await _analyzeAudio(path);
+        }
+      } else {
+        await _audioRecorder.startRecording();
+        setState(() {
+          _isRecording = true;
+          _recordingDuration = Duration.zero;
+        });
+        _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          setState(() {
+            _recordingDuration += const Duration(seconds: 1);
+          });
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro na gravação: $e')));
+      if (!mounted) return;
+      setState(() {
+        _isRecording = false;
+        _isAnalyzing = false;
+      });
+    }
+  }
+
+  Future<void> _analyzeAudio(String path) async {
+    try {
+      final repository = DependencyContainer().sessionRepository;
+      final sessionId = int.parse(widget.sessionId);
+
+      Map<String, dynamic> result;
+
+      if (kIsWeb) {
+        // On Web, 'path' is a Blob URL. We need to fetch the data.
+        final response = await http.get(Uri.parse(path));
+        if (response.statusCode != 200) {
+          throw Exception('Failed to fetch audio blob');
+        }
+        result = await repository.analyzeAudio(sessionId, audioBytes: response.bodyBytes);
+      } else {
+        final file = File(path);
+        if (!await file.exists()) throw Exception('Arquivo de áudio não encontrado');
+        result = await repository.analyzeAudio(sessionId, filePath: path);
+      }
+
+      if (result['transcription'] == null) {
+        throw Exception('Transcription not found in response');
+      }
+
+      if (!mounted) return;
+
+      // Mostrar modal de revisão
+      final bool? accepted = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => TranscriptionReviewModal(transcription: result['transcription'], analysisResult: result),
+      );
+
+      if (accepted != true) {
+        // Usuário cancelou
+        return;
+      }
+
+      // Populate fields
+      setState(() {
+        if (result['patientMood'] != null) _moodController.text = result['patientMood'];
+        if (result['sessionNotes'] != null) _notesController.text = result['sessionNotes'];
+        if (result['observedBehavior'] != null) _behaviorController.text = result['observedBehavior'];
+        if (result['resourcesUsed'] != null) _resourcesController.text = result['resourcesUsed'];
+        if (result['homework'] != null) _homeworkController.text = result['homework'];
+        if (result['patientReactions'] != null) _reactionsController.text = result['patientReactions'];
+        if (result['progressObserved'] != null) _progressController.text = result['progressObserved'];
+        if (result['difficultiesIdentified'] != null) _difficultiesController.text = result['difficultiesIdentified'];
+        if (result['nextSteps'] != null) _nextStepsController.text = result['nextSteps'];
+        if (result['nextSessionGoals'] != null) _nextGoalsController.text = result['nextSessionGoals'];
+        if (result['importantObservations'] != null) _importantObsController.text = result['importantObservations'];
+
+        if (result['topicsDiscussed'] != null && result['topicsDiscussed'] is List) {
+          _topics = List<String>.from(result['topicsDiscussed']);
+        }
+
+        if (result['interventionsUsed'] != null && result['interventionsUsed'] is List) {
+          _interventions = List<String>.from(result['interventionsUsed']);
+        }
+
+        // Risco e Encaminhamento
+        if (result['needsReferral'] != null && result['needsReferral'] is bool) {
+          _needsReferral = result['needsReferral'];
+        }
+
+        if (result['currentRisk'] != null) {
+          try {
+            _currentRisk = RiskLevel.values.firstWhere(
+              (e) => e.name == result['currentRisk'],
+              orElse: () => RiskLevel.low,
+            );
+          } catch (_) {}
+        }
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Dados preenchidos com sucesso!'), backgroundColor: Colors.green));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro na análise: $e'), backgroundColor: Colors.red));
+    } finally {
+      setState(() => _isAnalyzing = false);
+    }
+  }
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(d.inSeconds.remainder(60));
+    return "${twoDigits(d.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 
   void _loadExistingData(Session session) {
@@ -148,6 +304,8 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent> with
 
   @override
   void dispose() {
+    _recordingTimer?.cancel();
+    _audioRecorder.dispose();
     _tabController.dispose();
     _moodController.dispose();
     _topicsController.dispose();
@@ -277,6 +435,8 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent> with
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildAudioRecorderUI(),
+          const SizedBox(height: 24),
           _buildSectionTitle('Humor/Estado Emocional'),
           const SizedBox(height: 8),
           TextFormField(
@@ -343,6 +503,57 @@ class _SessionEvolutionContentState extends State<_SessionEvolutionContent> with
               hintText: 'Ex: Postura tensa no início, relaxou após primeiros 20 minutos',
             ),
             maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAudioRecorderUI() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _isRecording ? Colors.red.withOpacity(0.05) : AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _isRecording ? Colors.red : AppColors.primary.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _isAnalyzing ? null : _toggleRecording,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: _isRecording ? Colors.red : AppColors.primary, shape: BoxShape.circle),
+              child: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.white, size: 24),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isAnalyzing
+                      ? 'Processando áudio...'
+                      : _isRecording
+                      ? 'Gravando...'
+                      : 'Gravar Sessão',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _isRecording ? Colors.red : AppColors.primary),
+                ),
+                if (_isRecording)
+                  Text(
+                    _formatDuration(_recordingDuration),
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+                  ),
+                if (_isAnalyzing)
+                  const Padding(padding: EdgeInsets.only(top: 8.0), child: LinearProgressIndicator(minHeight: 2)),
+                if (!_isRecording && !_isAnalyzing)
+                  Text(
+                    'Toque para iniciar a gravação e preencher automaticamente.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

@@ -21,20 +21,13 @@ class SessionRepositoryImpl implements SessionRepository {
       AppLogger.func();
       final queryParams = <String, dynamic>{};
       if (patientId != null) queryParams['patientId'] = patientId.toString();
-      if (therapistId != null)
-        queryParams['therapistId'] = therapistId.toString();
-      if (appointmentId != null)
-        queryParams['appointmentId'] = appointmentId.toString();
+      if (therapistId != null) queryParams['therapistId'] = therapistId.toString();
+      if (appointmentId != null) queryParams['appointmentId'] = appointmentId.toString();
       if (status != null) queryParams['status'] = status;
-      if (startDate != null)
-        queryParams['start'] = startDate.toUtc().toIso8601String();
-      if (endDate != null)
-        queryParams['end'] = endDate.toUtc().toIso8601String();
+      if (startDate != null) queryParams['start'] = startDate.toUtc().toIso8601String();
+      if (endDate != null) queryParams['end'] = endDate.toUtc().toIso8601String();
 
-      final response = await httpClient.get(
-        '/sessions',
-        queryParameters: queryParams.isEmpty ? null : queryParams,
-      );
+      final response = await httpClient.get('/sessions', queryParameters: queryParams.isEmpty ? null : queryParams);
 
       if (response.data is! List) {
         throw Exception('Resposta inválida ao carregar sessões');
@@ -42,11 +35,7 @@ class SessionRepositoryImpl implements SessionRepository {
 
       final data = response.data as List;
 
-      return data
-          .map(
-            (item) => Session.fromJson(Map<String, dynamic>.from(item as Map)),
-          )
-          .toList();
+      return data.map((item) => Session.fromJson(Map<String, dynamic>.from(item as Map))).toList();
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e) ?? 'Erro ao carregar sessões');
     }
@@ -71,10 +60,7 @@ class SessionRepositoryImpl implements SessionRepository {
   Future<Session> createSession(Session session) async {
     AppLogger.func();
     try {
-      final response = await httpClient.post(
-        '/sessions',
-        data: session.toJson(),
-      );
+      final response = await httpClient.post('/sessions', data: session.toJson());
 
       if (response.data is! Map<String, dynamic>) {
         throw Exception('Resposta inválida ao criar sessão');
@@ -90,10 +76,7 @@ class SessionRepositoryImpl implements SessionRepository {
   Future<Session> updateSession(int sessionId, Session session) async {
     AppLogger.func();
     try {
-      final response = await httpClient.put(
-        '/sessions/$sessionId',
-        data: session.toJson(),
-      );
+      final response = await httpClient.put('/sessions/$sessionId', data: session.toJson());
 
       if (response.data is! Map<String, dynamic>) {
         throw Exception('Resposta inválida ao atualizar sessão');
@@ -131,9 +114,30 @@ class SessionRepositoryImpl implements SessionRepository {
       final data = response.data as Map<String, dynamic>;
       return data['nextNumber'] as int;
     } on DioException catch (e) {
-      throw Exception(
-        _extractErrorMessage(e) ?? 'Erro ao calcular próximo número de sessão',
-      );
+      throw Exception(_extractErrorMessage(e) ?? 'Erro ao calcular próximo número de sessão');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> analyzeAudio(int sessionId, {String? filePath, List<int>? audioBytes}) async {
+    try {
+      MultipartFile audioMultipart;
+
+      if (audioBytes != null) {
+        audioMultipart = MultipartFile.fromBytes(audioBytes, filename: 'audio_upload.webm');
+      } else if (filePath != null) {
+        audioMultipart = await MultipartFile.fromFile(filePath);
+      } else {
+        throw Exception('File path or audio bytes must be provided');
+      }
+
+      final formData = FormData.fromMap({'audio': audioMultipart});
+
+      final response = await httpClient.post('/sessions/$sessionId/analyze_audio', data: formData);
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e) ?? 'Erro ao analisar áudio');
     }
   }
 

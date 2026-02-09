@@ -5,6 +5,19 @@ Todas as mudanças notáveis no servidor serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.6.0] - 2026-01-12
+
+### 🎉 Adicionado
+
+#### Revisão de Transcrição e Análise Avançada
+
+- **Frontend**: Novo modal de revisão pós-transcrição, permitindo ao terapeuta validar o texto antes do preenchimento.
+- **Backend**: Prompt de sistema aprimorado com mapeamento completo dos campos da tabela `session` (`currentRisk`, `needsReferral`, observações).
+- **Setup**: Permissões de áudio (`RECORD_AUDIO`) configuradas corretamente para Android.
+- **UX**: Fluxo de gravação mais robusto com feedback visual e tratamento de erros de layout.
+
+---
+
 ## 0.5.0
 
 ## [0.5.0] - 2026-01-04

@@ -11,9 +11,7 @@ Router configureSessionRoutes(SessionHandler handler) {
   router.get('/', therapistOrAdmin.call(handler.handleListSessions));
 
   router.get('/<id|[0-9]+>', (Request request, String id) async {
-    return therapistOrAdmin.call(
-      (Request req) => handler.handleGetSession(req, id),
-    )(request);
+    return therapistOrAdmin.call((Request req) => handler.handleGetSession(req, id))(request);
   });
 
   router.get('/next-number', (Request request) async {
@@ -23,15 +21,14 @@ Router configureSessionRoutes(SessionHandler handler) {
   router.post('/', therapistOrAdmin.call(handler.handleCreateSession));
 
   router.put('/<id|[0-9]+>', (Request request, String id) async {
-    return therapistOrAdmin.call(
-      (Request req) => handler.handleUpdateSession(req, id),
-    )(request);
+    return therapistOrAdmin.call((Request req) => handler.handleUpdateSession(req, id))(request);
   });
 
   router.delete('/<id|[0-9]+>', (Request request, String id) async {
-    return therapistOrAdmin.call(
-      (Request req) => handler.handleDeleteSession(req, id),
-    )(request);
+    return therapistOrAdmin.call((Request req) => handler.handleDeleteSession(req, id))(request);
+  });
+  router.post('/<id|[0-9]+>/analyze_audio', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleAnalyzeAudio(req, id))(request);
   });
 
   return router;

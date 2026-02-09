@@ -41,9 +41,11 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
-		<key>CADisableMinimumFrameDurationOnPhone</key>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Precisamos acesso ao microfone para gravar o áudio da sessão.</string>
 	</dict>
 </plist>

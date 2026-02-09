@@ -6,7 +6,11 @@ import 'package:server/features/session/session.controller.dart';
 import 'package:server/features/session/session.routes.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:server/features/session/session_ai.controller.dart';
+
 class _MockSessionController extends Mock implements SessionController {}
+
+class _MockSessionAIController extends Mock implements SessionAIController {}
 
 void main() {
   group('Session Routes', () {
@@ -15,7 +19,8 @@ void main() {
 
     setUp(() {
       final controller = _MockSessionController();
-      handler = SessionHandler(controller);
+      final aiController = _MockSessionAIController();
+      handler = SessionHandler(controller, aiController);
       router = configureSessionRoutes(handler);
     });
 
@@ -178,14 +183,7 @@ void main() {
 
       test('Rotas com padrões corretos são reconhecidas', () async {
         // O router usa paths relativos (sem o prefixo /sessions)
-        final validRoutes = [
-          'GET /',
-          'POST /',
-          'GET /123',
-          'PUT /456',
-          'DELETE /789',
-          'GET /next-number',
-        ];
+        final validRoutes = ['GET /', 'POST /', 'GET /123', 'PUT /456', 'DELETE /789', 'GET /next-number'];
 
         for (final route in validRoutes) {
           final parts = route.split(' ');
@@ -223,4 +221,3 @@ void main() {
     });
   });
 }
-

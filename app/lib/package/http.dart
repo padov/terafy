@@ -3,32 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 abstract class HttpClient {
-  Future<Response> get(
-    String url, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  });
+  Future<Response> get(String url, {Map<String, dynamic>? queryParameters, Options? options});
 
-  Future<Response> post(
-    String url, {
-    Map<String, dynamic>? data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  });
+  Future<Response> post(String url, {dynamic data, Map<String, dynamic>? queryParameters, Options? options});
 
-  Future<Response> put(
-    String url, {
-    Map<String, dynamic>? data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  });
+  Future<Response> put(String url, {dynamic data, Map<String, dynamic>? queryParameters, Options? options});
 
-  Future<Response> delete(
-    String url, {
-    Map<String, dynamic>? data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  });
+  Future<Response> delete(String url, {dynamic data, Map<String, dynamic>? queryParameters, Options? options});
 }
 
 class DioHttpClient implements HttpClient {
@@ -44,11 +25,7 @@ class DioHttpClient implements HttpClient {
            baseUrl: baseUrl,
            connectTimeout: connectTimeout,
            receiveTimeout: receiveTimeout,
-           headers: {
-             'Content-Type': 'application/json',
-             'Accept': 'application/json',
-             ...?defaultHeaders,
-           },
+           headers: {'Content-Type': 'application/json', 'Accept': 'application/json', ...?defaultHeaders},
          ),
        ) {
     if (enableLogger) {
@@ -72,60 +49,26 @@ class DioHttpClient implements HttpClient {
   final Dio dio;
 
   @override
-  Future<Response> get(
-    String url, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) {
+  Future<Response> get(String url, {Map<String, dynamic>? queryParameters, Options? options}) {
     AppLogger.func();
     return dio.get(url, queryParameters: queryParameters, options: options);
   }
 
   @override
-  Future<Response> post(
-    String url, {
-    Map<String, dynamic>? data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) {
+  Future<Response> post(String url, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) {
     AppLogger.func();
-    return dio.post(
-      url,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    return dio.post(url, data: data, queryParameters: queryParameters, options: options);
   }
 
   @override
-  Future<Response> put(
-    String url, {
-    Map<String, dynamic>? data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) {
+  Future<Response> put(String url, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) {
     AppLogger.func();
-    return dio.put(
-      url,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    return dio.put(url, data: data, queryParameters: queryParameters, options: options);
   }
 
   @override
-  Future<Response> delete(
-    String url, {
-    Map<String, dynamic>? data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) {
+  Future<Response> delete(String url, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) {
     AppLogger.func();
-    return dio.delete(
-      url,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    return dio.delete(url, data: data, queryParameters: queryParameters, options: options);
   }
 }

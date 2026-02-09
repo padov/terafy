@@ -7,7 +7,11 @@ import 'package:server/features/session/session.handler.dart';
 import 'package:server/features/session/session.controller.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:server/features/session/session_ai.controller.dart';
+
 class _MockSessionController extends Mock implements SessionController {}
+
+class _MockSessionAIController extends Mock implements SessionAIController {}
 
 void main() {
   setUpAll(() {
@@ -28,11 +32,13 @@ void main() {
 
   group('SessionHandler', () {
     late _MockSessionController controller;
+    late _MockSessionAIController aiController;
     late SessionHandler handler;
 
     setUp(() {
       controller = _MockSessionController();
-      handler = SessionHandler(controller);
+      aiController = _MockSessionAIController();
+      handler = SessionHandler(controller, aiController);
     });
 
     // Helper para criar request autenticado
@@ -55,12 +61,7 @@ void main() {
         ...?headers,
       };
 
-      return Request(
-        method,
-        uri,
-        body: body != null ? jsonEncode(body) : null,
-        headers: defaultHeaders,
-      );
+      return Request(method, uri, body: body != null ? jsonEncode(body) : null, headers: defaultHeaders);
     }
 
     final sampleSession = Session(
@@ -200,11 +201,7 @@ void main() {
         final request = createAuthenticatedRequest(
           method: 'POST',
           path: '/sessions',
-          body: {
-            'patientId': 1,
-            'scheduledStartTime': DateTime.now().toIso8601String(),
-            'durationMinutes': 60,
-          },
+          body: {'patientId': 1, 'scheduledStartTime': DateTime.now().toIso8601String(), 'durationMinutes': 60},
           userId: 1,
           userRole: 'therapist',
           accountId: null,
@@ -222,11 +219,7 @@ void main() {
         final request = createAuthenticatedRequest(
           method: 'POST',
           path: '/sessions',
-          body: {
-            'patientId': 1,
-            'scheduledStartTime': DateTime.now().toIso8601String(),
-            'durationMinutes': 60,
-          },
+          body: {'patientId': 1, 'scheduledStartTime': DateTime.now().toIso8601String(), 'durationMinutes': 60},
           userId: 1,
           userRole: 'patient',
         );
@@ -243,11 +236,7 @@ void main() {
         final request = createAuthenticatedRequest(
           method: 'POST',
           path: '/sessions',
-          body: {
-            'patientId': 1,
-            'scheduledStartTime': DateTime.now().toIso8601String(),
-            'durationMinutes': 60,
-          },
+          body: {'patientId': 1, 'scheduledStartTime': DateTime.now().toIso8601String(), 'durationMinutes': 60},
           userId: 1,
           userRole: 'admin',
         );
@@ -273,11 +262,7 @@ void main() {
         final request = createAuthenticatedRequest(
           method: 'POST',
           path: '/sessions',
-          body: {
-            'patientId': 0,
-            'scheduledStartTime': DateTime.now().toIso8601String(),
-            'durationMinutes': 60,
-          },
+          body: {'patientId': 0, 'scheduledStartTime': DateTime.now().toIso8601String(), 'durationMinutes': 60},
           userId: 1,
           userRole: 'therapist',
           accountId: 1,
@@ -295,12 +280,7 @@ void main() {
     group('handleGetSession', () {
       test('deve retornar sessão quando encontrada (200)', () async {
         when(
-          () => controller.getSession(
-            sessionId: 1,
-            userId: 1,
-            userRole: 'therapist',
-            accountId: 1,
-          ),
+          () => controller.getSession(sessionId: 1, userId: 1, userRole: 'therapist', accountId: 1),
         ).thenAnswer((_) async => sampleSession);
 
         final request = createAuthenticatedRequest(
@@ -346,12 +326,7 @@ void main() {
 
       test('deve retornar 404 quando sessão não encontrada', () async {
         when(
-          () => controller.getSession(
-            sessionId: 999,
-            userId: 1,
-            userRole: 'therapist',
-            accountId: 1,
-          ),
+          () => controller.getSession(sessionId: 999, userId: 1, userRole: 'therapist', accountId: 1),
         ).thenThrow(SessionException('Sessão não encontrada', 404));
 
         final request = createAuthenticatedRequest(
@@ -514,12 +489,7 @@ void main() {
       });
 
       test('deve retornar 403 quando role não autorizado', () async {
-        final request = createAuthenticatedRequest(
-          method: 'GET',
-          path: '/sessions',
-          userId: 1,
-          userRole: 'patient',
-        );
+        final request = createAuthenticatedRequest(method: 'GET', path: '/sessions', userId: 1, userRole: 'patient');
 
         final response = await handler.handleListSessions(request);
 
@@ -645,12 +615,7 @@ void main() {
     group('handleDeleteSession', () {
       test('deve deletar sessão quando encontrada (200)', () async {
         when(
-          () => controller.deleteSession(
-            sessionId: 1,
-            userId: 1,
-            userRole: 'therapist',
-            accountId: 1,
-          ),
+          () => controller.deleteSession(sessionId: 1, userId: 1, userRole: 'therapist', accountId: 1),
         ).thenAnswer((_) async {});
 
         final request = createAuthenticatedRequest(
@@ -693,12 +658,7 @@ void main() {
 
       test('deve retornar 404 quando sessão não encontrada', () async {
         when(
-          () => controller.deleteSession(
-            sessionId: 999,
-            userId: 1,
-            userRole: 'therapist',
-            accountId: 1,
-          ),
+          () => controller.deleteSession(sessionId: 999, userId: 1, userRole: 'therapist', accountId: 1),
         ).thenThrow(SessionException('Sessão não encontrada', 404));
 
         final request = createAuthenticatedRequest(
@@ -718,12 +678,7 @@ void main() {
     group('handleGetNextSessionNumber', () {
       test('deve retornar próximo número quando patientId fornecido (200)', () async {
         when(
-          () => controller.getNextSessionNumber(
-            patientId: 1,
-            userId: 1,
-            userRole: 'therapist',
-            accountId: 1,
-          ),
+          () => controller.getNextSessionNumber(patientId: 1, userId: 1, userRole: 'therapist', accountId: 1),
         ).thenAnswer((_) async => 5);
 
         final request = createAuthenticatedRequest(
@@ -785,4 +740,3 @@ void main() {
     });
   });
 }
-
