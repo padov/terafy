@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:common/common.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:terafy/core/subscription/subscription_models.dart';
+import 'package:flutter/foundation.dart';
 
 /// Serviço para gerenciar compras do Google Play Billing
 class SubscriptionService {
@@ -19,6 +20,8 @@ class SubscriptionService {
   }
 
   void _initialize() {
+    if (kIsWeb) return;
+
     _inAppPurchase.purchaseStream.listen(
       _onPurchaseUpdated,
       onDone: () => _purchaseUpdatedController.close(),
@@ -30,9 +33,18 @@ class SubscriptionService {
 
   /// Verifica se o In-App Purchase está disponível
   Future<bool> checkAvailability() async {
+    if (kIsWeb) {
+      _isAvailable = false;
+      return false;
+    }
     try {
       _isAvailable = await _inAppPurchase.isAvailable();
       AppLogger.info('In-App Purchase disponível: $_isAvailable');
+      if (!_isAvailable) {
+        AppLogger.warning(
+          '[IAP] Serviço de compras indisponível. Verifique conexão, login e configuração da Play Store.',
+        );
+      }
       return _isAvailable;
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao verificar disponibilidade: $e', stackTrace);
@@ -52,13 +64,20 @@ class SubscriptionService {
         throw Exception('In-App Purchase não está disponível');
       }
 
+      AppLogger.debug('[IAP] Buscando detalhes para produtos: $productIds');
+
       final response = await _inAppPurchase.queryProductDetails(productIds);
 
       if (response.error != null) {
+        AppLogger.error('[IAP] Erro na resposta da loja: ${response.error!.message}', StackTrace.current);
         throw Exception('Erro ao buscar produtos: ${response.error!.message}');
       }
 
-      AppLogger.info('Produtos encontrados: ${response.productDetails.length}');
+      AppLogger.debug('[IAP] Produtos não encontrados na loja: ${response.notFoundIDs}');
+      AppLogger.info('[IAP] Produtos encontrados: ${response.productDetails.length}');
+      for (var p in response.productDetails) {
+        AppLogger.debug('[IAP] Produto detalhes: ${p.id} - ${p.title} - ${p.price}');
+      }
 
       return response.productDetails;
     } catch (e, stackTrace) {

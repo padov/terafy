@@ -15,7 +15,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   SubscriptionBloc({required SubscriptionRepository repository, required SubscriptionService subscriptionService})
     : _repository = repository,
       _subscriptionService = subscriptionService,
-      super(const SubscriptionInitial()) {
+      super(const SubscriptionState(status: SubscriptionStatusEnum.initial)) {
     on<LoadSubscriptionStatus>(_onLoadSubscriptionStatus);
     on<LoadAvailablePlans>(_onLoadAvailablePlans);
     on<PurchasePlan>(_onPurchasePlan);
@@ -30,13 +30,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   }
 
   Future<void> _onLoadSubscriptionStatus(LoadSubscriptionStatus event, Emitter<SubscriptionState> emit) async {
-    emit(const SubscriptionLoading());
+    emit(state.copyWith(status: SubscriptionStatusEnum.loading));
     try {
       final status = await _repository.getSubscriptionStatus();
-      emit(SubscriptionLoaded(status: status));
+      emit(state.copyWith(status: SubscriptionStatusEnum.loaded, subscriptionStatus: status));
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao carregar status: $e', stackTrace);
-      emit(SubscriptionError(message: e.toString()));
+      emit(state.copyWith(status: SubscriptionStatusEnum.error, errorMessage: e.toString()));
     }
   }
 
@@ -85,44 +85,50 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         AppLogger.warning('Erro ao verificar disponibilidade do In-App Purchase (continuando sem produtos): $e');
       }
 
-      // Emite os planos mesmo sem produtos do Play Store
-      emit(PlansLoaded(plans: plans, productDetails: productDetails, plansWithProducts: plansWithProducts));
+      // Emite os planos mesmo sem produtos do Play Store, preservando o status atual
+      emit(state.copyWith(plans: plans, productDetails: productDetails, plansWithProducts: plansWithProducts));
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao carregar planos: $e', stackTrace);
-      emit(SubscriptionError(message: e.toString()));
+      emit(state.copyWith(status: SubscriptionStatusEnum.error, errorMessage: e.toString()));
     }
   }
 
   Future<void> _onPurchasePlan(PurchasePlan event, Emitter<SubscriptionState> emit) async {
     try {
-      emit(SubscriptionPurchasing(planId: event.planId));
+      emit(state.copyWith(status: SubscriptionStatusEnum.purchasing, purchasingPlanId: event.planId));
 
       final result = await _subscriptionService.purchaseSubscription(productDetails: event.productDetails);
 
       if (!result.success) {
-        emit(SubscriptionError(message: result.errorMessage ?? 'Erro ao realizar compra'));
+        emit(
+          state.copyWith(
+            status: SubscriptionStatusEnum.error,
+            errorMessage: result.errorMessage ?? 'Erro ao realizar compra',
+            purchasingPlanId: null, // Limpa o ID de compra em caso de erro imediato
+          ),
+        );
       }
       // A compra será processada no stream de purchaseUpdated
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao comprar plano: $e', stackTrace);
-      emit(SubscriptionError(message: e.toString()));
+      emit(state.copyWith(status: SubscriptionStatusEnum.error, errorMessage: e.toString()));
     }
   }
 
   Future<void> _onRestorePurchases(RestorePurchases event, Emitter<SubscriptionState> emit) async {
     try {
-      emit(const SubscriptionRestoring());
+      emit(state.copyWith(status: SubscriptionStatusEnum.restoring));
       final success = await _subscriptionService.restorePurchases();
 
       if (success) {
         // Recarrega status após restaurar
         add(const LoadSubscriptionStatus());
       } else {
-        emit(const SubscriptionError(message: 'Erro ao restaurar compras'));
+        emit(state.copyWith(status: SubscriptionStatusEnum.error, errorMessage: 'Erro ao restaurar compras'));
       }
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao restaurar compras: $e', stackTrace);
-      emit(SubscriptionError(message: e.toString()));
+      emit(state.copyWith(status: SubscriptionStatusEnum.error, errorMessage: e.toString()));
     }
   }
 
@@ -141,17 +147,34 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               autoRenewing: purchaseInfo['auto_renewing'] as bool,
             );
 
-            emit(SubscriptionPurchased(status: status));
+            emit(
+              state.copyWith(
+                status: SubscriptionStatusEnum.purchased,
+                subscriptionStatus: status,
+                purchasingPlanId: null,
+              ),
+            );
 
             // Recarrega status
             add(const LoadSubscriptionStatus());
           }
         } catch (e, stackTrace) {
           AppLogger.error('Erro ao processar compra: $e', stackTrace);
-          emit(SubscriptionError(message: 'Erro ao processar compra: ${e.toString()}'));
+          emit(
+            state.copyWith(
+              status: SubscriptionStatusEnum.error,
+              errorMessage: 'Erro ao processar compra: ${e.toString()}',
+            ),
+          );
         }
       } else if (purchase.status == PurchaseStatus.error) {
-        emit(SubscriptionError(message: purchase.error?.message ?? 'Erro na compra'));
+        emit(
+          state.copyWith(
+            status: SubscriptionStatusEnum.error,
+            errorMessage: purchase.error?.message ?? 'Erro na compra',
+            purchasingPlanId: null,
+          ),
+        );
       }
     }
   }
@@ -159,7 +182,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   Future<void> _onCheckSubscriptionStatus(CheckSubscriptionStatus event, Emitter<SubscriptionState> emit) async {
     try {
       final status = await _repository.getSubscriptionStatus();
-      emit(SubscriptionLoaded(status: status));
+      emit(state.copyWith(status: SubscriptionStatusEnum.loaded, subscriptionStatus: status));
     } catch (e, stackTrace) {
       AppLogger.error('Erro ao verificar status: $e', stackTrace);
       // Não emite erro para não interromper o fluxo

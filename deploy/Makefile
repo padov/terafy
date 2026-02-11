@@ -20,6 +20,7 @@ help: ## Display this help.
 
 .PHONY: all
 all: ## Build, deploy and connect to VM (default: terafy-freetier-vm).
+	@gcloud config set account marcio.padovani@gmail.com
 	@VM_NAME=$${VM_NAME:-terafy-freetier-vm}; \
 	echo "🚀 Building, deploying and connecting to $$VM_NAME..."; \
 	echo ""; \

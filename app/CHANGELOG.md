@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0] - Fevereiro 2026
+
+### ✨ Novidades
+
+#### 💎 Planos e Assinaturas
+
+Agora você pode gerenciar sua assinatura diretamente pelo aplicativo!
+
+- **Assinatura Nativa**: Assine o Terafy Premium usando sua conta da Google Play Store.
+- **Gestão de Planos**: Visualize detalhes dos planos Mensal e Anual.
+- **Status da Assinatura**: Acompanhe o status da sua assinatura e o consumo de limites (pacientes ativos) em tempo real.
+- **Restaurar Compras**: Trocou de celular? Recupere sua assinatura ativa facilmente.
+
+### 🔧 Melhorias
+
+- **Integração com Lojas**: Adicionada biblioteca de faturamento nativo (`in_app_purchase`) para maior segurança e confiabilidade nas transações.
+- **Segurança**: Validação de recibos de compra realizada diretamente no servidor para evitar fraudes.
+
+---
+
 ## [0.5.0] - Janeiro 2026
 
 ### ✨ Novidades

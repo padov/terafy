@@ -46,68 +46,57 @@ class CheckSubscriptionStatus extends SubscriptionEvent {
 }
 
 // States
-abstract class SubscriptionState extends Equatable {
-  const SubscriptionState();
 
-  @override
-  List<Object?> get props => [];
-}
+// State
+enum SubscriptionStatusEnum { initial, loading, loaded, error, purchasing, purchased, restoring }
 
-class SubscriptionInitial extends SubscriptionState {
-  const SubscriptionInitial();
-}
-
-class SubscriptionLoading extends SubscriptionState {
-  const SubscriptionLoading();
-}
-
-class SubscriptionLoaded extends SubscriptionState {
-  final SubscriptionStatus status;
-
-  const SubscriptionLoaded({required this.status});
-
-  @override
-  List<Object?> get props => [status];
-}
-
-class PlansLoaded extends SubscriptionState {
-  final List<SubscriptionPlan> plans;
+class SubscriptionState extends Equatable {
+  final SubscriptionStatusEnum status;
+  final SubscriptionStatus? subscriptionStatus;
+  final List<SubscriptionPlan>? plans;
   final List<ProductDetails>? productDetails;
   final List<({SubscriptionPlan plan, ProductDetails productDetail})>? plansWithProducts;
+  final String? errorMessage;
+  final String? purchasingPlanId;
 
-  const PlansLoaded({required this.plans, this.productDetails, this.plansWithProducts});
+  const SubscriptionState({
+    this.status = SubscriptionStatusEnum.initial,
+    this.subscriptionStatus,
+    this.plans,
+    this.productDetails,
+    this.plansWithProducts,
+    this.errorMessage,
+    this.purchasingPlanId,
+  });
+
+  SubscriptionState copyWith({
+    SubscriptionStatusEnum? status,
+    SubscriptionStatus? subscriptionStatus,
+    List<SubscriptionPlan>? plans,
+    List<ProductDetails>? productDetails,
+    List<({SubscriptionPlan plan, ProductDetails productDetail})>? plansWithProducts,
+    String? errorMessage,
+    String? purchasingPlanId,
+  }) {
+    return SubscriptionState(
+      status: status ?? this.status,
+      subscriptionStatus: subscriptionStatus ?? this.subscriptionStatus,
+      plans: plans ?? this.plans,
+      productDetails: productDetails ?? this.productDetails,
+      plansWithProducts: plansWithProducts ?? this.plansWithProducts,
+      errorMessage: errorMessage, // Error message is transient, so we don't keep old one by default unless specified
+      purchasingPlanId: purchasingPlanId ?? this.purchasingPlanId,
+    );
+  }
 
   @override
-  List<Object?> get props => [plans, productDetails, plansWithProducts];
-}
-
-class SubscriptionPurchasing extends SubscriptionState {
-  final String planId;
-
-  const SubscriptionPurchasing({required this.planId});
-
-  @override
-  List<Object?> get props => [planId];
-}
-
-class SubscriptionPurchased extends SubscriptionState {
-  final SubscriptionStatus status;
-
-  const SubscriptionPurchased({required this.status});
-
-  @override
-  List<Object?> get props => [status];
-}
-
-class SubscriptionRestoring extends SubscriptionState {
-  const SubscriptionRestoring();
-}
-
-class SubscriptionError extends SubscriptionState {
-  final String message;
-
-  const SubscriptionError({required this.message});
-
-  @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [
+    status,
+    subscriptionStatus,
+    plans,
+    productDetails,
+    plansWithProducts,
+    errorMessage,
+    purchasingPlanId,
+  ];
 }

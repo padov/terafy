@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:terafy/common/app_colors.dart';
@@ -38,22 +39,23 @@ class _SubscriptionPageContent extends StatelessWidget {
         foregroundColor: AppColors.offBlack,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.restore),
-            onPressed: () {
-              context.read<SubscriptionBloc>().add(const RestorePurchases());
-            },
-            tooltip: 'Restaurar compras',
-          ),
+          if (!kIsWeb)
+            IconButton(
+              icon: const Icon(Icons.restore),
+              onPressed: () {
+                context.read<SubscriptionBloc>().add(const RestorePurchases());
+              },
+              tooltip: 'Restaurar compras',
+            ),
         ],
       ),
       body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
         listener: (context, state) {
-          if (state is SubscriptionError) {
+          if (state.status == SubscriptionStatusEnum.error && state.errorMessage != null) {
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.red));
-          } else if (state is SubscriptionPurchased) {
+            ).showSnackBar(SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red));
+          } else if (state.status == SubscriptionStatusEnum.purchased) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Assinatura ativada com sucesso!'), backgroundColor: Colors.green),
             );
@@ -61,11 +63,11 @@ class _SubscriptionPageContent extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          if (state is SubscriptionLoading) {
+          if (state.status == SubscriptionStatusEnum.loading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is SubscriptionError && state is! PlansLoaded) {
+          if (state.status == SubscriptionStatusEnum.error && state.plans == null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -73,7 +75,7 @@ class _SubscriptionPageContent extends StatelessWidget {
                   const Icon(Icons.error_outline, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   Text(
-                    state.message,
+                    state.errorMessage ?? 'Erro desconhecido',
                     style: const TextStyle(color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
@@ -90,14 +92,10 @@ class _SubscriptionPageContent extends StatelessWidget {
             );
           }
 
-          // Carrega status e planos
-          final status = state is SubscriptionLoaded
-              ? state.status
-              : state is PlansLoaded
-              ? null
-              : null;
-
-          final plansState = state is PlansLoaded ? state : null;
+          final status = state.subscriptionStatus;
+          final plans = state.plans;
+          final plansWithProducts = state.plansWithProducts;
+          final productDetails = state.productDetails;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -108,6 +106,30 @@ class _SubscriptionPageContent extends StatelessWidget {
                 if (status != null) _buildCurrentStatus(context, status),
 
                 const SizedBox(height: 24),
+
+                if (kIsWeb)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Para assinar ou alterar seu plano, utilize o aplicativo Terafy em seu dispositivo Android ou iOS.',
+                            style: TextStyle(color: Colors.blue[900], fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // Título dos planos
                 const Text(
@@ -122,14 +144,14 @@ class _SubscriptionPageContent extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Lista de planos
-                if (plansState != null)
-                  ...plansState.plans.map((plan) {
+                if (plans != null)
+                  ...plans.map((plan) {
                     ProductDetails? productDetail;
 
                     // Tenta encontrar o productDetail correspondente
-                    if (plansState.plansWithProducts != null) {
+                    if (plansWithProducts != null) {
                       try {
-                        final planWithProduct = plansState.plansWithProducts!.firstWhere((p) => p.plan.id == plan.id);
+                        final planWithProduct = plansWithProducts.firstWhere((p) => p.plan.id == plan.id);
                         productDetail = planWithProduct.productDetail;
                       } catch (e) {
                         // Produto não encontrado, productDetail fica null
@@ -138,9 +160,9 @@ class _SubscriptionPageContent extends StatelessWidget {
                     }
 
                     // Se não encontrou e há productDetails disponíveis, tenta buscar pelo ID
-                    if (productDetail == null && plansState.productDetails != null && plan.playStoreProductId != null) {
+                    if (productDetail == null && productDetails != null && plan.playStoreProductId != null) {
                       try {
-                        productDetail = plansState.productDetails!.firstWhere((pd) => pd.id == plan.playStoreProductId);
+                        productDetail = productDetails.firstWhere((pd) => pd.id == plan.playStoreProductId);
                       } catch (e) {
                         // Produto não encontrado
                         productDetail = null;
@@ -155,7 +177,9 @@ class _SubscriptionPageContent extends StatelessWidget {
                         plan: plan,
                         productDetails: productDetail,
                         isCurrentPlan: isCurrentPlan,
-                        isPurchasing: state is SubscriptionPurchasing && state.planId == plan.id.toString(),
+                        isPurchasing:
+                            state.status == SubscriptionStatusEnum.purchasing &&
+                            state.purchasingPlanId == plan.id.toString(),
                         onPurchase: productDetail != null && plan.playStoreProductId != null
                             ? () {
                                 context.read<SubscriptionBloc>().add(

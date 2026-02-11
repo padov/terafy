@@ -2,7 +2,6 @@ import 'package:common/common.dart' hide Appointment;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
-import 'package:terafy/core/domain/repositories/subscription_repository.dart';
 import 'package:terafy/core/domain/usecases/home/get_home_summary_usecase.dart';
 import 'package:terafy/core/domain/usecases/therapist/get_current_therapist_usecase.dart';
 
@@ -142,8 +141,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       userRole: 'Terapeuta',
       therapistName: therapistName,
       plan: plan,
-      patientCount: patientCount,
-      patientLimit: patientLimit,
+      patientLimit: plan.patientLimit,
       notificationCount: 0,
       stats: stats,
       todayAppointments: agenda,

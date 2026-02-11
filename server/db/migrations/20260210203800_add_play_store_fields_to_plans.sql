@@ -3,7 +3,11 @@
 -- Adiciona campos para integração com Google Play Billing
 ALTER TABLE plans
   ADD COLUMN IF NOT EXISTS play_store_product_id VARCHAR(255),
-  ADD COLUMN IF NOT EXISTS billing_period VARCHAR(20) DEFAULT 'monthly' CHECK (billing_period IN ('monthly', 'annual'));
+  ADD COLUMN IF NOT EXISTS billing_period VARCHAR(20) DEFAULT 'monthly' CHECK (billing_period IN ('free', 'monthly', 'annual'));
+
+-- Ensure constraint is correct (in case it was created with restrictive values in a previous run)
+ALTER TABLE plans DROP CONSTRAINT IF EXISTS plans_billing_period_check;
+ALTER TABLE plans ADD CONSTRAINT plans_billing_period_check CHECK (billing_period IN ('free', 'monthly', 'annual'));
 
 -- Cria índice para busca rápida por product_id
 CREATE INDEX IF NOT EXISTS idx_plans_play_store_product_id ON plans(play_store_product_id);
@@ -24,19 +28,18 @@ VALUES
         'Registro de Sessões'
     ],
     NULL, -- Plano gratuito não tem product_id
-    'monthly',
+    'free',
     TRUE
   ),
   (
     'Starter',
     'Plano Starter com limite ampliado de pacientes',
-    30.00,
+    39.90,
     999999, -- Praticamente ilimitado (999.999 pacientes)
     ARRAY[
         'Pacientes ilimitados', 
         'Até 2 templates de Anamnese customizáveis',
         'Registro de sessões',
-        'Plano terapêutico estruturado',
         'Perfil comportamental completo',
         'Agenda avançada com recorrência',
         'Lembretes automáticos (email/SMS)',
@@ -50,18 +53,17 @@ VALUES
   (
     'Full',
     'Plano Full com todas as funcionalidades',
-    60.00,
+    69.90,
     999999, -- Praticamente ilimitado (999.999 pacientes)
     ARRAY[
         'Todos do plano Starter +', 
         'Integração com Google Calendar',
-        'Plano terapêutico customizável',
         'Anamnese completa customizável',
         'Integração com Whatsapp',
         'Webhooks e API access',
-        'IA (até 60 consultas, sob demanda)',
+        'IA (até 60 consultas, sob demanda)'
       ],
-    'starter_monthly', -- Será configurado no Play Console
+    'full_monthly', -- Será configurado no Play Console
     'monthly',
     TRUE
   )
