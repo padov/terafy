@@ -102,6 +102,31 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     }, defaultErrorMessage: 'Erro ao buscar informações de uso');
   }
 
+  @override
+  Future<String> createCheckoutSession({
+    required int planId,
+    required String successUrl,
+    required String cancelUrl,
+  }) async {
+    return await _wrapRequest(() async {
+      final response = await httpClient.post(
+        '/subscription/checkout',
+        data: {'plan_id': planId, 'success_url': successUrl, 'cancel_url': cancelUrl},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Falha ao criar sessão de checkout.');
+      }
+
+      final data = response.data;
+      if (data is! Map<String, dynamic> || data['url'] == null) {
+        throw Exception('Resposta inválida ao criar sessão de checkout.');
+      }
+
+      return data['url'] as String;
+    }, defaultErrorMessage: 'Erro ao criar sessão de checkout');
+  }
+
   Future<T> _wrapRequest<T>(Future<T> Function() action, {required String defaultErrorMessage}) async {
     AppLogger.func();
     try {

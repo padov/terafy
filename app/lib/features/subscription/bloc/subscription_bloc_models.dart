@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+
 import 'package:terafy/core/subscription/subscription_models.dart';
 
 // Events
@@ -18,85 +18,73 @@ class LoadAvailablePlans extends SubscriptionEvent {
   const LoadAvailablePlans();
 }
 
-class PurchasePlan extends SubscriptionEvent {
-  final String planId;
-  final ProductDetails productDetails;
-
-  const PurchasePlan({required this.planId, required this.productDetails});
-
-  @override
-  List<Object?> get props => [planId, productDetails];
-}
-
-class RestorePurchases extends SubscriptionEvent {
-  const RestorePurchases();
-}
-
-class HandlePurchaseUpdate extends SubscriptionEvent {
-  final List<PurchaseDetails> purchases;
-
-  const HandlePurchaseUpdate(this.purchases);
-
-  @override
-  List<Object?> get props => [purchases];
-}
-
 class CheckSubscriptionStatus extends SubscriptionEvent {
   const CheckSubscriptionStatus();
+}
+
+class CreateCheckoutSession extends SubscriptionEvent {
+  final int planId;
+  const CreateCheckoutSession({required this.planId});
+
+  @override
+  List<Object?> get props => [planId];
 }
 
 // States
 
 // State
-enum SubscriptionStatusEnum { initial, loading, loaded, error, purchasing, purchased, restoring }
+enum SubscriptionStatusEnum { initial, loading, loaded, error, purchasing, purchased, restoring, checkoutRedirect }
 
 class SubscriptionState extends Equatable {
   final SubscriptionStatusEnum status;
   final SubscriptionStatus? subscriptionStatus;
   final List<SubscriptionPlan>? plans;
-  final List<ProductDetails>? productDetails;
-  final List<({SubscriptionPlan plan, ProductDetails productDetail})>? plansWithProducts;
   final String? errorMessage;
   final String? purchasingPlanId;
+  final String? checkoutUrl;
 
   const SubscriptionState({
     this.status = SubscriptionStatusEnum.initial,
     this.subscriptionStatus,
     this.plans,
-    this.productDetails,
-    this.plansWithProducts,
     this.errorMessage,
     this.purchasingPlanId,
+    this.checkoutUrl,
   });
+
+  List<SubscriptionPlan> get visiblePlans {
+    if (plans == null) return [];
+
+    final currentPlanName = subscriptionStatus?.plan.name.toLowerCase() ?? '';
+    final hasActive = subscriptionStatus?.hasActiveSubscription ?? false;
+
+    return plans!.where((plan) {
+      final isFreePlan = plan.name.toLowerCase() == 'free';
+      if (isFreePlan) {
+        return currentPlanName == 'free' || !hasActive;
+      }
+      return plan.stripePriceId != null && plan.stripePriceId!.isNotEmpty;
+    }).toList();
+  }
 
   SubscriptionState copyWith({
     SubscriptionStatusEnum? status,
     SubscriptionStatus? subscriptionStatus,
     List<SubscriptionPlan>? plans,
-    List<ProductDetails>? productDetails,
-    List<({SubscriptionPlan plan, ProductDetails productDetail})>? plansWithProducts,
     String? errorMessage,
     String? purchasingPlanId,
+    String? checkoutUrl,
   }) {
     return SubscriptionState(
       status: status ?? this.status,
       subscriptionStatus: subscriptionStatus ?? this.subscriptionStatus,
       plans: plans ?? this.plans,
-      productDetails: productDetails ?? this.productDetails,
-      plansWithProducts: plansWithProducts ?? this.plansWithProducts,
       errorMessage: errorMessage, // Error message is transient, so we don't keep old one by default unless specified
       purchasingPlanId: purchasingPlanId ?? this.purchasingPlanId,
+      checkoutUrl: checkoutUrl, // Checkout Url is transient too
     );
   }
 
   @override
-  List<Object?> get props => [
-    status,
-    subscriptionStatus,
-    plans,
-    productDetails,
-    plansWithProducts,
-    errorMessage,
-    purchasingPlanId,
-  ];
+  List<Object?> get props => [status, subscriptionStatus, plans, errorMessage, purchasingPlanId, checkoutUrl];
 }

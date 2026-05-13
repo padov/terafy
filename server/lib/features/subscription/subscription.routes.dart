@@ -13,11 +13,14 @@ Router configureSubscriptionRoutes(SubscriptionHandler handler) {
   // GET /api/subscription/plans - Lista planos disponíveis
   router.get('/plans', therapistOrAdmin.call(handler.handleGetPlans));
 
-  // POST /api/subscription/verify - Verifica/sincroniza assinatura do Play Store
-  router.post('/verify', therapistOrAdmin.call(handler.handleVerifySubscription));
-
   // GET /api/subscription/usage - Retorna informações de uso (contagem de pacientes)
   router.get('/usage', therapistOrAdmin.call(handler.handleGetUsage));
+
+  // POST /api/subscription/checkout - Cria sessão do checkout no Stripe
+  router.post('/checkout', therapistOrAdmin.call(handler.handleCreateCheckout));
+
+  // POST /api/subscription/webhook - Endpoint desprotegido para a Stripe
+  router.post('/webhook', handler.handleStripeWebhook);
 
   return router;
 }

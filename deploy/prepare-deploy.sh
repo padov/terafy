@@ -168,6 +168,14 @@ if [ -d "$PROJECT_ROOT/server/db/policies" ] && [ "$(ls -A "$PROJECT_ROOT/server
     echo "  ✅ Policies: $POLICY_COUNT arquivos"
 fi
 
+# 5. Prompts da IA
+if [ -d "$PROJECT_ROOT/server/prompts" ] && [ "$(ls -A "$PROJECT_ROOT/server/prompts" 2>/dev/null)" ]; then
+    mkdir -p "$DEPLOY_DIR/prompts"
+    cp -r "$PROJECT_ROOT/server/prompts"/* "$DEPLOY_DIR/prompts/"
+    PROMPT_COUNT=$(ls -1 "$DEPLOY_DIR/prompts"/*.md 2>/dev/null | wc -l | tr -d ' ')
+    echo "  ✅ Prompts: $PROMPT_COUNT arquivos"
+fi
+
 # 6. Docker Compose (runtime)
 cp "$NEW_DEPLOY_DIR/docker-compose.runtime.yml" "$DEPLOY_DIR/docker-compose.yml"
 echo "  ✅ Docker Compose: docker-compose.yml"

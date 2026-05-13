@@ -41,3 +41,10 @@ create-test-user: ## Create a test user in the database.
 prepare-test-db: ## Prepare test database with therapists and patients.
 	@echo "Preparing test database..."
 	@cd server && dart run bin/prepare_test_database.dart
+
+##@ Google Cloud
+
+.PHONY: gcloud-login
+gcloud-login: ## Login to Google Cloud.
+	@echo "Logging into Google Cloud..."
+	@gcloud auth login marcio.padovani@gmail.com

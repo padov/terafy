@@ -30,7 +30,8 @@ class SubscriptionRepository {
           p.patient_limit as plan_patient_limit,
           p.features as plan_features,
           p.play_store_product_id,
-          p.billing_period
+          p.billing_period,
+          p.custom_anamnesis_limit as plan_custom_anamnesis_limit
         FROM plan_subscriptions ps
         INNER JOIN plans p ON ps.plan_id = p.id
         WHERE ps.therapist_id = @therapist_id 
@@ -69,6 +70,7 @@ class SubscriptionRepository {
           'features': map['plan_features'],
           'play_store_product_id': map['play_store_product_id'],
           'billing_period': map['billing_period'],
+          'custom_anamnesis_limit': map['plan_custom_anamnesis_limit'],
         },
       };
     });
@@ -87,7 +89,8 @@ class SubscriptionRepository {
           patient_limit,
           features,
           play_store_product_id,
-          billing_period
+          billing_period,
+          custom_anamnesis_limit
         FROM plans
         WHERE name = 'Free' AND is_active = true
         LIMIT 1;
@@ -106,6 +109,7 @@ class SubscriptionRepository {
             'features': <String>[],
             'play_store_product_id': null,
             'billing_period': 'monthly',
+            'custom_anamnesis_limit': 0,
           },
         };
       }
@@ -121,6 +125,7 @@ class SubscriptionRepository {
           'features': map['features'],
           'play_store_product_id': map['play_store_product_id'],
           'billing_period': map['billing_period'],
+          'custom_anamnesis_limit': map['custom_anamnesis_limit'],
         },
       };
     });
@@ -143,6 +148,20 @@ class SubscriptionRepository {
         return 0;
       }
 
+      return (results.first.toColumnMap()['count'] as int?) ?? 0;
+    });
+  }
+
+  /// Conta o numero de anamneses customizadas ativas do terapeuta
+  Future<int> countCustomAnamnesis(int therapistId) async {
+    return await _dbConnection.withConnection((conn) async {
+      final results = await conn.execute(
+        Sql.named(
+          'SELECT COUNT(*) as count FROM anamnesis_templates WHERE therapist_id = @therapist_id AND is_system = false',
+        ),
+        parameters: {'therapist_id': therapistId},
+      );
+      if (results.isEmpty) return 0;
       return (results.first.toColumnMap()['count'] as int?) ?? 0;
     });
   }
@@ -177,7 +196,8 @@ class SubscriptionRepository {
           features,
           play_store_product_id,
           billing_period,
-          is_active
+          is_active,
+          stripe_price_id
         FROM plans
         WHERE is_active = true
         ORDER BY price ASC;
@@ -195,6 +215,7 @@ class SubscriptionRepository {
           'features': map['features'],
           'play_store_product_id': map['play_store_product_id'],
           'billing_period': map['billing_period'],
+          'stripe_price_id': map['stripe_price_id'],
         };
       }).toList();
     });
@@ -213,6 +234,7 @@ class SubscriptionRepository {
           patient_limit,
           features,
           play_store_product_id,
+          stripe_price_id,
           billing_period
         FROM plans
         WHERE play_store_product_id = @product_id
@@ -235,6 +257,49 @@ class SubscriptionRepository {
         'patient_limit': map['patient_limit'],
         'features': map['features'],
         'play_store_product_id': map['play_store_product_id'],
+        'stripe_price_id': map['stripe_price_id'],
+        'billing_period': map['billing_period'],
+      };
+    });
+  }
+
+  /// Busca um plano por ID
+  Future<Map<String, dynamic>?> getPlanById(int planId) async {
+    return await _dbConnection.withConnection((conn) async {
+      final results = await conn.execute(
+        Sql.named('''
+        SELECT 
+          id,
+          name,
+          description,
+          price,
+          patient_limit,
+          features,
+          play_store_product_id,
+          stripe_price_id,
+          billing_period
+        FROM plans
+        WHERE id = @id
+          AND is_active = true
+        LIMIT 1;
+      '''),
+        parameters: {'id': planId},
+      );
+
+      if (results.isEmpty) {
+        return null;
+      }
+
+      final map = results.first.toColumnMap();
+      return {
+        'id': map['id'],
+        'name': map['name'],
+        'description': map['description'],
+        'price': map['price'],
+        'patient_limit': map['patient_limit'],
+        'features': map['features'],
+        'play_store_product_id': map['play_store_product_id'],
+        'stripe_price_id': map['stripe_price_id'],
         'billing_period': map['billing_period'],
       };
     });
@@ -362,6 +427,166 @@ class SubscriptionRepository {
         'is_active': map['is_active'],
         'auto_renewing': map['auto_renewing'],
       };
+    });
+  }
+
+  /// Sincroniza Stripe Subscription
+  Future<void> syncStripeSubscription({
+    required int therapistId,
+    required String stripeCustomerId,
+    required String stripeSubscriptionId,
+    required String status,
+    int? planId,
+  }) async {
+    await _dbConnection.withConnection((conn) async {
+      // 1. Desativa assinaturas antigas ativas
+      await conn.execute(
+        Sql.named('''
+        UPDATE plan_subscriptions
+        SET is_active = false
+        WHERE therapist_id = @therapist_id
+          AND stripe_subscription_id IS DISTINCT FROM @stripe_subscription_id
+          AND is_active = true;
+      '''),
+        parameters: {'therapist_id': therapistId, 'stripe_subscription_id': stripeSubscriptionId},
+      );
+
+      // Precisamos identificar o plan_id se ele existir no banco,
+      // Caso não saibamos o plan_id correspondente, usamos um padrão, mas nós vamos tentar pegá-lo depois se precisarmos na controller.
+      // O plano padrão se null será buscado no DB para ter fallback:
+      int finalPlanId = planId ?? 1; // 1 é Free, temporariamente
+
+      if (planId == null) {
+        final existing = await conn.execute(
+          Sql.named('''
+            SELECT plan_id FROM plan_subscriptions 
+            WHERE stripe_subscription_id = @stripe_subscription_id
+            LIMIT 1
+          '''),
+          parameters: {'stripe_subscription_id': stripeSubscriptionId},
+        );
+        if (existing.isNotEmpty) {
+          finalPlanId = existing.first.toColumnMap()['plan_id'] as int;
+        } else {
+          // tenta pegar o último plano que ele assinou
+          final fallbackPlan = await conn.execute(
+            Sql.named('''
+              SELECT plan_id FROM plan_subscriptions 
+              WHERE therapist_id = @therapist_id
+              ORDER BY created_at DESC
+              LIMIT 1
+            '''),
+            parameters: {'therapist_id': therapistId},
+          );
+          if (fallbackPlan.isNotEmpty) {
+            finalPlanId = fallbackPlan.first.toColumnMap()['plan_id'] as int;
+          }
+        }
+      }
+
+      final isActive = status == 'active' || status == 'trialing';
+      final startDate = DateTime.now();
+      final endDate = DateTime(startDate.year, startDate.month + 1, startDate.day);
+
+      // Upsert
+      await conn.execute(
+        Sql.named('''
+        INSERT INTO plan_subscriptions (
+          therapist_id,
+          plan_id,
+          start_date,
+          end_date,
+          payment_method,
+          stripe_customer_id,
+          stripe_subscription_id,
+          stripe_status,
+          is_active,
+          auto_renewing
+        ) VALUES (
+          @therapist_id,
+          @plan_id,
+          @start_date,
+          @end_date,
+          'credit_card'::payment_method,
+          @stripe_customer_id,
+          @stripe_subscription_id,
+          @stripe_status,
+          @is_active,
+          true
+        )
+        ON CONFLICT (id) DO NOTHING; -- Precisaria de constraint unique para UPDATE, vamos só atualizar por update abaixo
+      '''),
+        parameters: {
+          'therapist_id': therapistId,
+          'plan_id': finalPlanId,
+          'start_date': startDate,
+          'end_date': endDate,
+          'stripe_customer_id': stripeCustomerId,
+          'stripe_subscription_id': stripeSubscriptionId,
+          'stripe_status': status,
+          'is_active': isActive,
+        },
+      );
+
+      // Atualiza o existente se já estava na base e falhou no ON CONFLICT se tivéssemos uniq mas não temos
+      // Como não tem UNIQUE, faremos UPDATE pelo stripe_subscription_id para garantir!
+      await conn.execute(
+        Sql.named('''
+        UPDATE plan_subscriptions
+        SET stripe_status = @stripe_status,
+            is_active = @is_active,
+            stripe_customer_id = @stripe_customer_id
+        WHERE stripe_subscription_id = @stripe_subscription_id
+      '''),
+        parameters: {
+          'stripe_subscription_id': stripeSubscriptionId,
+          'stripe_status': status,
+          'is_active': isActive,
+          'stripe_customer_id': stripeCustomerId,
+        },
+      );
+    });
+  }
+
+  /// Cancela assinatura
+  Future<void> cancelStripeSubscription(String stripeSubscriptionId) async {
+    await _dbConnection.withConnection((conn) async {
+      await conn.execute(
+        Sql.named('''
+        UPDATE plan_subscriptions
+        SET stripe_status = 'canceled',
+            is_active = false,
+            auto_renewing = false
+        WHERE stripe_subscription_id = @stripe_subscription_id;
+      '''),
+        parameters: {'stripe_subscription_id': stripeSubscriptionId},
+      );
+    });
+  }
+
+  /// Atualiza o status e a data de renovação
+  Future<void> updateStripeSubscriptionStatus(
+    String stripeSubscriptionId,
+    String status, {
+    DateTime? currentPeriodEnd,
+  }) async {
+    final isActive = status == 'active' || status == 'trialing';
+    await _dbConnection.withConnection((conn) async {
+      await conn.execute(
+        Sql.named('''
+        UPDATE plan_subscriptions
+        SET stripe_status = @stripe_status,
+            is_active = @is_active
+            \${currentPeriodEnd != null ? ', end_date = @end_date' : ''}
+        WHERE stripe_subscription_id = @stripe_subscription_id;
+      '''),
+        parameters: {
+          'stripe_subscription_id': stripeSubscriptionId,
+          'stripe_status': status,
+          'is_active': isActive,
+          if (currentPeriodEnd != null) 'end_date': currentPeriodEnd,
+        },
+      );
     });
   }
 }

@@ -364,77 +364,93 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
                                   key: ValueKey(section.id),
                                   margin: const EdgeInsets.only(bottom: 12),
                                   child: ExpansionTile(
+                                    initiallyExpanded: true,
                                     title: Text(section.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle: Text('${section.fields.length} campos'),
-                                    leading: const Icon(Icons.drag_handle, color: Colors.grey),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                    subtitle: Row(
                                       children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, size: 20),
-                                          onPressed: () => _editSection(index),
+                                        Text('${section.fields.length} campo(s)'),
+                                        const Spacer(),
+                                        InkWell(
+                                          onTap: () => _editSection(index),
+                                          child: const Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            child: Icon(Icons.edit, size: 18),
+                                          ),
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                          onPressed: () => _removeSection(index),
+                                        InkWell(
+                                          onTap: () => _removeSection(index),
+                                          child: const Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            child: Icon(Icons.delete, color: Colors.red, size: 18),
+                                          ),
                                         ),
-                                        const Icon(Icons.expand_more),
                                       ],
                                     ),
+                                    leading: const Icon(Icons.drag_handle, color: Colors.grey),
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.all(16.0),
+                                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            ReorderableListView.builder(
-                                              shrinkWrap: true,
-                                              physics: const NeverScrollableScrollPhysics(),
-                                              itemCount: section.fields.length,
-                                              onReorder: (oldIndex, newIndex) {
-                                                setState(() {
-                                                  if (newIndex > oldIndex) newIndex -= 1;
-                                                  final fields = List<AnamnesisField>.from(section.fields);
-                                                  final item = fields.removeAt(oldIndex);
-                                                  fields.insert(newIndex, item);
+                                            if (section.fields.isEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                                child: Text(
+                                                  'Nenhum campo ainda. Clique em "Adicionar Campo" abaixo.',
+                                                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                                ),
+                                              )
+                                            else
+                                              ReorderableListView.builder(
+                                                shrinkWrap: true,
+                                                physics: const NeverScrollableScrollPhysics(),
+                                                itemCount: section.fields.length,
+                                                onReorder: (oldIndex, newIndex) {
+                                                  setState(() {
+                                                    if (newIndex > oldIndex) newIndex -= 1;
+                                                    final fields = List<AnamnesisField>.from(section.fields);
+                                                    final item = fields.removeAt(oldIndex);
+                                                    fields.insert(newIndex, item);
 
-                                                  // Update order
-                                                  final updatedFields = fields.asMap().entries.map((e) {
-                                                    return e.value.copyWith(order: e.key + 1);
-                                                  }).toList();
+                                                    // Update order
+                                                    final updatedFields = fields.asMap().entries.map((e) {
+                                                      return e.value.copyWith(order: e.key + 1);
+                                                    }).toList();
 
-                                                  _sections[index] = section.copyWith(fields: updatedFields);
-                                                });
-                                              },
-                                              itemBuilder: (context, fieldIndex) {
-                                                final field = section.fields[fieldIndex];
-                                                return ListTile(
-                                                  key: ValueKey(field.id),
-                                                  dense: true,
-                                                  contentPadding: EdgeInsets.zero,
-                                                  leading: ReorderableDragStartListener(
-                                                    index: fieldIndex,
-                                                    child: const Padding(
-                                                      padding: EdgeInsets.only(right: 8.0, left: 8.0),
-                                                      child: Icon(Icons.drag_indicator, size: 20, color: Colors.grey),
+                                                    _sections[index] = section.copyWith(fields: updatedFields);
+                                                  });
+                                                },
+                                                itemBuilder: (context, fieldIndex) {
+                                                  final field = section.fields[fieldIndex];
+                                                  return ListTile(
+                                                    key: ValueKey(field.id),
+                                                    dense: true,
+                                                    contentPadding: EdgeInsets.zero,
+                                                    leading: ReorderableDragStartListener(
+                                                      index: fieldIndex,
+                                                      child: const Padding(
+                                                        padding: EdgeInsets.only(right: 8.0, left: 8.0),
+                                                        child: Icon(Icons.drag_indicator, size: 20, color: Colors.grey),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  title: Text(field.label + (field.required ? ' *' : '')),
-                                                  subtitle: Text(field.type.name.toUpperCase()),
-                                                  onTap: () => _editField(index, fieldIndex),
-                                                  trailing: IconButton(
-                                                    icon: const Icon(Icons.close, size: 16),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        final updatedFields = List<AnamnesisField>.from(section.fields)
-                                                          ..remove(field);
-                                                        _sections[index] = section.copyWith(fields: updatedFields);
-                                                      });
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ),
+                                                    title: Text(field.label + (field.required ? ' *' : '')),
+                                                    subtitle: Text(field.type.name.toUpperCase()),
+                                                    onTap: () => _editField(index, fieldIndex),
+                                                    trailing: IconButton(
+                                                      icon: const Icon(Icons.close, size: 16),
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          final updatedFields = List<AnamnesisField>.from(
+                                                            section.fields,
+                                                          )..remove(field);
+                                                          _sections[index] = section.copyWith(fields: updatedFields);
+                                                        });
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                              ),
                                             const SizedBox(height: 8),
                                             TextButton.icon(
                                               onPressed: () => _addField(index),

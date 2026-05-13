@@ -3,13 +3,13 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:common/common.dart';
 import 'package:server/core/handlers/base_handler.dart';
-import 'package:server/core/services/ai/ai_service.dart';
+import 'package:server/core/services/openrouter_service.dart';
 import 'package:server/core/middleware/auth_middleware.dart';
 import '../ai_analysis_repository.dart';
 import '../models/ai_analysis.dart';
 
 class AiHandler extends BaseHandler {
-  final AIService _aiService;
+  final OpenRouterService _aiService;
   final AIAnalysisRepository _repository;
 
   AiHandler(this._aiService, this._repository);

@@ -1,10 +1,14 @@
+import 'package:equatable/equatable.dart';
 import 'package:terafy/features/financial/models/payment.dart';
 import 'package:terafy/features/sessions/models/session.dart';
 
 // ========== EVENTS ==========
 
-abstract class SessionsEvent {
+abstract class SessionsEvent extends Equatable {
   const SessionsEvent();
+
+  @override
+  List<Object?> get props => [];
 }
 
 class LoadPatientSessions extends SessionsEvent {
@@ -23,6 +27,9 @@ class CreateSession extends SessionsEvent {
   final Session session;
 
   const CreateSession(this.session);
+
+  @override
+  List<Object?> get props => [session];
 }
 
 class UpdateSession extends SessionsEvent {
@@ -73,8 +80,11 @@ class RegisterSessionPayment extends SessionsEvent {
 
 // ========== STATES ==========
 
-abstract class SessionsState {
+abstract class SessionsState extends Equatable {
   const SessionsState();
+
+  @override
+  List<Object?> get props => [];
 }
 
 class SessionsInitial extends SessionsState {}
@@ -86,6 +96,9 @@ class SessionsLoaded extends SessionsState {
   final String patientId;
 
   const SessionsLoaded({required this.sessions, required this.patientId});
+
+  @override
+  List<Object?> get props => [sessions, patientId];
 }
 
 class SessionDetailsLoaded extends SessionsState {
@@ -93,12 +106,18 @@ class SessionDetailsLoaded extends SessionsState {
   final Payment? payment;
 
   const SessionDetailsLoaded(this.session, {this.payment});
+
+  @override
+  List<Object?> get props => [session, payment];
 }
 
 class SessionCreated extends SessionsState {
   final Session session;
 
   const SessionCreated(this.session);
+
+  @override
+  List<Object?> get props => [session];
 }
 
 class SessionUpdated extends SessionsState {
@@ -111,4 +130,7 @@ class SessionsError extends SessionsState {
   final String message;
 
   const SessionsError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

@@ -7,6 +7,7 @@ import 'package:terafy/features/sessions/bloc/sessions_bloc.dart';
 import 'package:terafy/features/sessions/bloc/sessions_bloc_models.dart';
 import 'package:terafy/features/sessions/models/session.dart';
 import 'package:terafy/features/financial/models/payment.dart' as financial;
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class SessionDetailsPage extends StatelessWidget {
   final String sessionId;
@@ -396,11 +397,53 @@ class _SessionDetailsContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Humor do paciente
-          if (session.patientMood != null) ...[
-            _buildClinicalField('Humor/Estado Emocional', session.patientMood!),
+          // --- V2 Fields (Relato de IA + Transcrições/Anotações base) ---
+          if (session.sessionReport != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+              ),
+              child: MarkdownBody(
+                data: session.sessionReport!,
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(fontSize: 14, color: AppColors.offBlack, height: 1.6),
+                  h3: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  strong: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          if (session.freeNotes != null && session.freeNotes!.isNotEmpty) ...[
+            _buildClinicalField('Anotações Livres (Terapeuta)', session.freeNotes!),
             const SizedBox(height: 12),
           ],
+
+          if (session.transcription != null && session.transcription!.isNotEmpty) ...[
+            _buildClinicalField('Transcrição Original', session.transcription!),
+            const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 12),
+          ],
+          // --- Fim V2 Fields ---
+
+          // Humor do paciente
+          if (session.patientMood != null) ...[_buildPatientMood(session.patientMood!), const SizedBox(height: 12)],
+
+          // Evolução
+          if (session.progressLevel != null) ...[
+            _buildProgressLevel(session.progressLevel!),
+            const SizedBox(height: 12),
+          ],
+
+          // Nível de Risco
+          _buildRiskLevel(session.currentRisk),
+          const SizedBox(height: 12),
 
           // Temas discutidos
           if (session.topicsDiscussed.isNotEmpty) ...[
@@ -533,9 +576,6 @@ class _SessionDetailsContent extends StatelessWidget {
             ),
           ],
 
-          // Nível de risco
-          _buildRiskLevel(session.currentRisk),
-
           // Observações importantes
           if (session.importantObservations != null) ...[
             const SizedBox(height: 12),
@@ -625,6 +665,111 @@ class _SessionDetailsContent extends StatelessWidget {
           child: Text(value, style: TextStyle(fontSize: 13, color: AppColors.offBlack)),
         ),
       ],
+    );
+  }
+
+  Widget _buildPatientMood(String mood) {
+    Color color;
+    IconData icon;
+
+    switch (mood) {
+      case 'Raiva':
+        color = const Color(0xFFEF5350); // Red
+        icon = Icons.sentiment_very_dissatisfied;
+        break;
+      case 'Triste':
+        color = const Color(0xFFFFA726); // Orange
+        icon = Icons.sentiment_dissatisfied;
+        break;
+      case 'Neutro':
+        color = const Color(0xFFFFEE58); // Yellow
+        icon = Icons.sentiment_neutral;
+        break;
+      case 'Feliz':
+        color = const Color(0xFF9CCC65); // Light Green
+        icon = Icons.sentiment_satisfied;
+        break;
+      case 'Muito Feliz':
+        color = const Color(0xFF66BB6A); // Dark Green
+        icon = Icons.sentiment_very_satisfied;
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.sentiment_neutral;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Estado Emocional: ',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.offBlack),
+          ),
+          Text(
+            mood,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressLevel(String progressLevel) {
+    Color color;
+    String text;
+    IconData icon;
+
+    switch (progressLevel) {
+      case 'improving':
+        color = Colors.green;
+        text = 'Melhorando';
+        icon = Icons.trending_up;
+        break;
+      case 'stable':
+        color = Colors.blue;
+        text = 'Estável';
+        icon = Icons.trending_flat;
+        break;
+      case 'declining':
+        color = Colors.orange;
+        text = 'Piorando';
+        icon = Icons.trending_down;
+        break;
+      default:
+        color = Colors.grey;
+        text = progressLevel;
+        icon = Icons.info_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Evolução: ',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.offBlack),
+          ),
+          Text(
+            text,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+          ),
+        ],
+      ),
     );
   }
 

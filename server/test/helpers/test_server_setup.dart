@@ -1,7 +1,7 @@
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:server/features/session/session_ai.controller.dart';
-import 'package:server/core/services/openai_service.dart';
+import 'package:server/core/services/openrouter_service.dart';
 import 'package:server/core/middleware/cors_middleware.dart';
 import 'package:server/core/middleware/auth_middleware.dart';
 import 'package:server/core/database/db_connection.dart';
@@ -52,7 +52,7 @@ class TestServerSetup {
       sessionRepository,
       patientRepository,
       therapistRepository,
-      OpenAIService(),
+      OpenRouterService(),
     );
     final sessionController = SessionController(sessionRepository, scheduleRepository, financialRepository);
     final sessionHandler = SessionHandler(sessionController, sessionAIController);

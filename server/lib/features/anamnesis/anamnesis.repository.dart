@@ -229,6 +229,44 @@ class AnamnesisRepository {
     });
   }
 
+  // ========== LIMITS ==========
+
+  Future<int> countCustomTemplates(int therapistId) async {
+    return await _dbConnection.withConnection((conn) async {
+      await RLSContext.clearContext(conn);
+      final results = await conn.execute(
+        Sql.named('SELECT COUNT(*) FROM anamnesis_templates WHERE therapist_id = @therapist_id AND is_system = false'),
+        parameters: {'therapist_id': therapistId},
+      );
+      return int.parse(results[0][0].toString());
+    });
+  }
+
+  Future<int> getCustomAnamnesisLimit(int therapistId) async {
+    return await _dbConnection.withConnection((conn) async {
+      await RLSContext.clearContext(conn);
+      final results = await conn.execute(
+        Sql.named('''
+          SELECT p.custom_anamnesis_limit
+          FROM plan_subscriptions ps
+          JOIN plans p ON p.id = ps.plan_id
+          WHERE ps.therapist_id = @therapist_id AND ps.is_active = true
+          LIMIT 1
+        '''),
+        parameters: {'therapist_id': therapistId},
+      );
+      if (results.isEmpty) {
+        // Retorna o limite do plano Free
+        final defaultResult = await conn.execute(
+          "SELECT custom_anamnesis_limit FROM plans WHERE name ILIKE '%free%' LIMIT 1",
+        );
+        if (defaultResult.isEmpty) return 0;
+        return int.parse(defaultResult[0][0].toString());
+      }
+      return int.parse(results[0][0].toString());
+    });
+  }
+
   // ========== TEMPLATES CRUD ==========
 
   Future<List<AnamnesisTemplate>> getTemplates({

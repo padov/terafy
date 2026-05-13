@@ -9,7 +9,9 @@ class SubscriptionPlan extends Equatable {
   final int patientLimit;
   final List<String> features;
   final String? playStoreProductId;
+  final String? stripePriceId;
   final String billingPeriod; // 'monthly' ou 'annual'
+  final int customAnamnesisLimit;
 
   const SubscriptionPlan({
     required this.id,
@@ -19,7 +21,9 @@ class SubscriptionPlan extends Equatable {
     required this.patientLimit,
     required this.features,
     this.playStoreProductId,
+    this.stripePriceId,
     required this.billingPeriod,
+    required this.customAnamnesisLimit,
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
@@ -39,12 +43,11 @@ class SubscriptionPlan extends Equatable {
       description: json['description'] as String? ?? '',
       price: parsePrice(json['price']),
       patientLimit: json['patient_limit'] as int? ?? 0,
-      features: (json['features'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       playStoreProductId: json['play_store_product_id'] as String?,
+      stripePriceId: json['stripe_price_id'] as String?,
       billingPeriod: json['billing_period'] as String? ?? 'monthly',
+      customAnamnesisLimit: json['custom_anamnesis_limit'] as int? ?? 0,
     );
   }
 
@@ -57,21 +60,25 @@ class SubscriptionPlan extends Equatable {
       'patient_limit': patientLimit,
       'features': features,
       'play_store_product_id': playStoreProductId,
-      'billing_period': billingPeriod,
+      'stripe_price_id': stripePriceId,
+      'billingPeriod': billingPeriod,
+      'custom_anamnesis_limit': customAnamnesisLimit,
     };
   }
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        description,
-        price,
-        patientLimit,
-        features,
-        playStoreProductId,
-        billingPeriod,
-      ];
+    id,
+    name,
+    description,
+    price,
+    patientLimit,
+    features,
+    playStoreProductId,
+    stripePriceId,
+    billingPeriod,
+    customAnamnesisLimit,
+  ];
 }
 
 /// Modelo de assinatura ativa
@@ -107,20 +114,14 @@ class Subscription extends Equatable {
       id: json['id'] as int?,
       therapistId: json['therapist_id'] as int? ?? 0,
       planId: json['plan_id'] as int? ?? 0,
-      startDate: json['start_date'] != null
-          ? DateTime.parse(json['start_date'] as String)
-          : DateTime.now(),
-      endDate: json['end_date'] != null
-          ? DateTime.parse(json['end_date'] as String)
-          : DateTime.now(),
+      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : DateTime.now(),
+      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : DateTime.now(),
       paymentMethod: json['payment_method'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? false,
       playStorePurchaseToken: json['play_store_purchase_token'] as String?,
       playStoreOrderId: json['play_store_order_id'] as String?,
       autoRenewing: json['auto_renewing'] as bool? ?? false,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : null,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
     );
   }
 
@@ -128,18 +129,18 @@ class Subscription extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        therapistId,
-        planId,
-        startDate,
-        endDate,
-        paymentMethod,
-        isActive,
-        playStorePurchaseToken,
-        playStoreOrderId,
-        autoRenewing,
-        createdAt,
-      ];
+    id,
+    therapistId,
+    planId,
+    startDate,
+    endDate,
+    paymentMethod,
+    isActive,
+    playStorePurchaseToken,
+    playStoreOrderId,
+    autoRenewing,
+    createdAt,
+  ];
 }
 
 /// Status da assinatura com informações de uso
@@ -148,28 +149,19 @@ class SubscriptionStatus extends Equatable {
   final SubscriptionPlan plan;
   final SubscriptionUsage usage;
 
-  const SubscriptionStatus({
-    this.subscription,
-    required this.plan,
-    required this.usage,
-  });
+  const SubscriptionStatus({this.subscription, required this.plan, required this.usage});
 
   factory SubscriptionStatus.fromJson(Map<String, dynamic> json) {
     return SubscriptionStatus(
       subscription: json['subscription'] != null
           ? Subscription.fromJson(json['subscription'] as Map<String, dynamic>)
           : null,
-      plan: SubscriptionPlan.fromJson(
-        json['plan'] as Map<String, dynamic>,
-      ),
-      usage: SubscriptionUsage.fromJson(
-        json['usage'] as Map<String, dynamic>,
-      ),
+      plan: SubscriptionPlan.fromJson(json['plan'] as Map<String, dynamic>),
+      usage: SubscriptionUsage.fromJson(json['usage'] as Map<String, dynamic>),
     );
   }
 
-  bool get hasActiveSubscription =>
-      subscription != null && subscription!.isActive && !subscription!.isExpired;
+  bool get hasActiveSubscription => subscription != null && subscription!.isActive && !subscription!.isExpired;
 
   @override
   List<Object?> get props => [subscription, plan, usage];
@@ -181,12 +173,18 @@ class SubscriptionUsage extends Equatable {
   final int patientLimit;
   final bool canCreatePatient;
   final int usagePercentage;
+  final int customAnamnesisCount;
+  final int customAnamnesisLimit;
+  final bool canCreateAnamnesis;
 
   const SubscriptionUsage({
     required this.patientCount,
     required this.patientLimit,
     required this.canCreatePatient,
     required this.usagePercentage,
+    required this.customAnamnesisCount,
+    required this.customAnamnesisLimit,
+    required this.canCreateAnamnesis,
   });
 
   factory SubscriptionUsage.fromJson(Map<String, dynamic> json) {
@@ -195,16 +193,22 @@ class SubscriptionUsage extends Equatable {
       patientLimit: json['patient_limit'] as int? ?? 0,
       canCreatePatient: json['can_create_patient'] as bool? ?? false,
       usagePercentage: json['usage_percentage'] as int? ?? 0,
+      customAnamnesisCount: json['custom_anamnesis_count'] as int? ?? 0,
+      customAnamnesisLimit: json['custom_anamnesis_limit'] as int? ?? 0,
+      canCreateAnamnesis: json['can_create_anamnesis'] as bool? ?? false,
     );
   }
 
   @override
   List<Object?> get props => [
-        patientCount,
-        patientLimit,
-        canCreatePatient,
-        usagePercentage,
-      ];
+    patientCount,
+    patientLimit,
+    canCreatePatient,
+    usagePercentage,
+    customAnamnesisCount,
+    customAnamnesisLimit,
+    canCreateAnamnesis,
+  ];
 }
 
 /// Resultado de uma compra
@@ -215,21 +219,8 @@ class PurchaseResult extends Equatable {
   final String? orderId;
   final String? productId;
 
-  const PurchaseResult({
-    required this.success,
-    this.errorMessage,
-    this.purchaseToken,
-    this.orderId,
-    this.productId,
-  });
+  const PurchaseResult({required this.success, this.errorMessage, this.purchaseToken, this.orderId, this.productId});
 
   @override
-  List<Object?> get props => [
-        success,
-        errorMessage,
-        purchaseToken,
-        orderId,
-        productId,
-      ];
+  List<Object?> get props => [success, errorMessage, purchaseToken, orderId, productId];
 }
-

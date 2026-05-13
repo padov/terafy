@@ -17,6 +17,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() {
     registerFallbackValue(RequestOptions(path: '/fallback'));
+    registerFallbackValue(DioException(requestOptions: RequestOptions(path: '/fallback')));
   });
 
   group('AuthInterceptor', () {
@@ -30,44 +31,35 @@ void main() {
       refreshTokenUseCase = _MockRefreshTokenUseCase();
       dio = _MockDio();
 
-      interceptor = AuthInterceptor(
-        secureStorage,
-        dio,
-        refreshTokenUseCase: refreshTokenUseCase,
-      );
+      interceptor = AuthInterceptor(secureStorage, dio, refreshTokenUseCase: refreshTokenUseCase);
 
       when(() => secureStorage.deleteToken()).thenAnswer((_) async {});
       when(() => secureStorage.deleteRefreshToken()).thenAnswer((_) async {});
       when(() => secureStorage.deleteUserIdentifier()).thenAnswer((_) async {});
     });
 
-    test(
-      'limpa estado de refresh quando refresh token está indisponível',
-      () async {
-        final requestOptions = RequestOptions(path: '/therapists');
-        final error = DioException(
-          requestOptions: requestOptions,
-          response: Response(statusCode: 401, requestOptions: requestOptions),
-          type: DioExceptionType.badResponse,
-        );
+    test('limpa estado de refresh quando refresh token está indisponível', () async {
+      final requestOptions = RequestOptions(path: '/therapists');
+      final error = DioException(
+        requestOptions: requestOptions,
+        response: Response(statusCode: 401, requestOptions: requestOptions),
+        type: DioExceptionType.badResponse,
+      );
 
-        final handler = _MockErrorHandler();
-        when(() => handler.reject(error)).thenAnswer((_) {});
+      final handler = _MockErrorHandler();
+      when(() => handler.reject(error)).thenAnswer((_) {});
 
-        // Retorna null sempre para simular ausência de refresh token
-        when(
-          () => secureStorage.getRefreshToken(),
-        ).thenAnswer((_) async => null);
+      // Retorna null sempre para simular ausência de refresh token
+      when(() => secureStorage.getRefreshToken()).thenAnswer((_) async => null);
 
-        await Future.sync(() => interceptor.onError(error, handler));
-        await Future.sync(() => interceptor.onError(error, handler));
+      await Future.sync(() => interceptor.onError(error, handler));
+      await Future.sync(() => interceptor.onError(error, handler));
 
-        verify(() => secureStorage.deleteToken()).called(2);
-        verify(() => secureStorage.deleteRefreshToken()).called(2);
-        verify(() => secureStorage.deleteUserIdentifier()).called(2);
-        verify(() => handler.reject(error)).called(2);
-      },
-    );
+      verify(() => secureStorage.deleteToken()).called(2);
+      verify(() => secureStorage.deleteRefreshToken()).called(2);
+      verify(() => secureStorage.deleteUserIdentifier()).called(2);
+      verify(() => handler.reject(error)).called(2);
+    });
 
     test('rejeita requisições pendentes quando refresh falha', () async {
       final requestOptions = RequestOptions(path: '/therapists');
@@ -83,12 +75,8 @@ void main() {
       when(() => handler1.reject(any())).thenAnswer((_) {});
       when(() => handler2.reject(any())).thenAnswer((_) {});
 
-      when(
-        () => secureStorage.getRefreshToken(),
-      ).thenAnswer((_) async => 'refresh-token');
-      when(
-        () => refreshTokenUseCase.call('refresh-token'),
-      ).thenThrow(Exception('refresh failed'));
+      when(() => secureStorage.getRefreshToken()).thenAnswer((_) async => 'refresh-token');
+      when(() => refreshTokenUseCase.call('refresh-token')).thenThrow(Exception('refresh failed'));
 
       // Primeira requisição dispara o refresh
       interceptor.onError(error, handler1);
@@ -98,8 +86,8 @@ void main() {
 
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
-      verify(() => handler1.reject(any())).called(1);
-      verify(() => handler2.reject(any())).called(1);
+      verify(() => handler1.reject(any())).called(2);
+      verify(() => handler2.reject(any())).called(2);
       verify(() => secureStorage.deleteToken()).called(1);
       verify(() => secureStorage.deleteRefreshToken()).called(1);
       verify(() => secureStorage.deleteUserIdentifier()).called(1);

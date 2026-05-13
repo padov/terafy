@@ -19,4 +19,7 @@ abstract class SubscriptionRepository {
 
   /// Retorna informações de uso (contagem de pacientes)
   Future<SubscriptionUsage> getUsageInfo();
+
+  /// Cria Sessão de Pagamento na Web via Stripe
+  Future<String> createCheckoutSession({required int planId, required String successUrl, required String cancelUrl});
 }

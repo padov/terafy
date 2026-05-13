@@ -2,21 +2,26 @@ import 'package:mocktail/mocktail.dart';
 import 'package:server/features/subscription/subscription.controller.dart';
 import 'package:server/features/subscription/subscription.repository.dart';
 import 'package:server/features/therapist/therapist.repository.dart';
+import 'package:server/core/services/stripe_service.dart';
 import 'package:test/test.dart';
 
 class _MockSubscriptionRepository extends Mock implements SubscriptionRepository {}
 
 class _MockTherapistRepository extends Mock implements TherapistRepository {}
 
+class _MockStripeService extends Mock implements StripeService {}
+
 void main() {
   late _MockSubscriptionRepository subscriptionRepository;
   late _MockTherapistRepository therapistRepository;
+  late _MockStripeService stripeService;
   late SubscriptionController controller;
 
   setUp(() {
     subscriptionRepository = _MockSubscriptionRepository();
     therapistRepository = _MockTherapistRepository();
-    controller = SubscriptionController(subscriptionRepository, therapistRepository);
+    stripeService = _MockStripeService();
+    controller = SubscriptionController(subscriptionRepository, therapistRepository, stripeService);
   });
 
   group('SubscriptionController', () {

@@ -11,6 +11,7 @@ WORKDIR /app
 
 # Copia o binário compilado (vem de fora)
 COPY server /app/server
+COPY prompts /app/prompts
 
 EXPOSE 8080
 ENV PORT=8080

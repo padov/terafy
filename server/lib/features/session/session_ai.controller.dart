@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:common/common.dart';
 import 'package:server/core/middleware/auth_middleware.dart';
 
-import 'package:server/core/services/openai_service.dart';
+import 'package:server/core/services/openrouter_service.dart';
 import 'package:server/features/ai_config/models/therapist_profile_model.dart';
 import 'package:server/features/patient/patient.repository.dart';
 import 'package:server/features/session/session.repository.dart';
@@ -19,9 +19,14 @@ class SessionAIController {
   final SessionRepository _sessionRepository;
   final PatientRepository _patientRepository;
   final TherapistRepository _therapistRepository;
-  final OpenAIService _openAIService;
+  final OpenRouterService _openRouterService;
 
-  SessionAIController(this._sessionRepository, this._patientRepository, this._therapistRepository, this._openAIService);
+  SessionAIController(
+    this._sessionRepository,
+    this._patientRepository,
+    this._therapistRepository,
+    this._openRouterService,
+  );
 
   Future<Response> handleAnalyzeAudio(Request request, String sessionIdStr) async {
     try {
@@ -132,10 +137,10 @@ class SessionAIController {
         }
 
         // 4. Transcrever
-        final transcription = await _openAIService.transcribeAudio(audioFile);
+        final transcription = await _openRouterService.transcribeAudio(audioFile);
 
         // 5. Analisar
-        final analysisJson = await _openAIService.analyzeSession(
+        final analysisJson = await _openRouterService.analyzeSession(
           transcription: transcription,
           therapistProfile: profile,
           patientName: patient.fullName,
@@ -180,6 +185,98 @@ class SessionAIController {
     } catch (e, stack) {
       AppLogger.error(e, stack);
       return Response.internalServerError(body: 'Internal Server Error');
+    }
+  }
+
+  /// Novo endpoint v2: recebe texto livre + transcrição STT e retorna relato em markdown.
+  /// Não requer upload de áudio — a transcrição já foi feita no dispositivo.
+  Future<Response> handleAnalyzeTextV2(Request request, String sessionIdStr) async {
+    try {
+      final sessionId = int.tryParse(sessionIdStr);
+      if (sessionId == null) {
+        return Response.badRequest(body: 'Invalid Session ID');
+      }
+
+      final userId = getUserId(request);
+      final userRole = getUserRole(request);
+      final accountId = getAccountId(request);
+
+      if (userId == null) return Response.forbidden('Unauthenticated');
+
+      final session = await _sessionRepository.getSessionById(
+        sessionId: sessionId,
+        userId: userId,
+        userRole: userRole,
+        accountId: accountId,
+        bypassRLS: userRole == 'admin',
+      );
+      if (session == null) return Response.notFound('Session not found');
+
+      // Parse body
+      final bodyStr = await request.readAsString();
+      final body = jsonDecode(bodyStr) as Map<String, dynamic>;
+      final freeNotes = body['freeNotes'] as String? ?? '';
+      final transcription = body['transcription'] as String? ?? '';
+
+      if (freeNotes.isEmpty && transcription.isEmpty) {
+        return Response.badRequest(body: 'freeNotes and transcription cannot both be empty');
+      }
+
+      // Carregar contextos
+      final patient = await _patientRepository.getPatientById(
+        session.patientId,
+        userId: userId,
+        userRole: userRole,
+        accountId: accountId,
+        bypassRLS: userRole == 'admin',
+      );
+      if (patient == null) return Response.internalServerError(body: 'Patient not found');
+
+      final therapist = await _therapistRepository.getTherapistById(
+        session.therapistId,
+        userId: userId,
+        userRole: userRole,
+      );
+      if (therapist == null) return Response.internalServerError(body: 'Therapist not found');
+
+      TherapistProfileModel profile = const TherapistProfileModel();
+      if (therapist.aiConfig != null) {
+        profile = TherapistProfileModel.fromJson(therapist.aiConfig!);
+      }
+
+      // Chamar IA com o novo prompt v2
+      final analysisResult = await _openRouterService.analyzeSessionV2(
+        freeNotes: freeNotes,
+        transcription: transcription,
+        therapistProfile: profile,
+        patientName: patient.fullName,
+      );
+
+      // Salvar os novos campos na sessão
+      final updatedSession = session.copyWith(
+        freeNotes: freeNotes,
+        transcription: transcription,
+        sessionReport: analysisResult['sessionReport'] as String?,
+        patientMood: analysisResult['patientMood'] as String?,
+        currentRisk: analysisResult['currentRisk'] as String? ?? session.currentRisk,
+        progressLevel: analysisResult['progressLevel'] as String?,
+        // status: mantemos o status atual (provavelmente draft)
+        updatedAt: DateTime.now(),
+      );
+
+      await _sessionRepository.updateSession(
+        sessionId: sessionId,
+        session: updatedSession,
+        userId: userId,
+        userRole: userRole,
+        accountId: accountId,
+        bypassRLS: userRole == 'admin',
+      );
+
+      return Response.ok(jsonEncode(analysisResult), headers: {'content-type': 'application/json'});
+    } catch (e, stack) {
+      AppLogger.error('Error in analyzeSessionV2: $e', stack);
+      return Response.internalServerError(body: 'Error: $e');
     }
   }
 }

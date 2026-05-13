@@ -21,4 +21,6 @@ abstract class SessionRepository {
   Future<int> getNextSessionNumber(int patientId);
 
   Future<Map<String, dynamic>> analyzeAudio(int sessionId, {String? filePath, List<int>? audioBytes});
+
+  Future<Map<String, dynamic>> analyzeTextV2(int sessionId, {required String freeNotes, required String transcription});
 }

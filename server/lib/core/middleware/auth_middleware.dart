@@ -5,13 +5,13 @@ import 'package:server/features/auth/token_blacklist.repository.dart';
 Middleware authMiddleware({TokenBlacklistRepository? blacklistRepository}) {
   return (Handler handler) {
     return (Request request) async {
-      // Rotas públicas que não precisam de autenticação
       final publicRoutes = [
         '/ping',
         '/auth/login',
         '/auth/register',
         '/auth/refresh', // Refresh token é público (usa refresh token para autenticar)
         '/anamnesis/public',
+        '/subscription/webhook', // Webhook do Stripe (valida pela assinatura, não JWT)
       ];
       final path = request.url.path;
 

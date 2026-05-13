@@ -31,5 +31,10 @@ Router configureSessionRoutes(SessionHandler handler) {
     return therapistOrAdmin.call((Request req) => handler.handleAnalyzeAudio(req, id))(request);
   });
 
+  // v2: recebe texto livre + transcrição STT (sem upload de áudio)
+  router.post('/<id|[0-9]+>/analyze_v2', (Request request, String id) async {
+    return therapistOrAdmin.call((Request req) => handler.handleAnalyzeTextV2(req, id))(request);
+  });
+
   return router;
 }

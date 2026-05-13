@@ -10,6 +10,19 @@ abstract class BaseHandler {
   /// Router abstrato que cada handler deve implementar
   Router get router;
 
+  /// Helper to encode JSON with support for DateTime
+  String _encodeJson(dynamic data) {
+    return jsonEncode(
+      data,
+      toEncodable: (item) {
+        if (item is DateTime) {
+          return item.toIso8601String();
+        }
+        return item;
+      },
+    );
+  }
+
   /// Cria uma resposta de erro padronizada
   ///
   /// [message] - Mensagem de erro
@@ -22,7 +35,7 @@ abstract class BaseHandler {
   /// }
   /// ```
   Response errorResponse(String message, {int statusCode = 400}) {
-    return Response(statusCode, body: jsonEncode({'error': message}), headers: {'Content-Type': 'application/json'});
+    return Response(statusCode, body: _encodeJson({'error': message}), headers: {'Content-Type': 'application/json'});
   }
 
   /// Cria uma resposta de sucesso padronizada
@@ -32,7 +45,7 @@ abstract class BaseHandler {
   ///
   /// Retorna uma Response com formato JSON padronizado
   Response successResponse(dynamic data, {int statusCode = 200}) {
-    return Response(statusCode, body: jsonEncode(data), headers: {'Content-Type': 'application/json'});
+    return Response(statusCode, body: _encodeJson(data), headers: {'Content-Type': 'application/json'});
   }
 
   /// Cria uma resposta de sucesso para criação de recursos (201 Created)

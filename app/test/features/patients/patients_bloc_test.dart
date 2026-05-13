@@ -56,26 +56,25 @@ void main() {
       'emite PatientsLoaded quando LoadPatients é adicionado com sucesso',
       build: () {
         when(() => patientsCacheService.getPatients()).thenReturn(null);
-        when(() => getPatientsUseCase()).thenAnswer((_) async => [
-              Patient(
-                id: '1',
-                therapistId: '1',
-                fullName: 'Paciente Teste',
-                phone: '11999999999',
-                status: PatientStatus.active,
-                totalSessions: 0,
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              ),
-            ]);
+        when(() => getPatientsUseCase()).thenAnswer(
+          (_) async => [
+            Patient(
+              id: '1',
+              therapistId: '1',
+              fullName: 'Paciente Teste',
+              phone: '11999999999',
+              status: PatientStatus.active,
+              totalSessions: 0,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ],
+        );
         when(() => patientsCacheService.savePatients(any())).thenReturn({});
         return bloc;
       },
       act: (bloc) => bloc.add(const LoadPatients()),
-      expect: () => [
-        const PatientsLoading(),
-        isA<PatientsLoaded>(),
-      ],
+      expect: () => [const PatientsLoading(), isA<PatientsLoaded>()],
     );
 
     blocTest<PatientsBloc, PatientsState>(
@@ -86,10 +85,7 @@ void main() {
         return bloc;
       },
       act: (bloc) => bloc.add(const LoadPatients()),
-      expect: () => [
-        const PatientsLoading(),
-        isA<PatientsError>(),
-      ],
+      expect: () => [const PatientsLoading(), isA<PatientsError>()],
     );
 
     blocTest<PatientsBloc, PatientsState>(
@@ -145,9 +141,7 @@ void main() {
         );
       },
       act: (bloc) => bloc.add(const SearchPatients('João')),
-      expect: () => [
-        isA<PatientsLoaded>(),
-      ],
+      expect: () => [isA<PatientsLoaded>()],
       verify: (bloc) {
         final state = bloc.state as PatientsLoaded;
         expect(state.filteredPatients.length, 1);
@@ -208,9 +202,7 @@ void main() {
         );
       },
       act: (bloc) => bloc.add(const FilterPatientsByStatus(PatientStatus.active)),
-      expect: () => [
-        isA<PatientsLoaded>(),
-      ],
+      expect: () => [isA<PatientsLoaded>()],
       verify: (bloc) {
         final state = bloc.state as PatientsLoaded;
         expect(state.filteredPatients.every((p) => p.status == PatientStatus.active), isTrue);
@@ -220,55 +212,54 @@ void main() {
     blocTest<PatientsBloc, PatientsState>(
       'emite PatientAdded quando AddQuickPatient é adicionado com sucesso',
       build: () {
-        when(() => createPatientUseCase(
-              fullName: any(named: 'fullName'),
-              phone: any(named: 'phone'),
-              email: any(named: 'email'),
-              birthDate: any(named: 'birthDate'),
-            )).thenAnswer((_) async => Patient(
-              id: '1',
-              therapistId: '1',
-              fullName: 'Novo Paciente',
-              phone: '11999999999',
-              status: PatientStatus.active,
-              totalSessions: 0,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ));
+        when(
+          () => createPatientUseCase(
+            fullName: any(named: 'fullName'),
+            phone: any(named: 'phone'),
+            email: any(named: 'email'),
+            birthDate: any(named: 'birthDate'),
+          ),
+        ).thenAnswer(
+          (_) async => Patient(
+            id: '1',
+            therapistId: '1',
+            fullName: 'Novo Paciente',
+            phone: '11999999999',
+            status: PatientStatus.active,
+            totalSessions: 0,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+        when(() => getPatientsUseCase()).thenAnswer((_) async => []);
+        when(() => patientsCacheService.savePatients(any())).thenReturn({});
+
         return bloc;
       },
-      act: (bloc) => bloc.add(
-        const AddQuickPatient(
-          fullName: 'Novo Paciente',
-          phone: '11999999999',
-        ),
-      ),
-      expect: () => [
-        const PatientAdding(),
-        isA<PatientAdded>(),
-      ],
+      act: (bloc) => bloc.add(const AddQuickPatient(fullName: 'Novo Paciente', phone: '11999999999')),
+      expect: () => [const PatientAdding(), isA<PatientAdded>(), isA<PatientsLoaded>()],
     );
 
     blocTest<PatientsBloc, PatientsState>(
       'emite PatientSelected quando SelectPatient é adicionado',
       build: () {
-        when(() => getPatientUseCase(any())).thenAnswer((_) async => Patient(
-              id: '1',
-              therapistId: '1',
-              fullName: 'Paciente Selecionado',
-              phone: '11999999999',
-              status: PatientStatus.active,
-              totalSessions: 0,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ));
+        when(() => getPatientUseCase(any())).thenAnswer(
+          (_) async => Patient(
+            id: '1',
+            therapistId: '1',
+            fullName: 'Paciente Selecionado',
+            phone: '11999999999',
+            status: PatientStatus.active,
+            totalSessions: 0,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
         return bloc;
       },
       act: (bloc) => bloc.add(const SelectPatient('1')),
-      expect: () => [
-        isA<PatientSelected>(),
-      ],
+      expect: () => [isA<PatientSelected>()],
     );
   });
 }
-

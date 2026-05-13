@@ -168,6 +168,9 @@ class SessionController {
   }) async {
     AppLogger.func();
     try {
+      AppLogger.info('--- UPDATE SESSION START ---');
+      AppLogger.info('Sessão recebida: \${session.id}. Status: \${session.status}');
+
       // Validações básicas
       if (session.durationMinutes <= 0) {
         throw SessionException('Duração deve ser maior que zero', 400);

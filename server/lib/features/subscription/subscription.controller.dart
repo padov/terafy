@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:common/common.dart';
 import 'package:server/features/subscription/subscription.repository.dart';
 import 'package:server/features/therapist/therapist.repository.dart';
+import 'package:server/core/services/stripe_service.dart';
 
 class SubscriptionException implements Exception {
   final String message;
@@ -15,8 +17,9 @@ class SubscriptionException implements Exception {
 class SubscriptionController {
   final SubscriptionRepository _repository;
   final TherapistRepository _therapistRepository;
+  final StripeService _stripeService;
 
-  SubscriptionController(this._repository, this._therapistRepository);
+  SubscriptionController(this._repository, this._therapistRepository, this._stripeService);
 
   /// Retorna o status da assinatura atual do terapeuta
   Future<Map<String, dynamic>> getSubscriptionStatus(int userId) async {
@@ -42,6 +45,10 @@ class SubscriptionController {
       final patientLimit = planData['patient_limit'] as int? ?? 10;
       final canCreate = patientCount < patientLimit;
 
+      final anamnesisLimit = planData['custom_anamnesis_limit'] as int? ?? 0;
+      final anamnesisCount = await _repository.countCustomAnamnesis(therapistId);
+      final canCreateAnamnesis = anamnesisCount < anamnesisLimit;
+
       return {
         'subscription': subscription?['subscription'],
         'plan': planData,
@@ -50,6 +57,9 @@ class SubscriptionController {
           'patient_limit': patientLimit,
           'can_create_patient': canCreate,
           'usage_percentage': patientLimit > 0 ? (patientCount / patientLimit * 100).round() : 0,
+          'custom_anamnesis_count': anamnesisCount,
+          'custom_anamnesis_limit': anamnesisLimit,
+          'can_create_anamnesis': canCreateAnamnesis,
         },
       };
     } catch (e) {
@@ -164,16 +174,127 @@ class SubscriptionController {
 
       final patientLimit = planData['patient_limit'] as int? ?? 10;
 
+      final anamnesisLimit = planData['custom_anamnesis_limit'] as int? ?? 0;
+      final anamnesisCount = await _repository.countCustomAnamnesis(therapistId);
+      final canCreateAnamnesis = anamnesisCount < anamnesisLimit;
+
       return {
         'patient_count': patientCount,
         'patient_limit': patientLimit,
         'can_create_patient': patientCount < patientLimit,
         'usage_percentage': patientLimit > 0 ? (patientCount / patientLimit * 100).round() : 0,
+        'custom_anamnesis_count': anamnesisCount,
+        'custom_anamnesis_limit': anamnesisLimit,
+        'can_create_anamnesis': canCreateAnamnesis,
       };
     } catch (e) {
       if (e is SubscriptionException) rethrow;
       AppLogger.error(e, StackTrace.current);
       throw SubscriptionException('Erro ao buscar informações de uso: ${e.toString()}', 500);
+    }
+  }
+
+  /// Gera link do Stripe Checkout
+  Future<String> createCheckoutSession({
+    required int userId,
+    required int planId,
+    required String successUrl,
+    required String cancelUrl,
+  }) async {
+    try {
+      final therapistData = await _therapistRepository.getTherapistByUserIdWithPlan(userId);
+      if (therapistData == null) {
+        throw SubscriptionException('Terapeuta não encontrado', 404);
+      }
+
+      final planData = await _repository.getPlanById(planId);
+      if (planData == null) {
+        throw SubscriptionException('Plano não encontrado', 404);
+      }
+
+      final stripePriceId = planData['stripe_price_id'] as String?;
+      if (stripePriceId == null || stripePriceId.isEmpty) {
+        throw SubscriptionException('Plano não possui configuração da Stripe', 400);
+      }
+
+      final email = therapistData['email'] as String? ?? '';
+
+      final url = await _stripeService.createCheckoutSession(
+        customerEmail: email,
+        therapistId: therapistData['id'].toString(),
+        priceId: stripePriceId,
+        planId: planId.toString(),
+        successUrl: successUrl,
+        cancelUrl: cancelUrl,
+      );
+
+      return url;
+    } catch (e) {
+      if (e is SubscriptionException) rethrow;
+      AppLogger.error(e, StackTrace.current);
+      throw SubscriptionException('Erro ao criar checkout: ${e.toString()}', 500);
+    }
+  }
+
+  /// Processa Webhook da Stripe
+  Future<void> handleStripeWebhook(String payload, String signature) async {
+    try {
+      if (!_stripeService.verifyWebhookSignature(signature, payload)) {
+        throw SubscriptionException('Assinatura do webhook inválida', 400);
+      }
+
+      final event = jsonDecode(payload);
+      final type = event['type'];
+      final data = event['data']['object'];
+
+      AppLogger.info('Stripe Webhook recebido: $type');
+
+      if (type == 'checkout.session.completed') {
+        final therapistIdStr = data['client_reference_id'] as String?;
+        if (therapistIdStr != null) {
+          final therapistId = int.tryParse(therapistIdStr);
+          if (therapistId != null) {
+            final planIdStr = data['metadata']?['plan_id'] ?? data['subscription_details']?['metadata']?['plan_id'];
+            int? planId;
+            if (planIdStr != null) {
+              planId = int.tryParse(planIdStr.toString());
+            }
+
+            AppLogger.info('Checkout complete para therapist_id: $therapistId, plan_id: $planId');
+
+            await _repository.syncStripeSubscription(
+              therapistId: therapistId,
+              planId: planId, // Novo param opcional se existir no webhook
+              stripeCustomerId: data['customer']?.toString() ?? '',
+              stripeSubscriptionId: data['subscription']?.toString() ?? '',
+              status: data['payment_status'] == 'paid' ? 'active' : 'pending',
+            );
+          }
+        }
+      } else if (type == 'customer.subscription.deleted') {
+        final stripeSubId = data['id'];
+        await _repository.cancelStripeSubscription(stripeSubId);
+      } else if (type == 'customer.subscription.updated') {
+        final stripeSubId = data['id'];
+        final status = data['status'];
+
+        final currentPeriodEndTimestamp = data['current_period_end'];
+        DateTime? currentPeriodEnd;
+        if (currentPeriodEndTimestamp != null) {
+          final seconds = currentPeriodEndTimestamp is int
+              ? currentPeriodEndTimestamp
+              : int.tryParse(currentPeriodEndTimestamp.toString());
+          if (seconds != null) {
+            currentPeriodEnd = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+          }
+        }
+
+        await _repository.updateStripeSubscriptionStatus(stripeSubId, status, currentPeriodEnd: currentPeriodEnd);
+      }
+    } catch (e) {
+      if (e is SubscriptionException) rethrow;
+      AppLogger.error('Erro processando webhook: $e', StackTrace.current);
+      throw SubscriptionException('Erro interno do servidor', 500);
     }
   }
 }

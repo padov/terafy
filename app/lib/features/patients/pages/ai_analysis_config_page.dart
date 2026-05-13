@@ -104,116 +104,26 @@ class _AiAnalysisConfigPageState extends State<AiAnalysisConfigPage> {
       return;
     }
 
-    // Build prompt in Markdown format
-    final sb = StringBuffer();
-    sb.writeln('# Análise Terapêutica - Solicitação de IA');
-    sb.writeln('- não finalize a analise com perguntas de próximos passos ou sugestões');
-    sb.writeln();
-
-    // 0. SYSTEM PROMPT
+    // Prepare variables
+    String therapistConfigText = '';
     if (_therapist?.aiConfig != null && _therapist!.aiConfig!.isNotEmpty) {
       try {
         final profile = TherapistProfileModel.fromJson(_therapist!.aiConfig!);
-        sb.writeln('## 📋 Configuração do Terapeuta (System Prompt)');
-        sb.writeln();
-        sb.writeln(_formatTherapistProfile(profile));
-        sb.writeln();
-        sb.writeln('---');
-        sb.writeln();
+        therapistConfigText =
+            '## 📋 Configuração do Terapeuta (System Prompt)\n\n' + _formatTherapistProfile(profile) + '\n\n---\n';
       } catch (e) {
-        sb.writeln('> ⚠️ **Aviso**: Erro ao processar configuração do terapeuta: $e');
-        sb.writeln();
+        therapistConfigText = '> ⚠️ **Aviso**: Erro ao processar configuração do terapeuta: $e\n\n';
       }
     } else {
-      sb.writeln('> ⚠️ **Aviso**: Nenhuma configuração de IA encontrada para este terapeuta.');
-      sb.writeln();
+      therapistConfigText = '> ⚠️ **Aviso**: Nenhuma configuração de IA encontrada para este terapeuta.\n\n';
     }
 
-    // 1. ANAMNESE
-    sb.writeln('## 📝 Anamnese');
-    sb.writeln();
-    sb.writeln('*Contexto permanente do paciente para todas as análises:*');
-    sb.writeln();
-    sb.writeln(_formatAnamnesis(_anamnesisData ?? {}));
-    sb.writeln();
-    sb.writeln('---');
-    sb.writeln();
+    String anamnesisText = _formatAnamnesis(_anamnesisData ?? {});
 
-    // 2. DADOS ESPECÍFICOS
-    switch (_selectedType) {
-      case AiAnalysisType.session:
-        sb.writeln('## 🎯 Dados da Sessão Específica');
-        sb.writeln();
-        sb.writeln(_formatSession(_selectedSession!));
-        if (_questionController.text.isNotEmpty) {
-          sb.writeln();
-          sb.writeln('### 💭 Questão Específica para Análise');
-          sb.writeln();
-          sb.writeln('> ${_questionController.text}');
-        }
-        break;
+    // Load base prompt
+    String prompt = '';
 
-      case AiAnalysisType.overview:
-        sb.writeln('## 📊 Histórico Terapêutico (Visão Geral)');
-        sb.writeln();
-        sb.writeln('**Total de sessões:** ${widget.patient.totalSessions}');
-        sb.writeln();
-        sb.writeln(
-          '**Início do tratamento:** ${widget.patient.treatmentStartDate != null ? DateFormat("dd/MM/yyyy").format(widget.patient.treatmentStartDate!) : "-"}',
-        );
-        sb.writeln();
-        final recentSessions = _sessions.take(5).toList();
-        sb.writeln('### Resumo das últimas ${recentSessions.length} sessões:');
-        sb.writeln();
-        for (var s in recentSessions) {
-          sb.writeln(
-            '- **${DateFormat("dd/MM").format(s.scheduledStartTime)}**: ${s.sessionNotes ?? "Sem notas"} *(Humor: ${s.patientMood ?? "-"})*',
-          );
-        }
-        if (_questionController.text.isNotEmpty) {
-          sb.writeln();
-          sb.writeln('### 💭 Dúvida/Questão Específica do Terapeuta');
-          sb.writeln();
-          sb.writeln('> ${_questionController.text}');
-        }
-        break;
-
-      case AiAnalysisType.evolution:
-        sb.writeln('## 📈 Evolução Temporal');
-        sb.writeln();
-        final sortedSessions = List<Session>.from(_sessions)
-          ..sort((a, b) => a.scheduledStartTime.compareTo(b.scheduledStartTime));
-        for (var s in sortedSessions) {
-          sb.writeln('### Sessão ${s.sessionNumber} - ${DateFormat("dd/MM/yyyy").format(s.scheduledStartTime)}');
-          sb.writeln();
-          sb.writeln('- **Notas:** ${s.sessionNotes}');
-          sb.writeln('- **Humor:** ${s.patientMood}');
-          sb.writeln('- **Evolução observada:** ${s.progressObserved ?? "-"}');
-          sb.writeln();
-        }
-        if (_questionController.text.isNotEmpty) {
-          sb.writeln('### 💭 Questão Específica do Terapeuta');
-          sb.writeln();
-          sb.writeln('> ${_questionController.text}');
-        }
-        break;
-
-      case AiAnalysisType.situation:
-        sb.writeln('## ⚠️ Situação Específica');
-        sb.writeln();
-        sb.writeln(_situationController.text);
-        if (_questionController.text.isNotEmpty) {
-          sb.writeln();
-          sb.writeln('### 💭 Pergunta Específica');
-          sb.writeln();
-          sb.writeln('> ${_questionController.text}');
-        }
-        break;
-    }
-
-    final prompt = sb.toString();
-
-    // Show loading dialog
+    // Show loading dialog for generation (re-used later)
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -221,6 +131,77 @@ class _AiAnalysisConfigPageState extends State<AiAnalysisConfigPage> {
         content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text('Gerando análise IA...')]),
       ),
     );
+
+    try {
+      final baseTemplate = await rootBundle.loadString('assets/prompts/analysis_base.md');
+      String specificData = '';
+      String questionSection = '';
+
+      if (_questionController.text.isNotEmpty) {
+        questionSection = '\n### 💭 Pergunta ou Foco Específico\n\n> ${_questionController.text}\n';
+      }
+
+      switch (_selectedType) {
+        case AiAnalysisType.session:
+          final sessionTemplate = await rootBundle.loadString('assets/prompts/analysis_session.md');
+          specificData = sessionTemplate
+              .replaceAll('{{session_data}}', _formatSession(_selectedSession!))
+              .replaceAll('{{question_section}}', questionSection);
+          break;
+        case AiAnalysisType.overview:
+          final overviewTemplate = await rootBundle.loadString('assets/prompts/analysis_overview.md');
+          final recentSessions = _sessions.take(5).toList();
+          final recentSessionsData = StringBuffer();
+          for (var s in recentSessions) {
+            recentSessionsData.writeln(
+              '- **${DateFormat("dd/MM").format(s.scheduledStartTime)}**: ${s.sessionNotes ?? "Sem notas"} *(Humor: ${s.patientMood ?? "-"})*',
+            );
+          }
+          final treatmentStart = widget.patient.treatmentStartDate != null
+              ? DateFormat("dd/MM/yyyy").format(widget.patient.treatmentStartDate!)
+              : "-";
+
+          specificData = overviewTemplate
+              .replaceAll('{{total_sessions}}', widget.patient.totalSessions.toString())
+              .replaceAll('{{treatment_start_date}}', treatmentStart)
+              .replaceAll('{{recent_sessions_count}}', recentSessions.length.toString())
+              .replaceAll('{{recent_sessions_data}}', recentSessionsData.toString())
+              .replaceAll('{{question_section}}', questionSection);
+          break;
+        case AiAnalysisType.evolution:
+          final evolutionTemplate = await rootBundle.loadString('assets/prompts/analysis_evolution.md');
+          final sortedSessions = List<Session>.from(_sessions)
+            ..sort((a, b) => a.scheduledStartTime.compareTo(b.scheduledStartTime));
+          final evolutionData = StringBuffer();
+          for (var s in sortedSessions) {
+            evolutionData.writeln(
+              '### Sessão ${s.sessionNumber} - ${DateFormat("dd/MM/yyyy").format(s.scheduledStartTime)}\n',
+            );
+            evolutionData.writeln('- **Notas:** ${s.sessionNotes}');
+            evolutionData.writeln('- **Humor:** ${s.patientMood}');
+            evolutionData.writeln('- **Evolução observada:** ${s.progressObserved ?? "-"}\n');
+          }
+          specificData = evolutionTemplate
+              .replaceAll('{{evolution_data}}', evolutionData.toString())
+              .replaceAll('{{question_section}}', questionSection);
+          break;
+        case AiAnalysisType.situation:
+          final situationTemplate = await rootBundle.loadString('assets/prompts/analysis_situation.md');
+          specificData = situationTemplate
+              .replaceAll('{{situation_data}}', _situationController.text)
+              .replaceAll('{{question_section}}', questionSection);
+          break;
+      }
+
+      prompt = baseTemplate
+          .replaceAll('{{therapist_config}}', therapistConfigText)
+          .replaceAll('{{anamnesis}}', anamnesisText)
+          .replaceAll('{{specific_data}}', specificData);
+    } catch (e) {
+      Navigator.pop(context); // close loader
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao carregar templates de prompt. $e')));
+      return;
+    }
 
     try {
       // Call backend API

@@ -64,7 +64,6 @@ import 'package:terafy/core/services/auth_service.dart';
 import 'package:terafy/core/services/secure_storage_service.dart';
 import 'package:terafy/core/services/patients_cache_service.dart';
 import 'package:terafy/core/services/session_manager.dart';
-import 'package:terafy/core/subscription/subscription_service.dart';
 import 'package:terafy/package/http.dart';
 
 // Este é um container de dependências simples. Em projetos maiores,
@@ -88,7 +87,6 @@ class DependencyContainer {
   late final AnamnesisTemplateRepository anamnesisTemplateRepository;
   late final AiAnalysisRepository aiAnalysisRepository;
   late final SubscriptionRepository subscriptionRepository;
-  late final SubscriptionService subscriptionService;
   late final LoginUseCase loginUseCase;
   late final RegisterUserUseCase registerUserUseCase;
   late final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -191,7 +189,6 @@ class DependencyContainer {
     secureStorageService = SecureStorageService();
     authService = testAuthService ?? AuthService();
     patientsCacheService = PatientsCacheService();
-    subscriptionService = SubscriptionService();
 
     httpClient = DioHttpClient(baseUrl: _baseUrl, enableLogger: kDebugMode);
     dio = (httpClient as DioHttpClient).dio;

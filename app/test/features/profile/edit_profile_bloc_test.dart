@@ -6,11 +6,19 @@ import 'package:terafy/core/domain/usecases/therapist/update_therapist_usecase.d
 import 'package:terafy/features/profile/edit_profile_bloc.dart';
 import 'package:terafy/features/profile/edit_profile_bloc_models.dart';
 
+import 'package:common/common.dart';
+
 class _MockGetCurrentTherapistUseCase extends Mock implements GetCurrentTherapistUseCase {}
 
 class _MockUpdateTherapistUseCase extends Mock implements UpdateTherapistUseCase {}
 
+class _FakeTherapist extends Fake implements Therapist {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeTherapist());
+  });
+
   group('EditProfileBloc', () {
     late _MockGetCurrentTherapistUseCase getCurrentTherapistUseCase;
     late _MockUpdateTherapistUseCase updateTherapistUseCase;
@@ -23,6 +31,7 @@ void main() {
         getCurrentTherapistUseCase: getCurrentTherapistUseCase,
         updateTherapistUseCase: updateTherapistUseCase,
       );
+      when(() => getCurrentTherapistUseCase()).thenAnswer((_) async => <String, dynamic>{});
     });
 
     tearDown(() {
@@ -36,28 +45,19 @@ void main() {
     blocTest<EditProfileBloc, EditProfileState>(
       'emite EditProfileLoaded quando LoadProfileData é adicionado',
       build: () {
-        when(() => getCurrentTherapistUseCase()).thenAnswer((_) async => {
-              'id': 1,
-              'name': 'Dr. João Silva',
-              'email': 'joao@test.com',
-              'phone': '11999999999',
-            });
+        when(() => getCurrentTherapistUseCase()).thenAnswer(
+          (_) async => {'id': 1, 'name': 'Dr. João Silva', 'email': 'joao@test.com', 'phone': '11999999999'},
+        );
         return bloc;
       },
       act: (bloc) => bloc.add(const LoadProfileData()),
-      expect: () => [
-        const EditProfileLoading(currentStep: 0, data: EditProfileData()),
-        isA<EditProfileLoaded>(),
-      ],
+      expect: () => [const EditProfileLoading(currentStep: 0, data: EditProfileData()), isA<EditProfileLoaded>()],
     );
 
     blocTest<EditProfileBloc, EditProfileState>(
       'atualiza dados pessoais quando UpdatePersonalData é adicionado',
       build: () => bloc,
-      seed: () => const EditProfileLoaded(
-        currentStep: 0,
-        data: EditProfileData(),
-      ),
+      seed: () => const EditProfileLoaded(currentStep: 0, data: EditProfileData()),
       act: (bloc) => bloc.add(
         const UpdatePersonalData(
           name: 'Dr. João Silva',
@@ -84,31 +84,23 @@ void main() {
     blocTest<EditProfileBloc, EditProfileState>(
       'emite EditProfileSuccess quando SubmitEditProfile é adicionado',
       build: () {
-        when(() => updateTherapistUseCase(therapist: any(named: 'therapist'))).thenAnswer((_) async => {
-              'id': 1,
-              'name': 'Dr. João Silva',
-            });
+        when(
+          () => updateTherapistUseCase(therapist: any(named: 'therapist')),
+        ).thenAnswer((_) async => {'id': 1, 'name': 'Dr. João Silva'});
         return bloc;
       },
       seed: () => const EditProfileInProgress(
         currentStep: 1,
-        data: EditProfileData(
-          name: 'Dr. João Silva',
-          email: 'joao@test.com',
-        ),
+        data: EditProfileData(name: 'Dr. João Silva', email: 'joao@test.com'),
       ),
       act: (bloc) => bloc.add(const SubmitEditProfile()),
       expect: () => [
         const EditProfileSaving(
           currentStep: 1,
-          data: EditProfileData(
-            name: 'Dr. João Silva',
-            email: 'joao@test.com',
-          ),
+          data: EditProfileData(name: 'Dr. João Silva', email: 'joao@test.com'),
         ),
         isA<EditProfileSuccess>(),
       ],
     );
   });
 }
-

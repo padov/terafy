@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/core/subscription/subscription_models.dart';
 
 class PlanCard extends StatelessWidget {
   final SubscriptionPlan plan;
-  final ProductDetails? productDetails;
   final bool isCurrentPlan;
   final bool isPurchasing;
   final VoidCallback? onPurchase;
@@ -14,7 +13,6 @@ class PlanCard extends StatelessWidget {
   const PlanCard({
     super.key,
     required this.plan,
-    this.productDetails,
     this.isCurrentPlan = false,
     this.isPurchasing = false,
     this.onPurchase,
@@ -109,7 +107,7 @@ class PlanCard extends StatelessWidget {
                     }),
                   const SizedBox(height: 16),
                   // Botão de ação
-                  if (onPurchase != null && !isCurrentPlan)
+                  if (onPurchase != null && !isCurrentPlan && plan.name.toLowerCase() != 'free')
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -158,10 +156,6 @@ class PlanCard extends StatelessWidget {
       return 'Gratuito';
     }
 
-    if (productDetails != null) {
-      return productDetails!.price;
-    }
-
-    return 'R\$ ${plan.price.toStringAsFixed(2)}/mês';
+    return 'R\$ ${plan.price.toStringAsFixed(2).replaceAll('.', ',')}/mês';
   }
 }

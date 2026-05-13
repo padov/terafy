@@ -125,4 +125,68 @@ class SubscriptionHandler extends BaseHandler {
       return internalServerErrorResponse('Erro ao buscar informações de uso: ${e.toString()}');
     }
   }
+
+  /// POST /api/subscription/checkout
+  Future<Response> handleCreateCheckout(Request request) async {
+    AppLogger.func();
+    try {
+      final userId = getUserId(request);
+      if (userId == null) {
+        return unauthorizedResponse('Autenticação necessária');
+      }
+
+      final body = await request.readAsString();
+      if (body.trim().isEmpty) {
+        return badRequestResponse('Corpo da requisição não pode ser vazio');
+      }
+
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      final planId = data['plan_id'] as int?;
+      final successUrl = data['success_url'] as String?;
+      final cancelUrl = data['cancel_url'] as String?;
+
+      if (planId == null || successUrl == null || cancelUrl == null) {
+        return badRequestResponse('plan_id, success_url e cancel_url são obrigatórios');
+      }
+
+      final url = await _controller.createCheckoutSession(
+        userId: userId,
+        planId: planId,
+        successUrl: successUrl,
+        cancelUrl: cancelUrl,
+      );
+
+      return successResponse({'url': url});
+    } on SubscriptionException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
+      return internalServerErrorResponse('Erro ao criar sessão de checkout: ${e.toString()}');
+    }
+  }
+
+  /// POST /api/subscription/webhook
+  Future<Response> handleStripeWebhook(Request request) async {
+    AppLogger.func();
+    try {
+      final signature = request.headers['stripe-signature'];
+      if (signature == null) {
+        AppLogger.warning('Webhook sem assinatura Stripe');
+        return badRequestResponse('Assinatura ausente');
+      }
+
+      // IMPORTANTE: precisamos ler o body exato como foi enviado pela Stripe
+      // request.readAsString() nos dá o body decodificado em utf-8 normalmente.
+      final payload = await request.readAsString();
+
+      await _controller.handleStripeWebhook(payload, signature);
+
+      return successResponse({'received': true});
+    } on SubscriptionException catch (e) {
+      return errorResponse(e.message, statusCode: e.statusCode);
+    } catch (e, stackTrace) {
+      AppLogger.error(e, stackTrace);
+      return internalServerErrorResponse('Erro no webhook: ${e.toString()}');
+    }
+  }
 }
