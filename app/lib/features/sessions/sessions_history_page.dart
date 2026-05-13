@@ -239,17 +239,26 @@ class _SessionsHistoryContent extends StatelessWidget {
     return grouped;
   }
 
-  void _onSessionTap(BuildContext context, Session session) {
+  void _onSessionTap(BuildContext context, Session session) async {
     // Se for rascunho, vai direto para a evolução
+    bool? result;
     if (session.status == SessionStatus.draft) {
-      Navigator.of(
-        context,
-      ).pushNamed('/session/evolution', arguments: {'sessionId': session.id, 'patientName': patientName});
+      result =
+          await Navigator.of(
+                context,
+              ).pushNamed('/session/evolution', arguments: {'sessionId': session.id, 'patientName': patientName})
+              as bool?;
     } else {
       // Senão, vai para os detalhes
-      Navigator.of(
-        context,
-      ).pushNamed('/session/details', arguments: {'sessionId': session.id, 'patientName': patientName});
+      result =
+          await Navigator.of(
+                context,
+              ).pushNamed('/session/details', arguments: {'sessionId': session.id, 'patientName': patientName})
+              as bool?;
+    }
+
+    if (result == true && context.mounted) {
+      context.read<SessionsBloc>().add(LoadPatientSessions(patientId));
     }
   }
 }

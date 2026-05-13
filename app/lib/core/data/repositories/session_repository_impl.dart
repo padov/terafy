@@ -141,6 +141,23 @@ class SessionRepositoryImpl implements SessionRepository {
     }
   }
 
+  @override
+  Future<Map<String, dynamic>> analyzeTextV2(
+    int sessionId, {
+    required String freeNotes,
+    required String transcription,
+  }) async {
+    try {
+      final response = await httpClient.post(
+        '/sessions/$sessionId/analyze_v2',
+        data: {'freeNotes': freeNotes, 'transcription': transcription},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e) ?? 'Erro ao analisar sessão com IA');
+    }
+  }
+
   String? _extractErrorMessage(DioException exception) {
     AppLogger.func();
     final data = exception.response?.data;

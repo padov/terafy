@@ -17,7 +17,13 @@ class Session {
   final double? chargedAmount;
   final int? transactionId; // FK para financial_transactions
 
-  // Registro Clínico
+  // Registro Clínico (v2 - novos campos)
+  final String? freeNotes; // Texto livre anotado pelo terapeuta durante a sessão
+  final String? transcription; // Transcrição de áudio em tempo real (STT nativo)
+  final String? sessionReport; // Relato em markdown gerado pela IA
+  final String? progressLevel; // 'improving' | 'stable' | 'regressing'
+
+  // Registro Clínico (v1 - mantidos para retrocompatibilidade)
   final String? patientMood;
   final List<String> topicsDiscussed;
   final String? sessionNotes;
@@ -62,6 +68,12 @@ class Session {
     this.cancellationTime,
     this.chargedAmount,
     this.transactionId,
+    // v2 fields
+    this.freeNotes,
+    this.transcription,
+    this.sessionReport,
+    this.progressLevel,
+    // v1 fields (retrocompat)
     this.patientMood,
     this.topicsDiscussed = const [],
     this.sessionNotes,
@@ -105,6 +117,12 @@ class Session {
     double? chargedAmount,
     int? transactionId,
     String? paymentStatus,
+    // v2 fields
+    String? freeNotes,
+    String? transcription,
+    String? sessionReport,
+    String? progressLevel,
+    // v1 fields (retrocompat)
     String? patientMood,
     List<String>? topicsDiscussed,
     String? sessionNotes,
@@ -146,6 +164,10 @@ class Session {
       cancellationTime: cancellationTime ?? this.cancellationTime,
       chargedAmount: chargedAmount ?? this.chargedAmount,
       transactionId: transactionId ?? this.transactionId,
+      freeNotes: freeNotes ?? this.freeNotes,
+      transcription: transcription ?? this.transcription,
+      sessionReport: sessionReport ?? this.sessionReport,
+      progressLevel: progressLevel ?? this.progressLevel,
       patientMood: patientMood ?? this.patientMood,
       topicsDiscussed: topicsDiscussed ?? this.topicsDiscussed,
       sessionNotes: sessionNotes ?? this.sessionNotes,
@@ -190,6 +212,12 @@ class Session {
       'cancellationTime': cancellationTime?.toIso8601String(),
       'chargedAmount': chargedAmount,
       'transactionId': transactionId,
+      // v2 fields
+      'freeNotes': freeNotes,
+      'transcription': transcription,
+      'sessionReport': sessionReport,
+      'progressLevel': progressLevel,
+      // v1 fields
       'patientMood': patientMood,
       'topicsDiscussed': topicsDiscussed,
       'sessionNotes': sessionNotes,
@@ -233,7 +261,12 @@ class Session {
       'cancellation_time': cancellationTime,
       'charged_amount': chargedAmount,
       'transaction_id': transactionId,
-
+      // v2 fields
+      'free_notes': freeNotes,
+      'transcription': transcription,
+      'session_report': sessionReport,
+      'progress_level': progressLevel,
+      // v1 fields (retrocompat)
       // payment_status não é salvo na tabela sessions, é apenas leitura via join
       'patient_mood': patientMood,
       'topics_discussed': topicsDiscussed,
@@ -277,6 +310,12 @@ class Session {
       cancellationTime: json['cancellationTime'] != null ? DateTime.parse(json['cancellationTime'] as String) : null,
       chargedAmount: json['chargedAmount'] != null ? (json['chargedAmount'] as num).toDouble() : null,
       transactionId: json['transactionId'] as int?,
+      // v2 fields
+      freeNotes: json['freeNotes'] as String?,
+      transcription: json['transcription'] as String?,
+      sessionReport: json['sessionReport'] as String?,
+      progressLevel: json['progressLevel'] as String?,
+      // v1 fields
       patientMood: json['patientMood'] as String?,
       topicsDiscussed: json['topicsDiscussed'] != null ? List<String>.from(json['topicsDiscussed'] as List) : const [],
       sessionNotes: json['sessionNotes'] as String?,
@@ -325,6 +364,12 @@ class Session {
       cancellationTime: _parseDate(map['cancellation_time']),
       chargedAmount: _parseDouble(map['charged_amount']),
       transactionId: _parseInt(map['transaction_id']),
+      // v2 fields
+      freeNotes: map['free_notes'] as String?,
+      transcription: map['transcription'] as String?,
+      sessionReport: map['session_report'] as String?,
+      progressLevel: map['progress_level'] as String?,
+      // v1 fields
       patientMood: map['patient_mood'] as String?,
       topicsDiscussed: _parseStringList(map['topics_discussed']),
       sessionNotes: map['session_notes'] as String?,

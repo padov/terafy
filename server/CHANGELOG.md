@@ -5,6 +5,27 @@ Todas as mudanças notáveis no servidor serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.7.0] - 2026-02-10
+
+### 🎉 Adicionado
+
+#### Sistema de Assinaturas (Google Play Billing)
+
+- **Integração Completa**: Implementação de assinaturas nativas usando a Google Play Billing Library.
+- **Backend de Assinaturas**:
+  - Novos controllers, handlers e repositórios para gerenciar assinaturas no servidor.
+  - Endpoints para listar planos, verificar status e validar compras (`/subscription/*`).
+  - Webhooks preparados para atualizações de assinatura em tempo real (Real-time Developer Notifications).
+- **Banco de Dados**:
+  - Novas tabelas e campos para suporte a produtos da Play Store.
+  - Funções SQL (`check_patient_limit`) e triggers para impor limites baseados no plano.
+
+### 🔧 Alterado
+
+- **Configurações de Limites**: O sistema agora valida o limite de pacientes ativos com base no plano de assinatura vigente.
+
+---
+
 ## [0.6.0] - 2026-01-12
 
 ### 🎉 Adicionado

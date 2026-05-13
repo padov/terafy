@@ -83,6 +83,7 @@ void main() {
     when(() => secureStorageService.deleteToken()).thenAnswer((_) async => {});
     when(() => secureStorageService.deleteRefreshToken()).thenAnswer((_) async => {});
     when(() => secureStorageService.deleteUserIdentifier()).thenAnswer((_) async => {});
+    when(() => secureStorageService.clearAll()).thenAnswer((_) async => {});
 
     when(() => authService.canCheckBiometrics()).thenAnswer((_) async => false);
     when(() => authService.authenticate()).thenAnswer((_) async => true);

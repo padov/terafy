@@ -22,7 +22,7 @@ import 'package:server/features/session/session.controller.dart';
 import 'package:server/features/session/session.handler.dart';
 import 'package:server/features/session/session.repository.dart';
 import 'package:server/features/session/session_ai.controller.dart';
-import 'package:server/core/services/openai_service.dart';
+import 'package:server/core/services/openrouter_service.dart';
 import 'package:server/features/financial/financial.controller.dart';
 import 'package:server/features/financial/financial.handler.dart';
 import 'package:server/features/financial/financial.repository.dart';
@@ -35,7 +35,10 @@ import 'package:server/features/anamnesis/anamnesis.handler.dart';
 import 'package:server/features/anamnesis/anamnesis.repository.dart';
 import 'package:server/features/ai/handlers/ai_handler.dart';
 import 'package:server/features/ai/ai_analysis_repository.dart';
-import 'package:server/core/services/ai/ai_factory.dart';
+import 'package:server/features/subscription/subscription.controller.dart';
+import 'package:server/features/subscription/subscription.handler.dart';
+import 'package:server/features/subscription/subscription.repository.dart';
+import 'package:server/core/services/stripe_service.dart';
 import 'package:common/common.dart';
 import 'package:server/core/config/env_config.dart';
 import 'package:path/path.dart' as p;
@@ -175,7 +178,10 @@ void main() async {
   final therapistRepository = TherapistRepository(dbConnection);
   final therapistHandler = TherapistHandler(therapistRepository, userRepository);
   final patientRepository = PatientRepository(dbConnection);
-  final patientController = PatientController(patientRepository);
+  final subscriptionRepository = SubscriptionRepository(dbConnection);
+  final stripeService = StripeService();
+  final subscriptionController = SubscriptionController(subscriptionRepository, therapistRepository, stripeService);
+  final patientController = PatientController(patientRepository, subscriptionController);
   final patientHandler = PatientHandler(patientController);
   final scheduleRepository = ScheduleRepository(dbConnection);
   final scheduleController = ScheduleController(scheduleRepository);
@@ -183,12 +189,14 @@ void main() async {
   final sessionRepository = SessionRepository(dbConnection);
   final financialRepository = FinancialRepository(dbConnection);
   final sessionController = SessionController(sessionRepository, scheduleRepository, financialRepository);
+
   final sessionAIController = SessionAIController(
     sessionRepository,
     patientRepository,
     therapistRepository,
-    OpenAIService(),
+    OpenRouterService(),
   );
+
   final sessionHandler = SessionHandler(sessionController, sessionAIController);
   final financialController = FinancialController(financialRepository);
   final financialHandler = FinancialHandler(financialController);
@@ -197,10 +205,11 @@ void main() async {
   final anamnesisRepository = AnamnesisRepository(dbConnection);
   final anamnesisController = AnamnesisController(anamnesisRepository);
   final anamnesisHandler = AnamnesisHandler(anamnesisController);
+  final subscriptionHandler = SubscriptionHandler(subscriptionController);
   final refreshTokenRepository = RefreshTokenRepository(dbConnection);
   final blacklistRepository = TokenBlacklistRepository(dbConnection);
   final authHandler = AuthHandler(userRepository, refreshTokenRepository, blacklistRepository);
-  final aiService = AIFactory.create(EnvConfig.env);
+  final aiService = OpenRouterService();
   final aiAnalysisRepository = AIAnalysisRepository(dbConnection);
   final aiHandler = AiHandler(aiService, aiAnalysisRepository);
 
@@ -216,9 +225,9 @@ void main() async {
     ..mount('/financial', financialHandler.router.call) // Monta as rotas financeiras
     ..mount('/home', homeHandler.router.call) // Monta as rotas da home
     ..mount('/anamnesis', anamnesisHandler.router.call) // Monta as rotas de anamnese
-    ..mount('/ai', aiHandler.router.call); // Monta as rotas de IA
-
-  // --- Criação do Pipeline e Servidor ---
+    ..mount('/ai', aiHandler.router.call) // Monta as rotas de IA
+    ..mount('/subscription', subscriptionHandler.router.call); // Monta as rotas de assinatura
+  // -- Top-level removal --
   final handler = Pipeline()
       .addMiddleware(corsMiddleware()) // CORS deve ser o primeiro middleware
       .addMiddleware(logRequests())

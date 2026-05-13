@@ -314,4 +314,8 @@ class SessionHandler extends BaseHandler {
   Future<Response> handleAnalyzeAudio(Request request, String id) async {
     return _aiController.handleAnalyzeAudio(request, id);
   }
+
+  Future<Response> handleAnalyzeTextV2(Request request, String id) async {
+    return _aiController.handleAnalyzeTextV2(request, id);
+  }
 }

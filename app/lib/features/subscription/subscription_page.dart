@@ -1,0 +1,246 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:terafy/common/app_colors.dart';
+import 'package:terafy/core/dependencies/dependency_container.dart';
+import 'package:terafy/features/subscription/bloc/subscription_bloc.dart';
+import 'package:terafy/features/subscription/bloc/subscription_bloc_models.dart';
+import 'package:terafy/features/subscription/widgets/plan_card.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+class SubscriptionPage extends StatelessWidget {
+  const SubscriptionPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => SubscriptionBloc(repository: DependencyContainer().subscriptionRepository)
+        ..add(const LoadSubscriptionStatus())
+        ..add(const LoadAvailablePlans()),
+      child: const _SubscriptionPageContent(),
+    );
+  }
+}
+
+class _SubscriptionPageContent extends StatelessWidget {
+  const _SubscriptionPageContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text('Planos de Assinatura', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.offBlack,
+        elevation: 0,
+      ),
+      body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
+        listener: (context, state) {
+          if (state.status == SubscriptionStatusEnum.error && state.errorMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red));
+          } else if (state.status == SubscriptionStatusEnum.purchased) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Assinatura ativada com sucesso!'), backgroundColor: Colors.green),
+            );
+            Navigator.of(context).pop();
+          } else if (state.status == SubscriptionStatusEnum.checkoutRedirect && state.checkoutUrl != null) {
+            launchUrl(Uri.parse(state.checkoutUrl!), webOnlyWindowName: '_self');
+          }
+        },
+        builder: (context, state) {
+          if (state.status == SubscriptionStatusEnum.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.status == SubscriptionStatusEnum.error && state.plans == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.errorMessage ?? 'Erro desconhecido',
+                    style: const TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<SubscriptionBloc>().add(const LoadSubscriptionStatus());
+                      context.read<SubscriptionBloc>().add(const LoadAvailablePlans());
+                    },
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final status = state.subscriptionStatus;
+          final plans = state.visiblePlans;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status atual
+                if (status != null) _buildCurrentStatus(context, status),
+
+                const SizedBox(height: 24),
+
+                if (!kIsWeb)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Para gerenciar sua assinatura ou alterar seu plano, acesse terafy.com.br pelo navegador do seu computador ou celular.',
+                            style: TextStyle(color: Colors.blue[900], fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Título dos planos
+                const Text(
+                  'Conheça os planos',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Todos os detalhes disponíveis no site oficial terafy.com.br',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+
+                // Lista de planos
+                if (plans.isNotEmpty)
+                  ...plans.map((plan) {
+                    final isCurrentPlan = status?.plan.id == plan.id && (status?.hasActiveSubscription ?? false);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: PlanCard(
+                        plan: plan,
+                        isCurrentPlan: isCurrentPlan,
+                        onPurchase: kIsWeb
+                            ? () {
+                                context.read<SubscriptionBloc>().add(CreateCheckoutSession(planId: plan.id));
+                              }
+                            : null,
+                      ),
+                    );
+                  })
+                else
+                  const Center(
+                    child: Padding(padding: EdgeInsets.all(32.0), child: CircularProgressIndicator()),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCurrentStatus(BuildContext context, dynamic status) {
+    final usage = status.usage;
+    final plan = status.plan;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Plano Atual', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  const SizedBox(height: 4),
+                  Text(
+                    plan.name,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                  ),
+                ],
+              ),
+              if (status.hasActiveSubscription)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(20)),
+                  child: const Text(
+                    'Ativo',
+                    style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Barra de progresso
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Uso de Pacientes',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.offBlack),
+                  ),
+                  Text(
+                    '${usage.patientCount} / ${usage.patientLimit}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: usage.patientLimit > 0 ? usage.patientCount / usage.patientLimit : 0,
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  usage.usagePercentage >= 80
+                      ? Colors.orange
+                      : usage.usagePercentage >= 100
+                      ? Colors.red
+                      : AppColors.primary,
+                ),
+                minHeight: 8,
+              ),
+              const SizedBox(height: 4),
+              if (usage.usagePercentage >= 80)
+                Text(
+                  usage.usagePercentage >= 100
+                      ? 'Limite atingido! Faça upgrade para adicionar mais pacientes.'
+                      : 'Você está próximo do limite. Considere fazer upgrade.',
+                  style: TextStyle(fontSize: 12, color: usage.usagePercentage >= 100 ? Colors.red : Colors.orange[700]),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

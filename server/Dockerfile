@@ -25,6 +25,8 @@ WORKDIR /app
 
 # Copia o binário compilado
 COPY --from=build /app/server .
+# Copia as pastas estáticas de runtime
+COPY --from=build /app/prompts ./prompts
 
 # Expõe a porta
 EXPOSE 8080

@@ -93,7 +93,11 @@ class SessionRepository {
           reminder_sent,
           reminder_sent_time,
           patient_rating,
-          attachments
+          attachments,
+          free_notes,
+          transcription,
+          session_report,
+          progress_level
         ) VALUES (
           @patient_id,
           @therapist_id,
@@ -130,7 +134,11 @@ class SessionRepository {
           @reminder_sent,
           @reminder_sent_time,
           @patient_rating,
-          CAST(@attachments AS JSONB)
+          CAST(@attachments AS JSONB),
+          @free_notes,
+          @transcription,
+          @session_report,
+          @progress_level
         )
         RETURNING id,
                   patient_id,
@@ -169,6 +177,10 @@ class SessionRepository {
                   reminder_sent_time,
                   patient_rating,
                   attachments,
+                  free_notes,
+                  transcription,
+                  session_report,
+                  progress_level,
                   created_at,
                   updated_at
       '''),
@@ -237,10 +249,13 @@ class SessionRepository {
                s.reminder_sent_time,
                s.patient_rating,
                s.attachments,
+               s.free_notes,
+               s.transcription,
+               s.session_report,
+               s.progress_level,
                s.created_at,
                s.updated_at
-        FROM sessions s
-        WHERE s.id = @id
+        FROM sessions s        WHERE s.id = @id
       '''),
         parameters: {'id': sessionId},
       );
@@ -316,9 +331,12 @@ class SessionRepository {
              s.reminder_sent_time,
              s.patient_rating,
              s.attachments,
+             s.free_notes,
+             s.transcription,
+             s.session_report,
+             s.progress_level,
              s.created_at,
-             s.updated_at,
-             t.status::text AS payment_status
+             s.updated_at,             t.status::text AS payment_status
       FROM sessions s
       LEFT JOIN financial_transactions t ON s.transaction_id = t.id
       WHERE 1=1
@@ -455,6 +473,10 @@ class SessionRepository {
             reminder_sent_time = @reminder_sent_time,
             patient_rating = @patient_rating,
             attachments = CAST(@attachments AS JSONB),
+            free_notes = @free_notes,
+            transcription = @transcription,
+            session_report = @session_report,
+            progress_level = @progress_level,
             updated_at = NOW()
         WHERE id = @id
         RETURNING id,
@@ -494,6 +516,10 @@ class SessionRepository {
                   reminder_sent_time,
                   patient_rating,
                   attachments,
+                  free_notes,
+                  transcription,
+                  session_report,
+                  progress_level,
                   created_at,
                   updated_at
       '''),

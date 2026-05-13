@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:terafy/core/domain/repositories/subscription_repository.dart';
 import 'package:terafy/core/domain/usecases/patient/create_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/get_patient_usecase.dart';
 import 'package:terafy/core/domain/usecases/patient/get_patients_usecase.dart';
@@ -14,11 +15,13 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     required GetPatientUseCase getPatientUseCase,
     required UpdatePatientUseCase updatePatientUseCase,
     required PatientsCacheService patientsCacheService,
+    SubscriptionRepository? subscriptionRepository,
   }) : _getPatientsUseCase = getPatientsUseCase,
        _createPatientUseCase = createPatientUseCase,
        _getPatientUseCase = getPatientUseCase,
        _updatePatientUseCase = updatePatientUseCase,
        _patientsCacheService = patientsCacheService,
+       _subscriptionRepository = subscriptionRepository,
        super(const PatientsInitial()) {
     on<LoadPatients>(_onLoadPatients);
     on<RefreshPatients>(_onRefreshPatients);
@@ -37,14 +40,12 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
   final GetPatientUseCase _getPatientUseCase;
   final UpdatePatientUseCase _updatePatientUseCase;
   final PatientsCacheService _patientsCacheService;
+  final SubscriptionRepository? _subscriptionRepository;
   PatientsLoaded? _lastLoadedState;
   String? _currentSearchQuery;
   PatientStatus? _currentStatusFilter = PatientStatus.active;
 
-  Future<void> _onLoadPatients(
-    LoadPatients event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onLoadPatients(LoadPatients event, Emitter<PatientsState> emit) async {
     final cachedList = _patientsCacheService.getPatients();
     if (cachedList != null && cachedList.isNotEmpty) {
       _emitLoaded(
@@ -70,22 +71,37 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
 
       final previous = _lastLoadedState;
       final searchQuery = _currentSearchQuery ?? previous?.searchQuery;
-      final statusFilter =
-          _currentStatusFilter ??
-          previous?.statusFilter ??
-          PatientStatus.active;
+      final statusFilter = _currentStatusFilter ?? previous?.statusFilter ?? PatientStatus.active;
+
+      // Busca informações de uso se subscription repository estiver disponível
+      int? patientCount;
+      int? patientLimit;
+      bool? canCreatePatient;
+
+      if (_subscriptionRepository != null) {
+        try {
+          final usage = await _subscriptionRepository.getUsageInfo();
+          patientCount = usage.patientCount;
+          patientLimit = usage.patientLimit;
+          canCreatePatient = usage.canCreatePatient;
+        } catch (e) {
+          // Se falhar, usa contagem de pacientes como fallback
+          patientCount = patients.length;
+        }
+      } else {
+        patientCount = patients.length;
+      }
 
       _emitLoaded(
         emit,
         PatientsLoaded(
           patients: patients,
-          filteredPatients: _applyFilters(
-            patients,
-            searchQuery: searchQuery,
-            statusFilter: statusFilter,
-          ),
+          filteredPatients: _applyFilters(patients, searchQuery: searchQuery, statusFilter: statusFilter),
           searchQuery: searchQuery,
           statusFilter: statusFilter,
+          patientCount: patientCount,
+          patientLimit: patientLimit,
+          canCreatePatient: canCreatePatient,
         ),
       );
     } catch (e) {
@@ -93,10 +109,7 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     }
   }
 
-  Future<void> _onRefreshPatients(
-    RefreshPatients event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onRefreshPatients(RefreshPatients event, Emitter<PatientsState> emit) async {
     add(const LoadPatients());
   }
 
@@ -121,10 +134,7 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     }
   }
 
-  void _onFilterPatientsByStatus(
-    FilterPatientsByStatus event,
-    Emitter<PatientsState> emit,
-  ) {
+  void _onFilterPatientsByStatus(FilterPatientsByStatus event, Emitter<PatientsState> emit) {
     if (state is PatientsLoaded) {
       final currentState = state as PatientsLoaded;
       _currentStatusFilter = event.status;
@@ -145,13 +155,27 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     }
   }
 
-  Future<void> _onAddQuickPatient(
-    AddQuickPatient event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onAddQuickPatient(AddQuickPatient event, Emitter<PatientsState> emit) async {
     emit(const PatientAdding());
 
     try {
+      // Verifica limite antes de criar
+      if (_subscriptionRepository != null) {
+        try {
+          final usage = await _subscriptionRepository.getUsageInfo();
+          if (!usage.canCreatePatient) {
+            emit(
+              PatientsError(
+                'Limite de pacientes atingido. Você possui ${usage.patientCount} de ${usage.patientLimit} pacientes permitidos no seu plano atual. Faça upgrade para adicionar mais pacientes.',
+              ),
+            );
+            return;
+          }
+        } catch (e) {
+          // Se falhar na verificação, continua (backend também valida)
+        }
+      }
+
       final createdPatient = await _createPatientUseCase(
         fullName: event.fullName,
         phone: event.phone,
@@ -163,6 +187,25 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
 
       final patients = await _getPatientsUseCase();
       _patientsCacheService.savePatients(patients);
+
+      // Busca informações de uso atualizadas
+      int? patientCount;
+      int? patientLimit;
+      bool? canCreatePatient;
+
+      if (_subscriptionRepository != null) {
+        try {
+          final usage = await _subscriptionRepository.getUsageInfo();
+          patientCount = usage.patientCount;
+          patientLimit = usage.patientLimit;
+          canCreatePatient = usage.canCreatePatient;
+        } catch (e) {
+          patientCount = patients.length;
+        }
+      } else {
+        patientCount = patients.length;
+      }
+
       _emitLoaded(
         emit,
         PatientsLoaded(
@@ -174,6 +217,9 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
           ),
           searchQuery: _currentSearchQuery,
           statusFilter: _currentStatusFilter,
+          patientCount: patientCount,
+          patientLimit: patientLimit,
+          canCreatePatient: canCreatePatient,
         ),
       );
     } catch (e) {
@@ -181,10 +227,7 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     }
   }
 
-  Future<void> _onSelectPatient(
-    SelectPatient event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onSelectPatient(SelectPatient event, Emitter<PatientsState> emit) async {
     Patient? fallback;
     if (state is PatientsLoaded) {
       final currentState = state as PatientsLoaded;
@@ -209,10 +252,7 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
     }
   }
 
-  Future<void> _onRequestAIAnalysis(
-    RequestAIAnalysis event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onRequestAIAnalysis(RequestAIAnalysis event, Emitter<PatientsState> emit) async {
     if (state is PatientSelected) {
       final currentState = state as PatientSelected;
 
@@ -223,19 +263,14 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
 
         final analysis = _generateMockAIAnalysis(currentState.patient);
 
-        emit(
-          AIAnalysisLoaded(patient: currentState.patient, analysis: analysis),
-        );
+        emit(AIAnalysisLoaded(patient: currentState.patient, analysis: analysis));
       } catch (e) {
         emit(PatientsError(e.toString()));
       }
     }
   }
 
-  void _onResetPatientsView(
-    ResetPatientsView event,
-    Emitter<PatientsState> emit,
-  ) {
+  void _onResetPatientsView(ResetPatientsView event, Emitter<PatientsState> emit) {
     if (_lastLoadedState != null) {
       final cachedState = _lastLoadedState!;
       _emitLoaded(
@@ -260,11 +295,7 @@ class PatientsBloc extends Bloc<PatientsEvent, PatientsState> {
         emit,
         PatientsLoaded(
           patients: cached,
-          filteredPatients: _applyFilters(
-            cached,
-            searchQuery: _currentSearchQuery,
-            statusFilter: _currentStatusFilter,
-          ),
+          filteredPatients: _applyFilters(cached, searchQuery: _currentSearchQuery, statusFilter: _currentStatusFilter),
           searchQuery: _currentSearchQuery,
           statusFilter: _currentStatusFilter,
         ),
@@ -317,11 +348,7 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
     }
   }
 
-  List<Patient> _applyFilters(
-    List<Patient> patients, {
-    String? searchQuery,
-    PatientStatus? statusFilter,
-  }) {
+  List<Patient> _applyFilters(List<Patient> patients, {String? searchQuery, PatientStatus? statusFilter}) {
     Iterable<Patient> filtered = patients;
 
     if (statusFilter != null) {
@@ -333,8 +360,7 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
       filtered = filtered.where((patient) {
         final matchesName = patient.fullName.toLowerCase().contains(query);
         final matchesPhone = patient.phone.contains(query);
-        final matchesEmail =
-            patient.email?.toLowerCase().contains(query) ?? false;
+        final matchesEmail = patient.email?.toLowerCase().contains(query) ?? false;
         return matchesName || matchesPhone || matchesEmail;
       });
     }
@@ -342,10 +368,7 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
     return filtered.toList();
   }
 
-  Future<void> _onUpdatePatient(
-    UpdatePatient event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onUpdatePatient(UpdatePatient event, Emitter<PatientsState> emit) async {
     Patient? currentPatient;
     if (state is PatientSelected) {
       currentPatient = (state as PatientSelected).patient;
@@ -362,7 +385,7 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
 
     try {
       final updatedPatient = await _updatePatientUseCase(patient: event.patient);
-      
+
       // Atualiza cache
       final cached = _patientsCacheService.getPatients();
       if (cached != null) {
@@ -382,13 +405,13 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
         // Se não estava visualizando, emite PatientUpdated
         emit(PatientUpdated(updatedPatient));
       }
-      
+
       // Atualiza lista se estiver em estado de lista (sem emitir, apenas atualiza o cache)
       if (_lastLoadedState != null) {
         final updatedList = _lastLoadedState!.patients.map((p) {
           return p.id == updatedPatient.id ? updatedPatient : p;
         }).toList();
-        
+
         // Atualiza o estado da lista apenas se não estivermos visualizando o paciente
         if (currentPatient == null) {
           _emitLoaded(
@@ -426,10 +449,7 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
     }
   }
 
-  Future<void> _onUpdatePatientNotes(
-    UpdatePatientNotes event,
-    Emitter<PatientsState> emit,
-  ) async {
+  Future<void> _onUpdatePatientNotes(UpdatePatientNotes event, Emitter<PatientsState> emit) async {
     Patient? currentPatient;
     if (state is PatientSelected) {
       currentPatient = (state as PatientSelected).patient;
@@ -452,9 +472,7 @@ Esta análise foi gerada automaticamente e deve ser complementada com avaliaçã
       return;
     }
 
-    final updatedPatient = currentPatient.copyWith(
-      notes: (event.notes?.isEmpty ?? true) ? null : event.notes,
-    );
+    final updatedPatient = currentPatient.copyWith(notes: (event.notes?.isEmpty ?? true) ? null : event.notes);
     add(UpdatePatient(updatedPatient));
   }
 

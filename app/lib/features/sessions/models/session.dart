@@ -46,7 +46,13 @@ class Session extends Equatable {
   final double? chargedAmount;
   final String? transactionId; // FK para financial_transactions
 
-  // Registro Clínico
+  // Registro Clínico v2 (novos campos simplificados)
+  final String? freeNotes; // Texto livre anotado pelo terapeuta
+  final String? transcription; // Transcrição STT em tempo real
+  final String? sessionReport; // Relato em markdown gerado pela IA
+  final String? progressLevel; // 'improving' | 'stable' | 'regressing'
+
+  // Registro Clínico v1 (mantidos para retrocompatibilidade)
   final String? patientMood; // Humor/estado emocional
   final List<String> topicsDiscussed; // Temas abordados
   final String? sessionNotes; // Conteúdo da sessão (protegido)
@@ -92,6 +98,12 @@ class Session extends Equatable {
     this.cancellationTime,
     this.chargedAmount,
     this.transactionId,
+    // v2 fields
+    this.freeNotes,
+    this.transcription,
+    this.sessionReport,
+    this.progressLevel,
+    // v1 fields (retrocompat)
     this.patientMood,
     this.topicsDiscussed = const [],
     this.sessionNotes,
@@ -134,6 +146,12 @@ class Session extends Equatable {
     DateTime? cancellationTime,
     double? chargedAmount,
     String? transactionId,
+    // v2 fields
+    String? freeNotes,
+    String? transcription,
+    String? sessionReport,
+    String? progressLevel,
+    // v1 fields
     String? patientMood,
     List<String>? topicsDiscussed,
     String? sessionNotes,
@@ -175,6 +193,12 @@ class Session extends Equatable {
       cancellationTime: cancellationTime ?? this.cancellationTime,
       chargedAmount: chargedAmount ?? this.chargedAmount,
       transactionId: transactionId ?? this.transactionId,
+      // v2 fields
+      freeNotes: freeNotes ?? this.freeNotes,
+      transcription: transcription ?? this.transcription,
+      sessionReport: sessionReport ?? this.sessionReport,
+      progressLevel: progressLevel ?? this.progressLevel,
+      // v1 fields
       patientMood: patientMood ?? this.patientMood,
       topicsDiscussed: topicsDiscussed ?? this.topicsDiscussed,
       sessionNotes: sessionNotes ?? this.sessionNotes,
@@ -219,6 +243,12 @@ class Session extends Equatable {
     cancellationTime,
     chargedAmount,
     transactionId,
+    // v2 fields
+    freeNotes,
+    transcription,
+    sessionReport,
+    progressLevel,
+    // v1 fields
     patientMood,
     topicsDiscussed,
     sessionNotes,

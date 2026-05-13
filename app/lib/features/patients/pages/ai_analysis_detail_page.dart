@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
@@ -241,15 +242,34 @@ class _AiAnalysisDetailPageState extends State<AiAnalysisDetailPage> {
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-            child: SelectableText(
-              hasResponse ? responseText : 'Resposta ainda não disponível',
-              style: TextStyle(
-                fontSize: 14,
-                color: hasResponse ? Colors.black87 : Colors.grey[500],
-                height: 1.6,
-                fontStyle: hasResponse ? FontStyle.normal : FontStyle.italic,
-              ),
-            ),
+            child: hasResponse
+                ? MarkdownBody(
+                    data: responseText,
+                    selectable: true,
+                    styleSheet: MarkdownStyleSheet(
+                      p: TextStyle(fontSize: 14, color: Colors.black87, height: 1.6),
+                      h1: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                      h2: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                      h3: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.offBlack),
+                      strong: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                      em: TextStyle(fontStyle: FontStyle.italic, color: Colors.black87),
+                      blockquoteDecoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.05),
+                        border: Border(left: BorderSide(color: AppColors.primary, width: 3)),
+                      ),
+                      blockquotePadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      code: TextStyle(fontFamily: 'monospace', fontSize: 13, backgroundColor: Colors.grey[100]),
+                      codeblockDecoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      listBullet: TextStyle(fontSize: 14, color: AppColors.primary),
+                    ),
+                  )
+                : Text(
+                    'Resposta ainda não disponível',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                  ),
           ),
         ],
       ),

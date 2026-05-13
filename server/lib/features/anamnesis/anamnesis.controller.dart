@@ -211,6 +211,16 @@ class AnamnesisController {
   }) async {
     AppLogger.func();
     try {
+      final therapistId = template.therapistId;
+      if (therapistId != null) {
+        final limit = await _repository.getCustomAnamnesisLimit(therapistId);
+        final currentCount = await _repository.countCustomTemplates(therapistId);
+
+        if (currentCount >= limit) {
+          throw AnamnesisException('Limite do plano atingido: Você só pode criar $limit modelo(s) de anamnese.', 403);
+        }
+      }
+
       return await _repository.createTemplate(
         template,
         userId: userId,

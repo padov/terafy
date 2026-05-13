@@ -70,6 +70,7 @@ class MyApp extends StatelessWidget {
     );
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Terafy',
       theme: AppTheme.lightTheme,
       // initialRoute: AppRouter.splashRoute, // Removido para respeitar a URL no web

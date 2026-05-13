@@ -64,10 +64,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       final planData = therapistData['plan'] as Map<String, dynamic>?;
       if (planData != null) {
+        double parsedPrice = 0.0;
+        final rawPrice = planData['price'];
+        if (rawPrice is num) parsedPrice = rawPrice.toDouble();
+        if (rawPrice is String) parsedPrice = double.tryParse(rawPrice) ?? 0.0;
+
         plan = TherapistPlan(
           id: planData['id'] as int? ?? 0,
           name: planData['name'] as String? ?? 'Free',
-          price: (planData['price'] as num?)?.toDouble() ?? 0.0,
+          price: parsedPrice,
           patientLimit: planData['patient_limit'] as int? ?? 5,
         );
       }
@@ -141,6 +146,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       userRole: 'Terapeuta',
       therapistName: therapistName,
       plan: plan,
+      patientLimit: plan.patientLimit,
       notificationCount: 0,
       stats: stats,
       todayAppointments: agenda,

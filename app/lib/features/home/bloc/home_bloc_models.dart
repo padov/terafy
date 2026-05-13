@@ -65,6 +65,8 @@ class HomeData extends Equatable {
   final int notificationCount;
   final String? therapistName;
   final TherapistPlan? plan;
+  final int? patientCount;
+  final int? patientLimit;
   final DailyStats stats;
   final List<Appointment> todayAppointments;
   final List<Reminder> reminders;
@@ -78,6 +80,8 @@ class HomeData extends Equatable {
     this.notificationCount = 0,
     this.therapistName,
     this.plan,
+    this.patientCount,
+    this.patientLimit,
     required this.stats,
     required this.todayAppointments,
     required this.reminders,
@@ -93,6 +97,8 @@ class HomeData extends Equatable {
     notificationCount,
     therapistName,
     plan,
+    patientCount,
+    patientLimit,
     stats,
     todayAppointments,
     reminders,

@@ -7,12 +7,19 @@ import 'package:terafy/core/domain/usecases/auth/register_user_usecase.dart';
 import 'package:terafy/core/domain/usecases/therapist/create_therapist_usecase.dart';
 import 'package:terafy/features/signup/bloc/signup_bloc.dart';
 import 'package:terafy/features/signup/bloc/signup_bloc_models.dart';
+import 'package:terafy/core/domain/entities/therapist_signup_input.dart';
 
 class _MockRegisterUserUseCase extends Mock implements RegisterUserUseCase {}
 
 class _MockCreateTherapistUseCase extends Mock implements CreateTherapistUseCase {}
 
+class _FakeTherapistSignupInput extends Fake implements TherapistSignupInput {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeTherapistSignupInput());
+  });
+
   group('SignupBloc', () {
     late _MockRegisterUserUseCase registerUserUseCase;
     late _MockCreateTherapistUseCase createTherapistUseCase;
@@ -21,10 +28,7 @@ void main() {
     setUp(() {
       registerUserUseCase = _MockRegisterUserUseCase();
       createTherapistUseCase = _MockCreateTherapistUseCase();
-      bloc = SignupBloc(
-        registerUserUseCase: registerUserUseCase,
-        createTherapistUseCase: createTherapistUseCase,
-      );
+      bloc = SignupBloc(registerUserUseCase: registerUserUseCase, createTherapistUseCase: createTherapistUseCase);
     });
 
     tearDown(() {
@@ -40,9 +44,7 @@ void main() {
       'emite SignupInProgress quando NextStepPressed é adicionado',
       build: () => bloc,
       act: (bloc) => bloc.add(const NextStepPressed()),
-      expect: () => [
-        const SignupInProgress(currentStep: 1, data: SignupData()),
-      ],
+      expect: () => [const SignupInProgress(currentStep: 1, data: SignupData())],
     );
 
     blocTest<SignupBloc, SignupState>(
@@ -58,9 +60,7 @@ void main() {
       build: () => bloc,
       seed: () => const SignupInProgress(currentStep: 1, data: SignupData()),
       act: (bloc) => bloc.add(const PreviousStepPressed()),
-      expect: () => [
-        const SignupInProgress(currentStep: 0, data: SignupData()),
-      ],
+      expect: () => [const SignupInProgress(currentStep: 0, data: SignupData())],
     );
 
     blocTest<SignupBloc, SignupState>(
@@ -126,12 +126,7 @@ void main() {
       'seleciona plano quando SelectPlan é adicionado',
       build: () => bloc,
       act: (bloc) => bloc.add(const SelectPlan(1)),
-      expect: () => [
-        const SignupInProgress(
-          currentStep: 0,
-          data: SignupData(planId: 1),
-        ),
-      ],
+      expect: () => [const SignupInProgress(currentStep: 0, data: SignupData(planId: 1))],
     );
 
     blocTest<SignupBloc, SignupState>(
@@ -150,11 +145,13 @@ void main() {
     blocTest<SignupBloc, SignupState>(
       'emite SignupLoading e SignupSuccess quando SubmitSignup com dados válidos',
       build: () {
-        when(() => registerUserUseCase(any(), any())).thenAnswer((_) async => AuthResult(
-              authToken: 'token123',
-              refreshAuthToken: 'refresh123',
-              client: Client(id: '1', name: 'João Silva', email: 'joao@test.com'),
-            ));
+        when(() => registerUserUseCase(any(), any())).thenAnswer(
+          (_) async => AuthResult(
+            authToken: 'token123',
+            refreshAuthToken: 'refresh123',
+            client: Client(id: '1', name: 'João Silva', email: 'joao@test.com'),
+          ),
+        );
         when(() => createTherapistUseCase(input: any(named: 'input'))).thenAnswer((_) async => {});
         return bloc;
       },
@@ -236,4 +233,3 @@ void main() {
     );
   });
 }
-

@@ -143,6 +143,8 @@ class _HomePageContentState extends State<_HomePageContent> with RouteAware {
               userPhotoUrl: data.userPhotoUrl,
               notificationCount: data.notificationCount,
               plan: data.plan,
+              patientCount: data.patientCount,
+              patientLimit: data.patientLimit,
               onNotificationTap: () {
                 // TODO: Navigate to notifications
               },

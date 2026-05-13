@@ -4,6 +4,8 @@ import 'package:terafy/common/app_colors.dart';
 import 'package:terafy/core/dependencies/dependency_container.dart';
 import 'package:terafy/features/anamnesis/bloc/anamnesis_bloc.dart';
 import 'package:terafy/features/anamnesis/bloc/anamnesis_bloc_models.dart';
+import 'package:terafy/features/subscription/bloc/subscription_bloc.dart';
+import 'package:terafy/features/subscription/bloc/subscription_bloc_models.dart';
 import 'package:terafy/features/anamnesis/models/anamnesis_template.dart';
 import 'package:terafy/features/anamnesis/pages/template_editor_page.dart';
 
@@ -12,11 +14,20 @@ class MyTemplatesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AnamnesisBloc(
-        anamnesisRepository: DependencyContainer().anamnesisRepository,
-        templateRepository: DependencyContainer().anamnesisTemplateRepository,
-      )..add(const LoadTemplates(isSystem: false)),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AnamnesisBloc(
+            anamnesisRepository: DependencyContainer().anamnesisRepository,
+            templateRepository: DependencyContainer().anamnesisTemplateRepository,
+          )..add(const LoadTemplates(isSystem: false)),
+        ),
+        BlocProvider(
+          create: (context) =>
+              SubscriptionBloc(repository: DependencyContainer().subscriptionRepository)
+                ..add(const LoadSubscriptionStatus()),
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Meus Modelos'),
@@ -24,17 +35,32 @@ class MyTemplatesPage extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
         body: const _MyTemplatesContent(),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TemplateEditorPage())).then((_) {
-              if (context.mounted) {
-                context.read<AnamnesisBloc>().add(const LoadTemplates(isSystem: false));
-              }
-            });
+        floatingActionButton: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+          builder: (context, subscriptionState) {
+            final hasReachedLimit = subscriptionState.subscriptionStatus?.usage.canCreateAnamnesis == false;
+
+            return FloatingActionButton.extended(
+              onPressed: () {
+                if (hasReachedLimit) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Limite do plano atingido. Faça upgrade para criar mais modelos.'),
+                      backgroundColor: Colors.amber,
+                    ),
+                  );
+                  return;
+                }
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const TemplateEditorPage())).then((_) {
+                  if (context.mounted) {
+                    context.read<AnamnesisBloc>().add(const LoadTemplates(isSystem: false));
+                  }
+                });
+              },
+              label: const Text('Novo Modelo'),
+              icon: const Icon(Icons.add),
+              backgroundColor: hasReachedLimit ? Colors.grey : AppColors.primary,
+            );
           },
-          label: const Text('Novo Modelo'),
-          icon: const Icon(Icons.add),
-          backgroundColor: AppColors.primary,
         ),
       ),
     );
@@ -151,25 +177,35 @@ class _MyTemplatesContent extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => TemplateEditorPage(templateToEdit: template)),
-                            ).then((_) {
-                              if (context.mounted) {
-                                context.read<AnamnesisBloc>().add(const LoadTemplates(isSystem: false));
-                              }
-                            });
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            _showDeleteConfirmation(context, template);
-                          },
-                        ),
+                        if (!template.isSystem)
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => TemplateEditorPage(templateToEdit: template)),
+                              ).then((_) {
+                                if (context.mounted) {
+                                  context.read<AnamnesisBloc>().add(const LoadTemplates(isSystem: false));
+                                }
+                              });
+                            },
+                          ),
+                        if (!template.isSystem)
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              _showDeleteConfirmation(context, template);
+                            },
+                          ),
+                        if (template.isSystem)
+                          const Tooltip(
+                            message: 'Modelo padrão do sistema',
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+                            ),
+                          ),
                       ],
                     ),
                   ),

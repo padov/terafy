@@ -44,7 +44,12 @@ void main() {
             'plan': {'id': 1, 'name': 'Premium', 'price': 99.0, 'patient_limit': 50},
           },
         );
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
@@ -82,7 +87,12 @@ void main() {
             'plan': {'id': 1, 'name': 'Premium', 'price': 99.0, 'patient_limit': 50},
           },
         );
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
@@ -154,7 +164,12 @@ void main() {
       'emite HomeError quando RefreshHomeData falha',
       build: () {
         when(() => getCurrentTherapistUseCase()).thenThrow(Exception('Erro ao atualizar'));
-        when(() => getHomeSummaryUseCase()).thenThrow(Exception('Erro ao atualizar'));
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenThrow(Exception('Erro ao atualizar'));
         return bloc;
       },
       seed: () => const HomeLoaded(
@@ -181,7 +196,12 @@ void main() {
             'plan': {'id': 1, 'name': 'Premium', 'price': 99.0, 'patient_limit': 50},
           },
         );
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
@@ -229,7 +249,12 @@ void main() {
       'mapeia corretamente diferentes status de compromisso',
       build: () {
         when(() => getCurrentTherapistUseCase()).thenAnswer((_) async => {'name': 'Dr. João Silva'});
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
@@ -299,7 +324,12 @@ void main() {
       'mapeia corretamente diferentes tipos de serviço',
       build: () {
         when(() => getCurrentTherapistUseCase()).thenAnswer((_) async => {'name': 'Dr. João Silva'});
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
@@ -366,7 +396,12 @@ void main() {
             // sem plano
           },
         );
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
@@ -393,7 +428,12 @@ void main() {
       build: () {
         final now = DateTime.now();
         when(() => getCurrentTherapistUseCase()).thenAnswer((_) async => {'name': 'Dr. João Silva'});
-        when(() => getHomeSummaryUseCase()).thenAnswer(
+        when(
+          () => getHomeSummaryUseCase(
+            referenceDate: any(named: 'referenceDate'),
+            therapistId: any(named: 'therapistId'),
+          ),
+        ).thenAnswer(
           (_) async => HomeSummary(
             referenceDate: DateTime.now(),
             therapistId: 1,
